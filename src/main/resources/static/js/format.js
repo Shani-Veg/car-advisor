@@ -8,7 +8,7 @@ export const statusLabels = Object.freeze({ MISSING: 'חסר', PROVIDED: 'הוז
 export const caseLabels = Object.freeze({ COLLECTING: 'משלימים פרטים', READY: 'אפשר להשוות', WAITING_FOR_REP: 'ממתין למענה נציג' });
 export const directionLabels = Object.freeze({ GAIN: 'עלייה בנטו החודשי', LOSS: 'ירידה בנטו החודשי', NONE: 'ללא שינוי בנטו' });
 export const breakdownLabels = Object.freeze({ grossCash: 'ברוטו מזומן', taxableIncome: 'הכנסה חייבת במס', incomeTax: 'מס הכנסה', nationalInsurance: 'ביטוח לאומי', healthTax: 'מס בריאות', pension: 'פנסיה', studyFund: 'קרן השתלמות', participation: 'השתתפות עובד', familyShare: 'השתתפות משפחתית', net: 'נטו' });
-const sourceLabels = Object.freeze({ EMPLOYEE_MESSAGE: 'הודעת עובד', FORM: 'טופס הפרופיל', CATALOG_DEFAULT: 'ברירת מחדל בקטלוג', REP: 'תשובת נציג', REP_ANSWER: 'תשובת נציג' });
+const sourceLabels = Object.freeze({ EMPLOYEE_MESSAGE: 'הודעת עובד', FORM: 'טופס הפרופיל', CATALOG_DEFAULT: 'ברירת מחדל בקטלוג', REP: 'נקבע על ידי נציג התחבורה', REP_ANSWER: 'נקבע על ידי נציג התחבורה' });
 export function formatMoney(value, signed = false) {
   return typeof value === 'number' && Number.isFinite(value) ? (signed ? signedShekels : shekels).format(value) : '—';
 }
@@ -51,7 +51,10 @@ export function moneyNode(value, signed = false, className = '') {
   node.textContent = formatMoney(value, signed);
   return node;
 }
-export function statusBadge(status) { return el('span', 'badge status-' + String(status).toLowerCase(), statusLabels[status] || String(status)); }
+export function statusBadge(status) {
+  const symbol = { MISSING: '○ ', DEFAULT: '~ ', PROVIDED: '✓ ', CONFIRMED: '✓ ' }[status] || '';
+  return el('span', 'badge status-' + String(status).toLowerCase(), symbol + (statusLabels[status] || String(status)));
+}
 export function emptyState(title, detail = '') {
   const node = el('div', 'empty-state');
   node.append(el('strong', '', title));
@@ -65,7 +68,7 @@ export function keepDemoLinks(ids) {
     const link = document.getElementById(id);
     if (!link) continue;
     const url = new URL(link.href);
-    for (const key of ['mock', 'down']) if (query.has(key)) url.searchParams.set(key, query.get(key));
+    for (const key of ['mock', 'down', 'replay']) if (query.has(key)) url.searchParams.set(key, query.get(key));
     link.href = url.href;
   }
 }

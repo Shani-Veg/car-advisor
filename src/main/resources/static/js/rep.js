@@ -44,7 +44,8 @@ function renderAnswered() {
     content.append(el('p', '', question.question), el('p', '', 'ערך שאושר: ' + question.answer.display));
     if (question.answer.effectiveFrom) content.append(el('p', '', 'תחולה: ' + question.answer.effectiveFrom));
     if (question.answer.note) content.append(el('p', '', 'הערה: ' + question.answer.note));
-    if (question.answer.answeredBy) content.append(el('p', '', 'נענה על ידי: ' + question.answer.answeredBy));
+    if (question.answer.answeredBy) content.append(el('p', '', 'נענה על ידי ' + question.answer.answeredBy));
+    content.append(el('p', 'small-muted', 'נקבע על ידי נציג התחבורה · מקור: REP'));
     content.append(el('p', 'small-muted', 'נענה: ' + formatDate(question.answer.answeredAt)));
     details.append(content); byId('answered-list').append(details);
   }

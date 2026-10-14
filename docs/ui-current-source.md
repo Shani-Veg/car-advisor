@@ -1,4 +1,4 @@
-# קוד ה-UI הנוכחי (בסיס לגרסה 3)
+# קוד ה-UI הנוכחי (אחרי שילוב גרסה 3)
 נוצר אוטומטית מ-`src/main/resources/static/`. כל קובץ בשלמותו. `proof.html`, `css/proof.css` ו-`js/proof.js` שייכים לדף ההוכחה ולא משתנים. נכסי `assets/` (איקונים, רקעים) כבר בתיקייה.
 
 ## `index.html`
@@ -81,51 +81,51 @@
   <title>ההשוואה שלי · יועץ הרכב</title>
   <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
+<body class="employee-page">
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header">
     <a class="wordmark" id="home-link" href="index.html">יועץ הרכב<span>סביבת ההחלטה שלך</span></a>
     <nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">ההשוואה שלי</span><a id="rep-link" href="rep.html">מסך נציג <span aria-hidden="true">↗</span></a></nav>
   </header>
   <main id="main" class="app-main">
-    <div class="page-intro"><div><span class="eyebrow">התמונה שלך, בדרך לרכב הבא</span><h1>מה יקרה לנטו שלי?</h1><p>שואלים, משווים, ומבינים מה עומד מאחורי המספרים.</p></div><span id="case-state" class="badge">טוען תיק…</span></div>
-    <div id="mock-banner" class="notice mock-notice" hidden>מצב הדגמה · נתוני דמה בלבד. אישור נציג לא מחשב מחדש את ההשוואה במוק.</div>
+    <div class="case-strip"><span>השיחה והפרטים שלך, במקום אחד</span><span id="case-state" class="badge">טוען תיק…</span></div>
+    <div id="mock-banner" class="notice mock-notice" hidden>הדגמה · נתוני דמה בלבד. הסכומים הם דוגמאות קבועות ואינם מחושבים לפי הפרטים שהוזנו.</div>
+    <div id="replay-banner" class="notice replay-notice" role="status" hidden>הדגמה: השמעה של שיחה מוקלטת</div>
     <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.</div>
     <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" type="button" class="text-button">נסה שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
-    <div id="pending-banner" class="notice pending-notice" hidden><strong>שאלה נשלחה לנציג התחבורה, ההשוואה תתעדכן כשתגיע תשובה</strong><ul id="pending-list"></ul></div>
-    <nav class="mobile-jumps" aria-label="מעבר בין אזורי המסך"><a href="#chat-panel">שיחה</a><a href="#comparison-panel">השוואה</a><a href="#profile-panel">הפרופיל שלי</a></nav>
     <div class="employee-grid">
       <section id="chat-panel" class="panel chat-panel" aria-labelledby="chat-heading">
-        <div class="panel-heading"><div><span class="section-kicker">מתקדמים יחד</span><h2 id="chat-heading">השיחה שלך</h2></div><span class="assistant-symbol" aria-hidden="true">✳</span></div>
-        <div class="chat-intro"><span class="tiny-dot"></span><span>אפשר לשאול במילים שלך, או לעדכן את הפרופיל.</span></div>
+        <div class="chat-heading"><img class="header-avatar" src="assets/avatar-bot.webp" alt="" width="48" height="48"><div><h1 id="chat-heading">יועץ הרכב</h1><p>הכללים והחישוב מהשרת, לא מהמודל</p></div><span class="chat-label">השיחה שלי</span></div>
+        <div class="chat-progress"><div><span id="progress-label">הפרטים שלי: טוען…</span><span class="small-muted">צעד אחר צעד</span></div><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
         <div id="messages" class="messages" role="log" aria-label="היסטוריית השיחה" aria-live="off" aria-busy="true"><p class="empty-state">טוען את השיחה…</p></div>
         <div id="chat-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="typing" class="typing" role="status" hidden><span class="typing-dots" aria-hidden="true">•••</span>העוזר מכין תשובה…</div>
         <form id="message-form" class="composer">
           <label for="message-input">מה תרצו לבדוק?</label>
-          <div class="composer-input"><textarea id="message-input" name="message" placeholder="למשל, מה יקרה אם אעבור לרכב חשמלי?" rows="2" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
+          <div class="composer-input"><textarea id="message-input" name="message" placeholder="אפשר גם לענות במילים שלך…" rows="2" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
           <p class="composer-hint">Enter לשליחה · Shift + Enter לשורה חדשה</p>
         </form>
       </section>
       <div class="decision-workspace">
-        <section id="comparison-panel" class="panel comparison-panel" aria-labelledby="comparison-heading">
-          <div class="panel-heading"><div><span class="section-kicker">מבט על הנטו החודשי</span><h2 id="comparison-heading">היום מול החלופה</h2></div><span class="badge soft-teal">התמונה הכספית</span></div>
-          <div id="comparison" aria-busy="true"><div class="skeleton comparison-skeleton"></div><p class="empty-state">טוען את ההשוואה…</p></div>
-        </section>
         <section id="profile-panel" class="panel profile-panel" aria-labelledby="profile-heading">
-          <div class="panel-heading"><div><span class="section-kicker">הבסיס להשוואה</span><h2 id="profile-heading">הפרופיל שלי</h2></div><span class="small-muted">לחצו על נתון לעריכה</span></div>
-          <div id="profile" class="profile-grid" aria-busy="true"><p class="empty-state">טוען את הפרטים…</p></div>
-          <div class="profile-legend"><span class="status-dot confirmed-dot"></span>אושר<span class="status-dot default-dot"></span>הערכה<span class="status-dot missing-dot"></span>חסר</div>
+          <div class="panel-heading"><div><span class="section-kicker">הבסיס להחלטה</span><h2 id="profile-heading">מה אני יודע עליך</h2></div><button id="profile-toggle" class="text-button" type="button" aria-expanded="true" aria-controls="profile-content" hidden>הצג הכול</button><span id="profile-count" class="badge neutral">טוען…</span></div>
+          <div id="profile-content"><p class="profile-hint">לחיצה על פרט פותחת את אפשרויות העריכה שלו.</p><div id="profile" class="profile-grid" aria-busy="true"><p class="empty-state">טוען את הפרטים…</p></div><details id="profile-extra" class="profile-extra"><summary>שאר הפרטים להשוואה</summary><div id="profile-other" class="profile-grid"></div></details><p id="profile-placeholder" class="profile-placeholder">כשאדע מספיק, ההשוואה תופיע כאן.</p></div>
         </section>
-        <section id="ranking-panel" class="panel ranking-panel" aria-labelledby="ranking-heading">
+        <div id="pending-banner" class="notice pending-notice" role="status" hidden><strong>שאלה נשלחה לנציג התחבורה, ההשוואה תתעדכן כשתגיע תשובה</strong><ul id="pending-list"></ul></div>
+        <section id="comparison-panel" class="panel comparison-panel" aria-labelledby="comparison-heading" hidden>
+          <div class="panel-heading"><div><span class="section-kicker">מבט על הנטו החודשי</span><h2 id="comparison-heading">היום מול החלופה</h2></div><span class="badge soft-teal">התמונה הכספית</span></div>
+          <div id="comparison"></div>
+        </section>
+        <section id="ranking-panel" class="panel ranking-panel" aria-labelledby="ranking-heading" hidden>
           <div class="panel-heading"><div><span class="section-kicker">עוד אפשרויות בדרך</span><h2 id="ranking-heading">חלופות להשוואה</h2></div><span class="small-muted">לפי סדר השרת</span></div>
-          <div id="ranking" aria-busy="true"><p class="empty-state">טוען חלופות…</p></div>
+          <div id="ranking"></div>
         </section>
       </div>
     </div>
     <footer class="app-footer"><span>הערכות מסומנות עד לאישור · הנתונים מתעדכנים במהלך השיחה</span><span id="sync-label" role="status">מתחבר…</span></footer>
   </main>
+  <button id="mobile-comparison" class="mobile-comparison" type="button" aria-controls="comparison-panel" hidden><span><strong id="mobile-direction"></strong><small>להשוואה המלאה <span aria-hidden="true">↑</span></small></span><bdi id="mobile-difference" dir="ltr"></bdi></button>
   <dialog id="profile-dialog" aria-labelledby="edit-heading">
     <form id="profile-form">
       <div class="dialog-heading"><h2 id="edit-heading">עדכון פרופיל</h2><button id="close-dialog" class="icon-button" type="button" aria-label="סגירת העריכה">×</button></div>
@@ -173,16 +173,21 @@
 ## `css/app.css`
 
 ```css
-:root{--bg:#f5f4f0;--surface:#fff;--ink:#233d4d;--muted:#63716f;--teal:#127d72;--teal-soft:#eaf4ef;--amber:#95601a;--amber-soft:#fcf3e4;--coral:#d84e45;--red:#a83136;--red-soft:#fbeeed;--line:#e4e7e0;--radius:17px;--focus:#127d72;font-family:Arial,"Segoe UI",Tahoma,sans-serif;color:var(--ink);background:var(--bg);font-synthesis:none}
-*{box-sizing:border-box}body{margin:0;line-height:1.55}button,input,select,textarea{font:inherit;color:inherit}button,a,input,textarea,select{touch-action:manipulation}button{cursor:pointer}button:disabled{cursor:wait;opacity:.5}a{color:inherit;text-decoration:none}a:hover{text-decoration:underline}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:4px}h1,h2,h3,p{margin:0}h1,h2,h3{line-height:1.2}h1{font-size:36px;letter-spacing:-1.2px}h2{font-size:20px;letter-spacing:-.5px}h3{font-size:17px}bdi{font-variant-numeric:tabular-nums}svg{display:block;max-width:100%}[hidden]{display:none!important}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.skip-link{position:fixed;z-index:10;inset-block-start:-100px;inset-inline-start:15px;background:var(--ink);color:white;padding:12px}.skip-link:focus{inset-block-start:10px}.site-header{min-height:82px;background:var(--ink);color:#fff;padding:16px max(28px,calc((100vw - 1392px)/2));display:flex;align-items:center;justify-content:space-between;gap:20px}.wordmark{font-weight:700;font-size:25px;line-height:1.15;letter-spacing:-.8px}.wordmark:hover{text-decoration:none}.wordmark span{display:block;font-weight:400;font-size:11px;letter-spacing:.3px;color:#c6d0ce;margin-top:6px}.header-nav{display:flex;gap:24px;align-items:center;font-size:13px}.header-nav a{color:#d5dfdb}.nav-current{border-bottom:2px solid #d9a095;padding:7px 0}.header-caption{font-size:13px;color:#d5dfdb}.app-main{max-width:1392px;margin:0 auto;padding:32px 28px 24px}.page-intro{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}.page-intro h1{margin:9px 0 8px}.page-intro p{font-size:14px;color:var(--muted)}.eyebrow,.section-kicker{font-size:11px;font-weight:700;letter-spacing:.7px;color:var(--muted)}.eyebrow{display:inline-flex;align-items:center;gap:9px}.accent-line{width:26px;height:3px;background:var(--coral)}.section-kicker{display:block;margin-bottom:7px}.small-muted,.quiet-note{font-size:12px;color:var(--muted)}.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:#ebece5;border:1px solid transparent;border-radius:6px;padding:5px 9px;white-space:nowrap}.soft-teal,.status-confirmed{color:#116b62;background:var(--teal-soft)}.status-provided{color:#4d626a;background:#f0f3f3}.status-default{color:var(--amber);background:var(--amber-soft)}.status-missing{color:#72736e;background:#f1f0eb}.notice{padding:12px 16px;border-radius:9px;font-size:13px;background:#edf2f0;border:1px solid #dce5df;margin-bottom:16px;display:flex;align-items:center;gap:12px;justify-content:space-between}.mock-notice{font-size:11px;background:#eeede6;border-color:#e3e1d7;color:#625f50}.warning,.pending-notice{background:var(--amber-soft);border-color:#ebd8b7;color:#704a1e}.error-notice{background:var(--red-soft);border-color:#efc9c7;color:var(--red)}.pending-notice{display:block}.pending-notice strong{font-size:13px}.pending-notice ul{margin:6px 0 0;padding-inline-start:20px}.employee-grid{display:grid;grid-template-columns:minmax(320px,.83fr) minmax(0,1.4fr);gap:22px;align-items:start}.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}.panel-heading{padding:22px 24px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.chat-panel{position:sticky;top:20px;display:flex;flex-direction:column;height:min(760px,calc(100vh - 40px));min-height:550px}.assistant-symbol{font-size:29px;color:var(--teal);width:40px;height:40px;display:grid;place-items:center;border:1px solid #d5e6dd;border-radius:12px;background:#f6f9f5}.chat-intro{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fafbf8;padding:11px 24px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px}.tiny-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);flex:none}.messages{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:24px 22px;display:flex;flex-direction:column;gap:22px;scroll-behavior:smooth}.message{max-width:94%;align-self:flex-start;display:flex;gap:9px;min-width:0}.message.employee{align-self:flex-end;flex-direction:row-reverse}.message-avatar{flex:none;width:40px;height:40px;border-radius:12px;object-fit:cover;background:#eff4ee}.message-content{min-width:0}.message-meta{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-size:10px;color:var(--muted)}.message-text{padding:14px 16px;border:1px solid var(--line);border-radius:2px 13px 13px 13px;background:#f7f8f4;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.8}.employee .message-text{background:var(--ink);color:#fff;border-color:var(--ink);border-radius:13px 2px 13px 13px}.message-choices{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.choice-button{border:1px solid #b9cfc5;background:white;border-radius:7px;padding:7px 12px;color:var(--teal);font-size:12px}.choice-button:hover{background:var(--teal-soft)}.typing{padding:3px 24px 12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.typing-dots{letter-spacing:3px;color:var(--teal);animation:pulse 1.2s ease-in-out infinite}.composer{border-top:1px solid var(--line);padding:18px 22px 15px;background:white}.composer label{display:block;font-size:12px;font-weight:700;margin-bottom:8px}.composer-input{display:flex;align-items:flex-end;gap:8px;border:1px solid #d2dad3;border-radius:10px;padding:8px;background:#fff}.composer textarea{border:0;background:none;resize:vertical;min-height:52px;max-height:170px;width:100%;font-size:12px;line-height:1.7;outline-offset:0;padding:4px}.composer textarea::placeholder{color:#7b8580}.send-button{border:0;background:var(--teal);color:white;width:38px;height:38px;border-radius:8px;font-size:22px;flex:none}.composer-hint{font-size:10px;margin-top:8px;color:var(--muted)}.decision-workspace{display:grid;gap:18px;min-width:0}.comparison-content{padding:0 24px 23px}.net-pair{display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);align-items:center;gap:9px;margin-bottom:15px}.net-card{border:1px solid var(--line);border-radius:10px;padding:15px 16px;background:#fafaf7;min-width:0}.net-card.alternative-net{background:#eff5ef;border-color:#d8e4d7}.net-label{font-size:11px;color:var(--muted);margin-bottom:5px;display:block}.vehicle-name{font-size:12px;font-weight:700;overflow-wrap:anywhere;min-height:20px}.net-amount{display:block;font-size:29px;font-weight:700;line-height:1.25;margin-top:8px;letter-spacing:-.8px}.net-unit{font-size:10px;color:var(--muted);margin-top:3px}.pair-arrow{font-size:21px;color:#8c9890;text-align:center}.difference-card{background:var(--teal-soft);border:1px solid #cee3d4;border-radius:11px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:21px}.difference-card.loss{background:var(--red-soft);border-color:#efcac7;color:var(--red)}.difference-card.none{background:#f1f1ec;border-color:var(--line)}.difference-label{font-size:14px;font-weight:700;display:block;color:var(--teal)}.loss .difference-label{color:var(--red)}.none .difference-label{color:var(--ink)}.difference-subtitle{display:block;font-size:11px;color:var(--muted);margin-top:4px}.difference-amount{font-size:35px;font-weight:700;line-height:1.2;letter-spacing:-1px;color:var(--teal);white-space:nowrap}.loss .difference-amount{color:var(--red)}.none .difference-amount{color:var(--ink)}.factors-heading{font-size:13px;margin:0 0 9px;display:flex;align-items:center;gap:9px}.factors-heading:before{content:"";display:block;width:16px;height:2px;background:var(--coral)}.table-wrapper{overflow-x:auto}.data-table{width:100%;border-collapse:collapse;font-size:12px;text-align:start}.data-table th{font-size:10px;font-weight:400;color:var(--muted);padding:6px 0 9px;text-align:start;border-bottom:1px solid var(--line)}.data-table td{padding:10px 0;border-bottom:1px solid #eff0e9;vertical-align:top}.data-table th:not(:first-child),.data-table td:not(:first-child){padding-inline-start:10px;white-space:nowrap}.impact{font-weight:700}.explanation{font-size:12px;line-height:1.8;color:var(--muted);margin:14px 0 11px;overflow-wrap:anywhere}.estimate-note{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);flex-wrap:wrap}.breakdown{border-top:1px solid var(--line);margin-top:17px;padding-top:12px}.breakdown summary{font-size:12px;font-weight:700;cursor:pointer}.breakdown .table-wrapper{margin-top:12px}.rules-note{font-size:10px;color:var(--muted);margin-top:12px}.profile-grid{padding:0 24px 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px 17px}.profile-field{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:start;border:1px solid transparent;border-bottom:1px solid var(--line);border-radius:4px;background:white;padding:10px 0;min-width:0}.profile-field:hover{background:#fafbf7;border-color:#dce5da;padding-inline:8px}.field-heading{display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px;font-size:11px;color:var(--muted)}.field-heading .badge{font-size:9px;padding:2px 5px}.field-value{font-size:14px;font-weight:700;margin-top:6px;overflow-wrap:anywhere}.missing-value{color:#8b8c82;font-weight:400}.profile-legend{display:flex;gap:6px;align-items:center;border-top:1px solid var(--line);padding:11px 24px;background:#fafbf8;font-size:10px;color:var(--muted)}.status-dot{width:5px;height:5px;border-radius:50%;margin-inline-start:9px}.status-dot:first-child{margin-inline-start:0}.confirmed-dot{background:var(--teal)}.default-dot{background:#c79742}.missing-dot{background:#acb0a6}.ranking-list{list-style:none;margin:0;padding:0 24px 12px}.ranking-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}.ranking-info{flex:1;min-width:0}.ranking-info strong{font-size:13px;display:block;overflow-wrap:anywhere}.ranking-info small{display:block;font-size:10px;color:var(--muted);margin-top:3px}.ranking-info .badge{margin-top:6px;font-size:9px}.ranking-value{text-align:end;font-weight:700;font-size:17px;white-space:nowrap}.ranking-value small{font-size:9px;font-weight:400;display:block;color:var(--muted)}.compare-button{border:1px solid #d5dcd3;border-radius:6px;font-size:11px;padding:6px 10px;background:white}.compare-button:hover{background:var(--teal-soft);border-color:#aecbb9}.empty-state{padding:25px 24px;color:var(--muted);font-size:13px;line-height:1.8}.empty-state strong{display:block;font-size:16px;color:var(--ink);margin-bottom:6px}.skeleton{background:linear-gradient(90deg,#f0f1eb,#f8f9f4,#f0f1eb);background-size:200% 100%;animation:shimmer 1.4s ease infinite;border-radius:10px}.comparison-skeleton{height:170px;margin:0 24px}.changed{animation:highlight 2s ease-out}.app-footer{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px;margin-top:22px}.mobile-jumps{display:none}.primary-button,.secondary-button{border-radius:8px;padding:10px 16px;font-size:13px;font-weight:700}.primary-button{background:var(--teal);color:white;border:1px solid var(--teal)}.primary-button:hover{background:#0e6c62}.secondary-button{background:white;border:1px solid #ccd7ce}.text-button{border:0;background:none;color:inherit;text-decoration:underline;font-size:12px;padding:4px;white-space:nowrap}.icon-button{border:0;background:#f4f5ee;border-radius:6px;width:30px;height:30px;font-size:22px}.form-error{color:var(--red);font-size:12px;margin:10px 0}.form-field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}.form-field input,.form-field select,.form-field textarea{width:100%;padding:10px 11px;background:white;border:1px solid #cdd7ce;border-radius:7px;min-width:0;font-size:13px}.form-field textarea{resize:vertical;min-height:68px}dialog{width:min(450px,calc(100vw - 30px));padding:24px;border:1px solid var(--line);border-radius:17px;color:var(--ink);box-shadow:0 16px 70px #233d4d22}dialog::backdrop{background:#20352d66}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.dialog-heading h2{font-size:20px}#edit-source{margin:12px 0 18px}.dialog-actions{display:flex;gap:10px;margin-top:24px}.rep-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:24px;align-items:start}.rep-guide{padding:26px;position:sticky;top:24px;background:#edf0e7}.rep-guide h2{font-size:29px;line-height:1.25;margin:13px 0 17px}.rep-guide>p{font-size:13px;color:var(--muted);line-height:1.85}.guide-steps{padding:0;margin:26px 0;list-style:none;counter-reset:steps}.guide-steps li{counter-increment:steps;display:flex;align-items:center;gap:10px;margin:14px 0;font-size:12px}.guide-steps li>bdi{display:grid;place-items:center;width:25px;height:25px;border:1px solid #c6d5c4;border-radius:50%;color:var(--teal);font-size:11px}.guide-note{padding-top:17px;border-top:1px solid #d6dfd2;font-size:11px;color:var(--muted);margin-bottom:18px}.queue-heading{display:flex;justify-content:space-between;align-items:center;margin:0 0 17px;gap:10px}.queue-heading h2{display:flex;align-items:center;gap:10px}.count-badge{font-size:11px;border-radius:5px;padding:2px 8px;background:#e7eadf;font-weight:700}.question-card{margin-bottom:16px;padding:24px}.question-header{display:flex;justify-content:space-between;gap:14px;margin-bottom:18px}.question-employee{font-size:12px;color:var(--muted);margin-top:8px}.question-card h3{font-size:20px;line-height:1.5}.question-time{display:block;font-size:10px;color:var(--muted);margin-top:7px}.context-boxes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px}.context-box{background:#f6f7f2;border:1px solid var(--line);border-radius:9px;padding:15px}.context-box.assumption{background:#fcf7ee;border-color:#eddfc5}.context-box h4{font-size:11px;color:var(--muted);margin:0 0 8px}.context-box p{font-size:12px;line-height:1.85;overflow-wrap:anywhere}.known-item+.known-item{margin-top:6px}.known-label{font-size:10px;color:var(--muted);display:block}.suggested-answer{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #d7e3d7;background:#f3f8f1;border-radius:9px;padding:12px 14px;margin-bottom:18px;font-size:12px}.suggested-answer small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.answer-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}.answer-fields .note-field{grid-column:1/-1}.answer-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px}.answer-footer small{font-size:10px;color:var(--muted)}.question-card.stale{background:#efefeb;color:#787c72;border-color:#e0e1da}.question-card.stale .context-box{background:#f3f3ef}.answered-section{margin-top:26px;border-top:1px solid #dce0d4;padding-top:17px}.answered-section>summary{font-weight:700;font-size:14px;cursor:pointer}.answered-section>div{margin-top:15px}.answered-card{padding:17px 20px;margin-top:12px}.answered-card summary{cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}.answer-result{margin-top:15px;font-size:12px}.welcome{max-width:1392px;margin:0 auto;min-height:calc(100vh - 154px);display:grid;grid-template-columns:1.05fr 1fr;gap:60px;align-items:center;padding:70px 48px}.welcome h1{font-size:clamp(37px,3.8vw,56px);line-height:1.22;margin-top:24px;letter-spacing:-2px}.welcome h1 em{font-style:normal;color:var(--teal)}.welcome-lead{font-size:16px;line-height:1.9;color:var(--muted);margin:25px 0 30px}.role-links{max-width:410px;display:grid;gap:11px}.role-link{display:flex;align-items:center;gap:15px;background:#fff;border:1px solid #dfe3d9;border-radius:12px;padding:16px 19px;transition:transform .15s ease,background .15s ease}.role-link:hover{transform:translateY(-2px);text-decoration:none;background:#f9faf5}.role-link>span:last-child{margin-inline-start:auto;font-size:23px}.role-link strong{display:block;font-size:16px}.role-link small{display:block;font-size:11px;opacity:.78;margin-top:4px}.primary-role{background:var(--ink);color:white;border-color:var(--ink)}.primary-role:hover{background:#2e4c5c}.role-symbol{width:36px;height:36px;display:grid;place-items:center;border:1px solid #89969066;border-radius:8px;font-size:23px;flex:none}.welcome .quiet-note{margin-top:21px;font-size:11px}.welcome-art{position:relative;min-height:430px;display:flex;align-items:center;justify-content:center;isolation:isolate}.art-grid{position:absolute;inset:20px 0;border-radius:50%;background:radial-gradient(ellipse at center,#e0eade 0,transparent 68%);z-index:-1}.art-caption{position:absolute;top:28px;font-size:11px;letter-spacing:.4px;color:var(--muted)}.illustration-card{width:100%;max-width:405px;transform:rotate(-3deg);border:1px solid #d9e0d3;border-radius:18px;background:#fff;padding:28px;box-shadow:12px 20px 0 #e9eade}.car-illustration{margin:13px 0}.art-labels{display:flex;justify-content:space-around;align-items:center;font-size:11px;color:var(--muted);margin-bottom:22px}.art-arrow{font-size:20px}.art-result{border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;gap:12px;padding:15px}.art-result strong{font-size:15px;display:block}.art-result small{font-size:10px;display:block;color:var(--muted);margin-top:4px}.art-check{width:32px;height:32px;background:var(--teal);color:white;border-radius:50%;display:grid;place-items:center}.floating-note{position:absolute;background:white;border:1px solid var(--line);border-radius:8px;padding:10px 13px;display:flex;align-items:center;gap:9px;font-size:10px;box-shadow:0 4px 15px #233d4d08}.note-one{bottom:47px;right:-10px;transform:rotate(2deg)}.note-two{top:70px;left:-8px;transform:rotate(4deg)}.note-two>span{color:var(--coral);font-size:22px;line-height:1}.welcome-footer{max-width:1392px;margin:auto;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:22px 48px;border-top:1px solid var(--line)}
-@keyframes shimmer{to{background-position:-200% 0}}@keyframes pulse{50%{opacity:.35}}@keyframes highlight{0%,40%{background-color:#e0eed4;box-shadow:inset 0 0 0 1px #b4d195}100%{}}
-@media(min-width:1550px){.chat-panel{height:780px}}
-@media(max-width:1100px){.employee-grid{grid-template-columns:minmax(290px,.85fr) minmax(0,1.2fr);gap:16px}.app-main{padding:28px 20px}.panel-heading{padding:20px 18px 16px}.comparison-content{padding:0 18px 20px}.profile-grid{padding:0 18px 18px}.ranking-list{padding:0 18px 12px}.net-card{padding:13px 11px}.net-amount{display:block;font-size:25px}.difference-amount{font-size:30px}.welcome{padding:55px 32px;gap:35px}.welcome h1{font-size:43px}.rep-grid{grid-template-columns:225px minmax(0,1fr)}.rep-guide{padding:21px}}
-@media(max-width:800px){.employee-grid{grid-template-columns:1fr}.chat-panel{position:static;min-height:0;height:540px}.messages{min-height:180px}.decision-workspace{gap:16px}.mobile-jumps{display:flex;gap:8px;margin-bottom:16px}.mobile-jumps a{padding:7px 12px;border:1px solid #dce1d5;background:white;border-radius:7px;font-size:12px}.page-intro{align-items:flex-start}.page-intro h1{font-size:31px}.rep-grid{grid-template-columns:1fr}.rep-guide{display:none}.welcome{grid-template-columns:1fr;gap:20px;padding:45px 25px;min-height:0}.welcome-copy{max-width:540px;margin:auto;width:100%}.welcome-art{max-width:470px;margin:auto;width:100%;min-height:400px}.welcome h1{font-size:43px}.role-links{max-width:100%}.header-caption{font-size:11px}.site-header{padding:16px 22px}.welcome-footer{padding:22px 25px}.app-footer{flex-direction:column;gap:6px}.context-boxes{gap:10px}}
-@media(max-width:480px){.site-header{min-height:74px;padding:14px 17px;gap:10px}.wordmark{font-size:22px}.wordmark span{font-size:10px}.header-nav{gap:12px;font-size:11px}.app-main{padding:24px 14px 18px}.page-intro{flex-direction:column;gap:12px;margin-bottom:20px}.page-intro h1{font-size:30px}.page-intro p{font-size:12px}.page-intro>.badge{align-self:flex-start}.notice{font-size:12px;padding:11px 12px;gap:8px}.mock-notice{font-size:10px}.panel{border-radius:12px}.panel-heading{padding:18px 15px 15px}.panel-heading h2{font-size:18px}.panel-heading .small-muted{font-size:10px}.section-kicker{font-size:10px}.chat-panel{height:510px}.chat-intro{padding:10px 15px;font-size:10px}.messages{padding:20px 14px}.message-text{font-size:12px;padding:12px}.composer{padding:15px}.comparison-content{padding:0 15px 18px}.net-pair{grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr);gap:6px}.net-card{padding:12px 9px}.vehicle-name{font-size:10px;min-height:31px}.net-amount{display:block;font-size:23px}.difference-card{padding:14px 12px;gap:8px}.difference-label{font-size:12px}.difference-amount{font-size:29px}.difference-subtitle{font-size:10px}.data-table{font-size:10px}.data-table th{font-size:9px}.data-table th:not(:first-child),.data-table td:not(:first-child){padding-inline-start:7px}.profile-grid{padding:0 15px 16px;gap:7px 10px}.field-heading{font-size:10px;align-items:flex-start}.field-heading .badge{font-size:8px;flex:none}.field-value{font-size:12px}.ranking-list{padding:0 15px 10px}.ranking-row{gap:8px}.ranking-info strong{font-size:12px}.ranking-value{font-size:15px}.compare-button{padding:6px 8px;font-size:10px}.question-card{padding:18px 15px}.question-card h3{font-size:17px}.question-header{gap:8px}.question-employee{font-size:11px}.context-boxes{grid-template-columns:1fr}.answer-fields{grid-template-columns:1fr}.answer-footer{align-items:flex-start;flex-direction:column}.suggested-answer{padding:11px;align-items:flex-start}.suggested-answer .secondary-button{font-size:11px;padding:8px 9px;flex:none}.queue-heading h2{font-size:18px}.queue-heading .small-muted{font-size:10px}.welcome{padding:36px 20px}.welcome h1{font-size:35px;letter-spacing:-1.2px}.welcome-lead{font-size:14px;margin:20px 0 25px}.welcome-art{min-height:370px}.illustration-card{padding:21px;max-width:300px}.floating-note{font-size:9px;padding:9px}.note-one{right:0;bottom:34px}.note-two{left:0;top:45px}.art-caption{top:15px}.role-link{padding:15px}.header-caption{max-width:115px;text-align:end;font-size:10px}.welcome-footer{font-size:10px;padding:18px 20px}dialog{padding:20px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.changed{background:#e0eed4}.illustration-card,.floating-note{transform:none}}
-
-.model-link{display:inline-block;font-size:11px;color:var(--teal);margin-top:6px;margin-inline-start:6px}.model-link:hover{text-decoration:underline}.net-card .model-link{display:block;margin-inline-start:0}
+:root{--ink:#253d4c;--muted:#596a77;--line:#dce5eb;--red:#b52737;--red-soft:#fff3f4;--teal:#086b61;--teal-soft:#edf8f5;--white:#fff;--shadow:0 10px 30px #253d4c0a;--radius:20px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:95px}body{margin:0;color:var(--ink);font:15px/1.6 Arial,'Segoe UI',sans-serif;background:#f6f9fb url('../assets/page-background-soft.webp') center/cover fixed no-repeat}button,input,textarea,select{font:inherit;color:inherit}button,a,input,textarea,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}a{color:var(--teal);text-decoration:none}a:hover{text-decoration:underline}p,h1,h2,h3,h4{margin:0}h2{font-size:22px;line-height:1.35}h3{font-size:18px}small{font-size:12px}bdi{unicode-bidi:isolate}img{max-width:100%}[hidden]{display:none!important}:focus-visible{outline:3px solid #197b88;outline-offset:4px}::selection{background:#cbe8e1}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.skip-link{position:fixed;top:-80px;right:20px;background:white;padding:12px 20px;z-index:200}.skip-link:focus{top:10px}.small-muted{font-size:12px;color:var(--muted)}.eyebrow,.section-kicker{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}.badge{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;border-radius:7px;padding:4px 9px;font-size:12px;line-height:1.4;white-space:nowrap}.status-provided,.status-confirmed,.soft-teal{background:var(--teal-soft);color:var(--teal);border-color:#c7e5dc}.status-default{background:#fff6e6;color:#805311;border-color:#eed8ac}.status-missing,.neutral{background:#f4f7f9;color:var(--muted);border-color:#e3e9ef}
+.site-header{position:sticky;top:0;z-index:50;min-height:72px;padding:12px max(24px,calc((100vw - 1440px)/2));display:flex;justify-content:space-between;align-items:center;gap:20px;background:#253d4c;color:#fff;box-shadow:0 2px 12px #243b4a16}.wordmark{color:#fff;font-weight:700;font-size:23px;line-height:1.2}.wordmark:hover{text-decoration:none}.wordmark span{display:block;font-size:12px;font-weight:400;margin-top:5px;color:#e3edf2}.header-nav{display:flex;gap:25px;align-items:center;font-size:14px}.header-nav a{color:#fff}.nav-current{color:#c9e9e2}.header-caption{font-size:13px;color:#e3edf2}.app-main{max-width:1440px;margin:auto;padding:20px 24px 24px}.case-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;padding:10px 15px;border-radius:12px;background:#fff;border:1px solid var(--line);margin-bottom:16px}.notice{background:#fff;border:1px solid var(--line);border-inline-start:4px solid #7fa29f;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:14px;font-size:13px;margin-bottom:16px;overflow-wrap:anywhere}.mock-notice{font-size:12px;border-inline-start-color:#718698}.warning,.pending-notice{border-color:#ead1a3;border-inline-start-color:#a76b12}.error-notice{border-color:#edc6cd;border-inline-start-color:var(--red);color:#a41e30}.replay-notice{position:sticky;top:72px;z-index:40;border:2px solid #a76b12;font-weight:700;color:#714307}.pending-notice{display:block;margin:0}.pending-notice ul{margin:8px 0 0;padding-inline-start:20px}.tiny-dot{height:7px;width:7px;background:var(--teal);border-radius:50%;flex:none}.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);min-width:0;overflow:hidden}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:24px}.employee-grid{display:grid;grid-template-columns:420px minmax(0,1fr);gap:24px;align-items:start}.chat-panel{position:sticky;top:92px;height:calc(100dvh - 116px);display:flex;flex-direction:column;border:1px solid var(--line);border-top:4px solid #bc3342;box-shadow:0 14px 36px #263d4c12,0 2px 5px #fff9 inset}.chat-heading{display:flex;align-items:center;gap:12px;padding:22px 20px 18px;border-bottom:1px solid var(--line);flex:none}.header-avatar{width:48px;height:48px;flex:none;object-fit:cover;border:1px solid #e6ecf1;border-radius:14px}.chat-heading h1{font-size:23px;line-height:1.25}.chat-heading p{font-size:12px;color:var(--muted);margin-top:5px}.chat-label{margin-inline-start:auto;white-space:nowrap;border-radius:5px;padding:3px 6px;font-size:12px;color:var(--red);background:var(--red-soft)}.chat-progress{padding:13px 20px 15px;border-bottom:1px solid var(--line);flex:none}.chat-progress>div{display:flex;justify-content:space-between;gap:6px;font-size:13px;font-weight:700;margin-bottom:7px}.chat-progress .small-muted{font-weight:400}progress{appearance:none;display:block;width:100%;height:5px;border:0;border-radius:8px;overflow:hidden;background:#edf1f5;color:var(--teal)}progress::-webkit-progress-bar{background:#edf1f5;border-radius:8px}progress::-webkit-progress-value{background:var(--teal);border-radius:8px}progress::-moz-progress-bar{background:var(--teal);border-radius:8px}.messages{flex:1;min-height:100px;padding:22px 18px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#cbd6dd transparent}.message{display:flex;align-items:flex-start;gap:10px;margin-bottom:25px}.message:last-child{margin-bottom:0}.message-avatar{width:40px;height:40px;flex:none;border-radius:12px;object-fit:cover;border:1px solid #e3e9ef}.message-content{flex:1;min-width:0}.message-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px;font-size:12px;color:var(--muted)}.message-meta strong{color:var(--ink)}.message-text{font-size:15px;line-height:1.85;padding:12px 14px;border:1px solid #e4eaef;border-radius:2px 14px 14px 14px;white-space:pre-wrap;overflow-wrap:anywhere;background:#fff}.employee .message-text{background:#f4faf8;border-color:#d9eae4;border-radius:14px 2px 14px 14px}.system-message{margin:18px 0;padding:10px 12px;text-align:center;background:#f5f8fa;border-radius:8px;font-size:13px;color:var(--muted);overflow-wrap:anywhere}.message-choices{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.choice-button{min-height:40px;max-width:100%;padding:8px 13px;border:1px solid #b6d4cc;background:#fff;border-radius:22px;font-size:14px;font-weight:700;text-align:start;overflow-wrap:anywhere}.choice-button:hover{border-color:var(--teal);background:#f0f8f5}.choices-list{display:grid;gap:8px;max-height:240px;overflow-y:auto;padding:3px 3px 3px 6px;scrollbar-width:thin;margin-top:8px}.choices-list .choice-button{width:100%;border-radius:10px;padding:10px 12px}.choices-search{margin-top:13px}.choices-search label{display:block;font-size:12px;margin-bottom:5px;color:var(--muted)}.choices-search input{width:100%;min-height:40px;border:1px solid #bfcdd6;border-radius:9px;background:#fff;padding:8px 11px;font-size:14px}.choices-hint,.choices-empty{font-size:12px;color:var(--muted);margin-top:9px}.typing{padding:8px 20px;font-size:12px;color:var(--muted)}.typing-dots{color:var(--red);letter-spacing:3px;margin-inline-end:9px}.composer{padding:16px 18px 12px;border-top:1px solid var(--line);flex:none;background:#fff}.composer>label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}.composer-input{display:flex;align-items:flex-end;gap:8px;padding:9px;background:#fff;border:1px solid #d4dfe7;border-radius:14px;box-shadow:inset 2px 3px 7px #263d4c0b}.composer-input:focus-within{border-color:var(--teal)}.composer textarea{display:block;resize:none;width:100%;min-width:0;border:0;outline:0;padding:4px;background:transparent;font-size:15px;line-height:1.55;max-height:125px}.send-button{border:0;border-radius:10px;background:var(--red);color:#fff;width:40px;height:40px;flex:none;font-size:25px}.send-button:hover{background:#951d2c}.composer-hint{margin-top:7px;color:var(--muted);font-size:12px}.decision-workspace{display:flex;flex-direction:column;gap:22px;min-width:0}.profile-hint{padding:0 24px 15px;color:var(--muted);font-size:13px}.profile-grid{display:grid;grid-template-columns:1fr;gap:0;padding:0 24px 8px}.profile-field{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:center;gap:14px;width:100%;text-align:start;border:0;border-top:1px solid var(--line);padding:17px 3px;background:#fff;border-radius:7px;min-width:0}.profile-field:hover{background:#f6faf9}.field-heading{display:flex;align-items:center;gap:10px;justify-content:space-between;font-size:13px;color:var(--muted);min-width:0}.field-heading .badge{font-size:12px;padding:3px 6px}.field-value{display:block;text-align:end;font-size:15px;font-weight:700;overflow-wrap:anywhere;min-width:0}.missing-value{color:var(--muted);font-weight:400}.profile-placeholder{padding:20px 24px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}.profile-extra{margin:0 24px 16px;border-top:1px solid var(--line);padding-top:12px}.profile-extra summary{font-size:13px;color:var(--teal);cursor:pointer}.profile-extra .profile-grid{padding:10px 0 0}.profile-panel.compact-profile .panel-heading{padding:17px 22px}.compact-profile h2{font-size:18px}.compact-profile .section-kicker{display:none}.profile-panel .text-button{margin-inline-start:auto}.comparison-panel,.ranking-panel{animation:reveal 200ms ease-out}.comparison-content{padding:0 24px 24px}.net-pair{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);align-items:center;gap:10px;margin-bottom:18px}.net-card{padding:17px 16px;border-radius:13px;border:1px solid var(--line);background:#fff;min-width:0}.alternative-net{border-color:#b7dacf}.net-label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}.net-amount{display:block;font-weight:700;font-size:30px;letter-spacing:-.5px;margin-top:15px;line-height:1.3;white-space:nowrap}.net-unit{font-size:12px;color:var(--muted);margin-top:3px}.pair-arrow{color:var(--muted);font-size:20px}.difference-card{border:1px solid #beddd3;border-inline-start:4px solid var(--teal);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:23px;color:var(--teal);background:#fff}.difference-card.loss{color:var(--red);border-color:#e7b6bf;border-inline-start-color:var(--red)}.difference-card.none{color:var(--ink);border-color:var(--line);border-inline-start-color:#6c7e8a}.difference-label{display:block;font-size:16px;font-weight:700}.difference-subtitle{display:block;font-size:12px;color:var(--muted);margin-top:4px}.difference-amount{font-size:36px;font-weight:700;white-space:nowrap;line-height:1.2;letter-spacing:-.5px}.factors-heading{font-size:15px;margin-bottom:9px}.table-wrapper{overflow-x:auto;max-width:100%}.data-table{width:100%;border-collapse:collapse;font-size:13px;text-align:start}.data-table th{font-size:12px;color:var(--muted);font-weight:400;text-align:start;padding:10px 0;border-bottom:1px solid var(--line)}.data-table td{padding:12px 0;border-bottom:1px solid #edf1f5;vertical-align:top}.data-table th:not(:first-child),.data-table td:not(:first-child){padding-inline-start:10px;white-space:nowrap}.impact{font-weight:700}.explanation{font-size:14px;line-height:1.85;color:var(--muted);margin:16px 0;overflow-wrap:anywhere}.estimate-note{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin:8px 0;flex-wrap:wrap}.breakdown{border-top:1px solid var(--line);margin-top:18px;padding-top:15px}.breakdown summary{font-size:14px;font-weight:700;cursor:pointer}.breakdown .table-wrapper{margin-top:12px}.rules-note{font-size:12px;color:var(--muted);margin-top:15px}.vehicle-identity{display:flex;gap:10px;align-items:center;min-width:0}.net-card .vehicle-identity{flex-direction:column;align-items:flex-start;gap:3px}.vehicle-icon{width:90px;height:48px;flex:none;color:#819ba8}.vehicle-copy{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}.vehicle-maker{font-size:20px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}.vehicle-model{font-size:13px;color:var(--muted);overflow-wrap:anywhere}.drive-badge{margin-top:4px;font-size:12px;padding:2px 6px;background:#f1f5f8;color:var(--muted)}.drive-badge.electric{background:var(--teal-soft);color:var(--teal)}.compact .vehicle-icon{width:58px;height:36px}.compact .vehicle-maker{font-size:16px}.compact .vehicle-model{font-size:12px}.choice-button .vehicle-identity{pointer-events:none}.choice-button .vehicle-icon{width:45px}.choice-button .vehicle-maker{font-size:14px}.model-link{display:inline-block;font-size:12px;color:var(--teal);margin-top:8px}.ranking-list{list-style:none;margin:0;padding:0 24px 12px}.ranking-row{display:flex;align-items:center;gap:14px;padding:17px 0;border-top:1px solid var(--line)}.ranking-info{flex:1;min-width:0}.ranking-info small{display:block;font-size:12px;color:var(--muted);margin-top:5px}.ranking-info>.badge{margin-top:7px}.ranking-value{font-size:19px;font-weight:700;text-align:end;white-space:nowrap}.ranking-value small{font-size:12px;color:var(--muted);font-weight:400;display:block}.compare-button{font-size:13px;border:1px solid #bfd6d0;background:#fff;border-radius:8px;padding:8px 11px}.compare-button:hover{background:var(--teal-soft);border-color:var(--teal)}.empty-state{padding:24px;color:var(--muted);font-size:14px;line-height:1.85}.empty-state strong{display:block;color:var(--ink);font-size:17px;margin-bottom:6px}.app-footer{display:flex;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--muted);margin-top:24px}.primary-button,.secondary-button{border-radius:9px;padding:10px 16px;min-height:42px;font-size:14px;font-weight:700}.primary-button{background:var(--red);color:#fff;border:1px solid var(--red)}.primary-button:hover{background:#941d2b}.secondary-button{background:#fff;border:1px solid #bccbd5}.text-button{border:0;background:none;color:var(--teal);font-size:13px;text-decoration:underline;padding:4px;white-space:nowrap}.icon-button{border:0;background:#f2f6f8;border-radius:8px;width:32px;height:32px;font-size:24px}.form-error{color:var(--red);font-size:13px;margin:10px 0}.form-field label{display:block;font-size:14px;font-weight:700;margin-bottom:7px}.form-field input,.form-field select,.form-field textarea{width:100%;padding:10px 12px;border:1px solid #bcccd6;border-radius:9px;background:#fff;min-width:0;font-size:15px}.form-field textarea{min-height:80px;resize:vertical}.form-field input:read-only{background:#f2f6f8}dialog{width:min(460px,calc(100vw - 30px));padding:25px;border:1px solid var(--line);border-radius:20px;color:var(--ink);background:#fff;box-shadow:0 20px 80px #253d4c30}dialog::backdrop{background:#253d4c77}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:15px}.dialog-heading h2{font-size:22px}#edit-source{margin:12px 0 22px}.readonly-note{margin-top:12px;font-size:13px;color:var(--muted)}.dialog-actions{display:flex;gap:10px;margin-top:24px}.mobile-comparison{display:none}
+.page-intro{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:25px;padding:24px;background:#fff;border:1px solid var(--line);border-radius:16px}.page-intro h1{font-size:32px;margin-bottom:7px}.page-intro p{color:var(--muted);font-size:14px}.rep-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:24px;align-items:start}.rep-guide{padding:25px;position:sticky;top:92px}.rep-guide h2{font-size:29px;margin:15px 0 18px}.rep-guide>p{font-size:14px;color:var(--muted)}.guide-steps{list-style:none;padding:0;margin:26px 0}.guide-steps li{display:flex;align-items:center;gap:10px;margin:15px 0;font-size:14px}.guide-steps bdi{display:grid;place-items:center;width:28px;height:28px;border:1px solid #bdd9d2;border-radius:50%;color:var(--teal);font-size:13px}.guide-note{border-top:1px solid var(--line);padding-top:18px;font-size:12px;color:var(--muted);margin-bottom:20px}.queue-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 20px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:16px}.queue-heading h2{font-size:20px;display:flex;gap:10px;align-items:center}.count-badge{font-size:12px;border:1px solid var(--line);border-radius:5px;padding:2px 7px;background:#f5f8fa}.question-card{margin-bottom:18px;padding:25px}.question-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:22px}.question-card h3{font-size:21px;line-height:1.55}.question-employee{font-size:14px;color:var(--muted);margin-top:8px}.question-time{display:block;font-size:12px;color:var(--muted);margin-top:6px}.context-boxes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}.context-box{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fff}.context-box.assumption{border-color:#ead3aa}.context-box h4{font-size:13px;color:var(--muted);margin-bottom:9px}.context-box p{font-size:14px;line-height:1.8;overflow-wrap:anywhere}.known-item+.known-item{margin-top:10px}.known-label{font-size:12px;color:var(--muted);display:block}.suggested-answer{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #c3e0d6;border-radius:11px;padding:15px;margin-bottom:20px;font-size:14px;background:#fff}.suggested-answer small{display:block;font-size:12px;color:var(--muted);margin-top:4px}.answer-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}.note-field{grid-column:1/-1}.answer-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:20px}.answer-footer small{font-size:12px;color:var(--muted)}.question-card.stale{background:#f4f6f8;color:#626f79}.answered-section{margin-top:25px;border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff}.answered-section>summary{font-size:15px;font-weight:700;cursor:pointer}.answered-card{padding:18px;margin-top:15px;box-shadow:none}.answered-card summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;font-size:14px}.answer-result{margin-top:15px;font-size:14px}.answer-result p+p{margin-top:5px}
+.welcome{max-width:1160px;margin:60px auto;padding:42px;min-height:calc(100dvh - 250px);display:grid;grid-template-columns:1.1fr 1fr;gap:55px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:25px;box-shadow:var(--shadow)}.welcome h1{font-size:clamp(32px,3.5vw,48px);line-height:1.25;letter-spacing:-1px;margin-top:20px}.welcome h1 em{color:var(--teal);font-style:normal}.welcome-lead{font-size:16px;line-height:1.9;color:var(--muted);margin:22px 0 28px}.role-links{display:grid;gap:12px}.role-link{display:flex;align-items:center;gap:14px;padding:18px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--ink)}.role-link:hover{border-color:var(--teal);text-decoration:none}.role-link>span:last-child{margin-inline-start:auto;font-size:23px}.role-link strong{font-size:17px;display:block}.role-link small{font-size:12px;display:block;margin-top:4px;color:var(--muted)}.primary-role{border-color:var(--red);background:var(--red);color:#fff}.primary-role:hover{background:#a22231;border-color:#a22231}.primary-role small{color:#fff}.role-symbol{display:grid;place-items:center;width:36px;height:36px;font-size:22px;border:1px solid #a8b8c488;border-radius:9px;flex:none}.quiet-note{font-size:12px;color:var(--muted);margin-top:18px}.welcome-art{position:relative;min-height:340px;display:flex;align-items:center;justify-content:center}.art-grid{display:none}.art-caption{position:absolute;top:0;color:var(--muted);font-size:12px}.illustration-card{border:1px solid var(--line);background:#fff;box-shadow:7px 12px 24px #253d4c0a;border-radius:20px;padding:26px;max-width:380px;width:100%}.car-illustration{display:block;width:100%;margin:15px 0}.art-labels{display:flex;align-items:center;justify-content:space-around;gap:12px;color:var(--muted);font-size:13px;margin-bottom:20px}.art-arrow{font-size:20px}.art-result{display:flex;gap:12px;align-items:center;border-radius:10px;background:var(--teal-soft);padding:14px}.art-result strong{display:block;font-size:16px}.art-result small{display:block;font-size:12px;color:var(--muted);margin-top:3px}.art-check{width:32px;height:32px;background:var(--teal);color:#fff;border-radius:50%;display:grid;place-items:center;flex:none}.floating-note{position:absolute;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;font-size:12px;display:flex;gap:8px;align-items:center;box-shadow:var(--shadow)}.note-one{bottom:2px;right:0}.note-two{top:30px;left:0}.note-two>span{color:var(--red);font-size:23px}.welcome-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1160px;margin:20px auto;padding:16px 22px;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:12px;background:#fff}
+@keyframes reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes highlight{0%,50%{background:#e8f7f0;box-shadow:inset 0 0 0 1px #aacfc0}100%{}}.changed{animation:highlight 2s ease-out}
+@media(max-width:1200px){.app-main{padding-inline:20px}.employee-grid{gap:20px}.panel-heading{padding:20px}.comparison-content{padding:0 20px 20px}.net-card{padding:14px 12px}.net-amount{font-size:26px}.difference-amount{font-size:30px}.difference-label{font-size:14px}.profile-grid{padding-inline:20px}.ranking-row{flex-wrap:wrap}.ranking-info{min-width:160px}.ranking-list{padding-inline:20px}.ranking-value{font-size:17px}.welcome,.welcome-footer{margin-inline:24px}.welcome{gap:30px}}
+@media(max-width:1000px){.employee-grid{grid-template-columns:minmax(0,1fr)}.chat-panel{position:static;height:80dvh;min-height:70dvh}.messages{min-height:160px}.decision-workspace{gap:18px}.mobile-comparison:not([hidden]){position:fixed;bottom:12px;right:14px;left:14px;z-index:45;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid #a8d4c5;border-inline-start:4px solid var(--teal);background:#fff;color:var(--teal);border-radius:13px;box-shadow:0 4px 24px #253d4c24;padding:12px 16px;text-align:start}.mobile-comparison strong{display:block;font-size:14px}.mobile-comparison small{display:block;font-size:12px;color:var(--muted)}.mobile-comparison bdi{font-size:24px;font-weight:700;white-space:nowrap}.mobile-comparison.loss{color:var(--red);border-inline-start-color:var(--red)}.mobile-comparison.none{color:var(--ink);border-inline-start-color:var(--ink)}body.has-comparison .app-main{padding-bottom:110px}.rep-grid{grid-template-columns:1fr}.rep-guide{position:static}.rep-guide h2{font-size:23px}.guide-steps{display:flex;flex-wrap:wrap;gap:15px;margin:12px 0}.guide-steps li{margin:0}.welcome{grid-template-columns:1fr}.welcome-art{max-width:420px;width:100%;margin:auto}.welcome-copy{max-width:540px;margin:auto;width:100%}}
+@media(max-width:700px){body{background-image:url('../assets/page-background-mobile.webp')}.site-header{padding:12px 18px;min-height:72px}.wordmark{font-size:21px}.header-nav{font-size:12px;gap:13px}.header-caption{font-size:12px}.app-main{padding:16px 14px 24px}.case-strip{font-size:12px;align-items:flex-start}.chat-heading{padding:18px 15px}.chat-progress{padding-inline:15px}.chat-label{display:none}.panel-heading{padding:20px 18px}.profile-hint{padding-inline:18px}.profile-grid{padding-inline:18px}.profile-field{padding:15px 0;gap:10px}.field-heading{flex-wrap:wrap;justify-content:flex-start;gap:5px}.profile-extra{margin-inline:18px}.profile-placeholder{padding:17px 18px}.net-pair{gap:6px;grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr)}.net-card{padding:13px 10px}.net-amount{font-size:24px}.vehicle-maker{font-size:18px}.difference-card{padding:15px 12px;gap:8px}.difference-amount{font-size:29px}.difference-label{font-size:14px}.data-table{font-size:12px}.data-table td,.data-table th{padding-block:11px}.data-table td:not(:first-child),.data-table th:not(:first-child){padding-inline-start:8px}.comparison-content{padding:0 18px 20px}.ranking-list{padding-inline:18px}.ranking-info{min-width:150px}.ranking-row{gap:10px}.ranking-value{margin-inline-start:auto}.ranking-value small{font-size:12px}.compact .vehicle-icon{width:44px}.app-footer{flex-direction:column;gap:5px}.notice{padding:11px 13px;gap:8px}.page-intro{align-items:flex-start;flex-direction:column;padding:20px}.page-intro h1{font-size:27px}.context-boxes,.answer-fields{grid-template-columns:1fr}.question-card{padding:20px 17px}.question-header{flex-wrap:wrap}.question-card h3{font-size:19px}.answer-footer{flex-direction:column;align-items:flex-start}.suggested-answer{align-items:flex-start;flex-wrap:wrap}.queue-heading{padding:14px}.queue-heading h2{font-size:18px}.queue-heading>.small-muted{display:none}.welcome{padding:26px 20px;margin:28px 14px;gap:30px}.welcome h1{font-size:32px;letter-spacing:0}.welcome-lead{font-size:15px}.welcome-art{min-height:350px}.illustration-card{padding:20px}.floating-note{font-size:12px;padding:8px}.welcome-footer{margin-inline:14px}.header-caption{max-width:140px;text-align:end}dialog{padding:21px}}
+@media(max-width:400px){.messages{padding:18px 12px}.message{gap:8px}.message-avatar{width:32px;height:32px}.message-text{padding:10px 12px}.composer{padding-inline:13px}.profile-panel .panel-heading{gap:8px;flex-wrap:wrap}.profile-panel h2{font-size:20px}.compact-profile h2{font-size:17px}.profile-field{grid-template-columns:1fr 1fr}.net-amount{font-size:22px}.net-card .vehicle-icon{width:72px}.difference-amount{font-size:26px}.difference-subtitle{max-width:150px}.ranking-info{min-width:130px}.ranking-value{font-size:17px}.header-nav .nav-current{display:none}.welcome-art{min-height:360px}.note-two{top:26px}}
+@media(min-width:401px) and (max-width:1000px){.message-avatar{width:32px;height:32px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.changed{background:#e8f7f0}}
+/* Desktop: the chat is a fixed pane that always fits the window (composer never below the fold); only the right side scrolls. */
+@media(min-width:1001px) and (min-height:640px){body.employee-page{height:100dvh;overflow:hidden;display:flex;flex-direction:column}body.employee-page .site-header{flex:none}body.employee-page .app-main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;padding-bottom:14px}body.employee-page .app-main>*{flex:none}body.employee-page .employee-grid{flex:1;min-height:0;align-items:stretch}body.employee-page .chat-panel{position:static;height:auto;min-height:0}body.employee-page .decision-workspace{min-height:0;overflow-y:auto;padding-inline-end:6px;scrollbar-width:thin}body.employee-page .decision-workspace>*{flex:none}}
+.mobile-comparison.bar-off:not([hidden]){display:none}@media(max-width:1000px){body.employee-page{padding-bottom:88px}}
 ```
 
 ## `js/api.js`
@@ -243,7 +248,7 @@ export const statusLabels = Object.freeze({ MISSING: 'חסר', PROVIDED: 'הוז
 export const caseLabels = Object.freeze({ COLLECTING: 'משלימים פרטים', READY: 'אפשר להשוות', WAITING_FOR_REP: 'ממתין למענה נציג' });
 export const directionLabels = Object.freeze({ GAIN: 'עלייה בנטו החודשי', LOSS: 'ירידה בנטו החודשי', NONE: 'ללא שינוי בנטו' });
 export const breakdownLabels = Object.freeze({ grossCash: 'ברוטו מזומן', taxableIncome: 'הכנסה חייבת במס', incomeTax: 'מס הכנסה', nationalInsurance: 'ביטוח לאומי', healthTax: 'מס בריאות', pension: 'פנסיה', studyFund: 'קרן השתלמות', participation: 'השתתפות עובד', familyShare: 'השתתפות משפחתית', net: 'נטו' });
-const sourceLabels = Object.freeze({ EMPLOYEE_MESSAGE: 'הודעת עובד', FORM: 'טופס הפרופיל', CATALOG_DEFAULT: 'ברירת מחדל בקטלוג', REP: 'תשובת נציג', REP_ANSWER: 'תשובת נציג' });
+const sourceLabels = Object.freeze({ EMPLOYEE_MESSAGE: 'הודעת עובד', FORM: 'טופס הפרופיל', CATALOG_DEFAULT: 'ברירת מחדל בקטלוג', REP: 'נקבע על ידי נציג התחבורה', REP_ANSWER: 'נקבע על ידי נציג התחבורה' });
 export function formatMoney(value, signed = false) {
   return typeof value === 'number' && Number.isFinite(value) ? (signed ? signedShekels : shekels).format(value) : '—';
 }
@@ -286,7 +291,10 @@ export function moneyNode(value, signed = false, className = '') {
   node.textContent = formatMoney(value, signed);
   return node;
 }
-export function statusBadge(status) { return el('span', 'badge status-' + String(status).toLowerCase(), statusLabels[status] || String(status)); }
+export function statusBadge(status) {
+  const symbol = { MISSING: '○ ', DEFAULT: '~ ', PROVIDED: '✓ ', CONFIRMED: '✓ ' }[status] || '';
+  return el('span', 'badge status-' + String(status).toLowerCase(), symbol + (statusLabels[status] || String(status)));
+}
 export function emptyState(title, detail = '') {
   const node = el('div', 'empty-state');
   node.append(el('strong', '', title));
@@ -300,7 +308,7 @@ export function keepDemoLinks(ids) {
     const link = document.getElementById(id);
     if (!link) continue;
     const url = new URL(link.href);
-    for (const key of ['mock', 'down']) if (query.has(key)) url.searchParams.set(key, query.get(key));
+    for (const key of ['mock', 'down', 'replay']) if (query.has(key)) url.searchParams.set(key, query.get(key));
     link.href = url.href;
   }
 }
@@ -315,11 +323,63 @@ import { keepDemoLinks } from './format.js';
 keepDemoLinks(['employee-link', 'rep-link']);
 ```
 
+## `js/vehicle.js`
+
+```js
+/** Vehicle identification uses the catalog, never a decoded choice ID. */
+import { el } from './format.js';
+
+export function carIcon(withoutCar = false) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 120 64');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'vehicle-icon');
+  for (const [tag, attributes] of [
+    ['path', { d: 'M12 42V33Q12 29 18 28L31 25L42 12H78L91 26L103 29Q108 31 108 37V43H97M79 43H42M24 43H12', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linejoin': 'round' }],
+    ['path', { d: 'M39 25L47 16H73L81 25ZM60 16V25', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5' }],
+    ['circle', { cx: '33', cy: '43', r: '9', fill: 'white', stroke: 'currentColor', 'stroke-width': '2' }],
+    ['circle', { cx: '88', cy: '43', r: '9', fill: 'white', stroke: 'currentColor', 'stroke-width': '2' }],
+    ...(withoutCar ? [['path', { d: 'M20 58L101 5', stroke: 'currentColor', 'stroke-width': '3' }]] : [])
+  ]) {
+    const node = document.createElementNS(ns, tag);
+    for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
+    svg.append(node);
+  }
+  return svg;
+}
+export function vehicleIdentity(data, catalog, compact = false) {
+  const car = catalog.find(item => item.id === data.vehicleId);
+  const waiver = data.type === 'waiver';
+  const node = el('div', 'vehicle-identity' + (compact ? ' compact' : ''));
+  node.append(carIcon(waiver));
+  const copy = el('div', 'vehicle-copy');
+  const maker = el('bdi', 'vehicle-maker', waiver ? (data.label === 'אין לי רכב חברה' ? data.label : 'ויתור על רכב') : car?.maker || data.maker || 'רכב חברה');
+  maker.dir = 'auto';
+  const model = el('bdi', 'vehicle-model', waiver ? 'ללא רכב חברה' : car ? car.commercialName + ' (' + car.regYear + ')' : data.label);
+  model.dir = 'auto';
+  copy.append(maker, model);
+  const drive = car?.drive || data.drive;
+  if (!waiver && drive) copy.append(el('span', 'badge drive-badge' + (drive === 'חשמלי' ? ' electric' : ''), drive));
+  node.append(copy);
+  return node;
+}
+export function choiceVehicle(label, catalog) {
+  if (['ויתור על רכב', 'אין לי רכב חברה'].includes(label)) return { type: 'waiver', label };
+  const matches = catalog.filter(car => [
+    car.commercialName + ' (' + car.regYear + ')',
+    car.maker + ' ' + car.commercialName + ' (' + car.regYear + ')'
+  ].includes(label));
+  return matches.length === 1 ? { type: 'car', vehicleId: matches[0].id, label } : null;
+}
+```
+
 ## `js/employee.js`
 
 ```js
 import { api, isMock } from './api.js';
 import { el, appendText, moneyNode, formatDate, sourceText, statusBadge, caseLabels, directionLabels, breakdownLabels, emptyState, showNotice, keepDemoLinks } from './format.js';
+import { vehicleIdentity, choiceVehicle } from './vehicle.js';
 
 const byId = id => document.getElementById(id);
 let current = null;
@@ -332,6 +392,8 @@ let pollTimer;
 let editSession = null;
 let assistantOffline = false;
 let retryAction = null;
+let rateLimitedUntil = 0;
+let rateTimer;
 const requestIds = new Map();
 const seenMessages = new Set();
 const messageNodes = new Map();
@@ -358,9 +420,9 @@ function setError(error, retry) {
 function clearError() { byId('error-banner').hidden = true; retryAction = null; }
 function feedback(message) { showNotice(byId('feedback'), message); }
 function updateControls() {
-  for (const button of document.querySelectorAll('[data-mutation]')) button.disabled = busy || !current || (button.dataset.chat === '1' && unavailable());
-  byId('message-input').disabled = busy || !current || unavailable();
-  byId('send-button').disabled = busy || !current || unavailable();
+  for (const button of document.querySelectorAll('[data-mutation]')) button.disabled = busy || !current;
+  byId('message-input').disabled = !current;
+  byId('send-button').disabled = busy || !current || unavailable() || Date.now() < rateLimitedUntil;
   byId('close-dialog').disabled = busy;
   byId('cancel-edit').disabled = busy;
   byId('assistant-banner').hidden = !unavailable();
@@ -388,6 +450,17 @@ async function mutate(key, action, onSuccess) {
       byId('profile-dialog').close();
       editSession = null;
       feedback('המידע התעדכן, בדקו שוב');
+    } else if (error.status === 400 && error.code === 'INVALID_CHOICE') {
+      requestIds.delete(key);
+      try { applyCase(await api.getCase(caseId)); }
+      catch (refreshError) { setError(refreshError, refresh); }
+      feedback('האפשרות כבר לא זמינה');
+    } else if (error.code === 'RATE_LIMITED') {
+      requestIds.delete(key);
+      rateLimitedUntil = Date.now() + 60000;
+      clearTimeout(rateTimer);
+      rateTimer = setTimeout(updateControls, 60000);
+      setError(error);
     } else if (error.code === 'ASSISTANT_UNAVAILABLE') {
       requestIds.delete(key);
       try { applyCase(await api.getCase(caseId)); } catch (refreshError) { setError(refreshError, refresh); }
@@ -409,9 +482,18 @@ function renderMessages(messages) {
   const incoming = new Set(messages.map(message => message.id));
   for (const [id, entry] of messageNodes) if (!incoming.has(id)) { entry.node.remove(); messageNodes.delete(id); }
   const announcements = [];
-  for (const message of messages) {
+  for (const [index, message] of messages.entries()) {
     const existing = messageNodes.get(message.id);
-    if (existing && same(existing.data, message)) continue;
+    const active = message.role === 'bot' && index === messages.length - 1;
+    if (existing && same(existing.data, message) && existing.active === active) continue;
+    if (message.role === 'system') {
+      const node = el('p', 'system-message', message.text);
+      if (existing) existing.node.replaceWith(node); else container.append(node);
+      messageNodes.set(message.id, { node, data: structuredClone(message), active });
+      if (!seenMessages.has(message.id)) announcements.push(message.text);
+      seenMessages.add(message.id);
+      continue;
+    }
     const node = el('article', 'message ' + (message.role === 'employee' ? 'employee' : 'bot'));
     const avatar = el('img', 'message-avatar');
     avatar.src = message.role === 'employee' ? 'assets/avatar-client.webp' : 'assets/avatar-bot.webp';
@@ -421,19 +503,39 @@ function renderMessages(messages) {
     const meta = el('div', 'message-meta');
     meta.append(el('strong', '', message.role === 'employee' ? 'אני' : 'יועץ הרכב'), el('span', '', formatDate(message.at, true)));
     content.append(meta, el('p', 'message-text', message.text));
-    if (message.choices?.length) {
-      const choices = el('div', 'message-choices');
+    if (active && message.choices?.length) {
+      const longList = message.choices.length > 8;
+      const choices = el('div', longList ? 'choices-list' : 'message-choices');
+      choices.setAttribute('aria-label', 'אפשרויות תשובה');
+      let filter;
+      if (longList) {
+        const search = el('div', 'choices-search');
+        const label = el('label', '', 'חיפוש');
+        filter = el('input'); filter.type = 'search'; filter.id = 'search-' + message.id;
+        filter.placeholder = 'סינון האפשרויות…'; label.htmlFor = filter.id;
+        search.append(label, filter); content.append(search);
+      }
       for (const choice of message.choices) {
-        const button = el('button', 'choice-button', choice.label);
-        button.type = 'button'; button.dataset.mutation = ''; button.dataset.chat = '1';
+        const button = el('button', 'choice-button');
+        const vehicle = choiceVehicle(choice.label, catalog);
+        if (vehicle) button.append(vehicleIdentity(vehicle, catalog, true));
+        else { const label = el('bdi', '', choice.label); label.dir = 'auto'; button.append(label); }
+        button.type = 'button'; button.dataset.mutation = ''; button.setAttribute('aria-label', choice.label);
+        if (filter) filter.addEventListener('input', () => { button.hidden = !choice.label.toLocaleLowerCase('he-IL').includes(filter.value.trim().toLocaleLowerCase('he-IL')); });
         button.addEventListener('click', () => mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id)));
         choices.append(button);
       }
       content.append(choices);
+      if (filter) {
+        const empty = el('p', 'choices-empty', 'לא נמצאו אפשרויות. אפשר לשנות את החיפוש.'); empty.hidden = true;
+        filter.addEventListener('input', () => { empty.hidden = [...choices.children].some(button => !button.hidden); });
+        content.append(empty);
+      }
+      content.append(el('p', 'choices-hint', 'אפשר גם לכתוב במילים שלך'));
     }
     node.append(content);
     if (existing) existing.node.replaceWith(node); else container.append(node);
-    messageNodes.set(message.id, { node, data: structuredClone(message) });
+    messageNodes.set(message.id, { node, data: structuredClone(message), active });
     if (message.role !== 'employee' && !seenMessages.has(message.id)) announcements.push(message.text);
     seenMessages.add(message.id);
   }
@@ -444,8 +546,9 @@ function renderMessages(messages) {
 }
 
 function renderProfile(profile, previous) {
-  const container = byId('profile');
-  if (!profileNodes.size) container.replaceChildren();
+  const container = byId('profile'); const other = byId('profile-other');
+  const keyFields = ['occupation', 'group', 'baseSalary', 'childrenUpTo23', 'currentCar'];
+  if (!profileNodes.size) { container.replaceChildren(); other.replaceChildren(); }
   const incoming = new Set(profile.map(field => field.key));
   for (const [key, entry] of profileNodes) if (!incoming.has(key)) { entry.node.remove(); profileNodes.delete(key); }
   for (const field of profile) {
@@ -454,16 +557,25 @@ function renderProfile(profile, previous) {
     const button = el('button', 'profile-field');
     button.type = 'button'; button.dataset.mutation = '';
     button.title = sourceText(field.source);
-    button.setAttribute('aria-label', field.label + ': ' + (field.display || 'חסר') + '. עריכת השדה. מקור: ' + sourceText(field.source));
+    button.setAttribute('aria-label', field.label + ': ' + (field.display || 'חסר') + '. הצגת פרטי השדה. מקור: ' + sourceText(field.source));
     const heading = el('span', 'field-heading');
     heading.append(el('span', '', field.label), statusBadge(field.status));
-    button.append(heading, el('span', 'field-value' + (field.status === 'MISSING' ? ' missing-value' : ''), field.display || 'השלמת נתון'));
+    const value = el('span', 'field-value' + (field.status === 'MISSING' ? ' missing-value' : ''), field.display || 'טרם הושלם');
+    if (field.key === 'currentCar') value.dir = 'auto';
+    button.append(heading, value);
     button.addEventListener('click', () => openEditor(field));
-    if (existing) existing.node.replaceWith(button); else container.append(button);
+    if (existing) existing.node.replaceWith(button); else (keyFields.includes(field.key) ? container : other).append(button);
     profileNodes.set(field.key, { node: button, data: structuredClone(field) });
     const old = previous?.profile?.find(item => item.key === field.key);
     if (old && !same(old, field)) highlight(button);
   }
+  for (const key of keyFields) { const entry = profileNodes.get(key); if (entry) container.append(entry.node); }
+  byId('profile-extra').hidden = !profile.some(field => !keyFields.includes(field.key));
+  const counted = profile.filter(field => field.key !== 'alternativeParticipation');
+  const complete = counted.filter(field => field.status !== 'MISSING').length;
+  showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + counted.length);
+  byId('profile-progress').max = Math.max(1, counted.length); byId('profile-progress').value = complete;
+  showNotice(byId('profile-count'), complete + ' מתוך ' + counted.length + ' פרטים');
   container.setAttribute('aria-busy', 'false');
 }
 
@@ -477,8 +589,7 @@ function modelLink(url, label) {
 }
 function netCard(data, alternative, estimates, key) {
   const node = el('div', 'net-card' + (alternative ? ' alternative-net' : ''));
-  node.append(el('span', 'net-label', alternative ? 'עם החלופה' : 'היום'), el('div', 'vehicle-name', data.label));
-  node.querySelector('.vehicle-name').dir = 'auto';
+  node.append(el('span', 'net-label', alternative ? 'עם החלופה' : 'היום'), vehicleIdentity(data, catalog));
   const link = modelLink(data.officialUrl, data.label);
   if (link) node.append(link);
   node.append(moneyNode(data.net, false, 'net-amount'), el('p', 'net-unit', 'נטו לחודש'));
@@ -495,11 +606,14 @@ function renderComparison(comparison, previous) {
   const wasOpen = container.querySelector('details')?.open || false;
   container.replaceChildren();
   container.setAttribute('aria-busy', 'false');
-  if (!comparison) {
-    container.append(emptyState('עוד רגע, והתמונה מתבהרת.', isMock ? 'תרחיש ההדגמה כולל השוואה מלאה ל־ATTO 3 בלבד. אחרי עריכת פרופיל, פירוט כספי חדש אינו מחושב במוק.' : 'השלימו את הפרופיל ובחרו חלופה. ההשוואה תופיע כשיהיו נתונים מתאימים.'));
-    return;
-  }
+  byId('comparison-panel').hidden = comparison == null;
+  byId('mobile-comparison').hidden = !comparison || comparison.eligible === false;
+  if (!comparison) return;
   if (comparison.eligible === false) { container.append(emptyState(comparison.eligibilityReason || 'החלופה אינה זמינה לפי הזכאות.')); return; }
+  showNotice(byId('mobile-direction'), directionLabels[comparison.direction] || 'שינוי בנטו החודשי');
+  byId('mobile-difference').replaceChildren(moneyNode(comparison.difference, true));
+  byId('mobile-comparison').classList.toggle('loss', comparison.direction === 'LOSS');
+  byId('mobile-comparison').classList.toggle('none', comparison.direction === 'NONE');
   const estimates = comparison.estimates || [];
   const content = el('div', 'comparison-content');
   const pair = el('div', 'net-pair');
@@ -566,12 +680,13 @@ function renderComparison(comparison, previous) {
 
 function renderRanking(ranking, previous) {
   const container = byId('ranking'); container.replaceChildren(); container.setAttribute('aria-busy', 'false');
-  if (!ranking?.length) { container.append(emptyState('החלופות יופיעו כאן.', 'אחרי השלמת הנתונים יוצגו אפשרויות לפי סדר השרת.')); return; }
+  byId('ranking-panel').hidden = ranking == null;
+  if (!ranking) return;
   const list = el('ul', 'ranking-list');
   for (const item of ranking) {
     const row = el('li', 'ranking-row');
     const info = el('div', 'ranking-info');
-    const vehicleLabel = el('strong', '', item.alternative.label); vehicleLabel.dir = 'auto'; info.append(vehicleLabel);
+    info.append(vehicleIdentity(item.alternative, catalog, true));
     const metadata = [item.alternative.drive, item.alternative.group ? 'קבוצה ' + item.alternative.group : 'ללא רכב חברה'].filter(Boolean);
     info.append(el('small', '', metadata.join(' · ')));
     if (item.participationEstimated) info.append(el('span', 'badge status-default', 'השתתפות משוערת'));
@@ -582,7 +697,7 @@ function renderRanking(ranking, previous) {
     button.setAttribute('aria-label', 'השוואת החלופה ' + item.alternative.label);
     button.addEventListener('click', async () => {
       const ok = await mutate('alternative:' + item.alternative.type + ':' + item.alternative.vehicleId, id => api.selectAlternative(caseId, item.alternative, id));
-      if (ok) byId('comparison-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (ok && !byId('comparison-panel').hidden) scrollToComparison();
     });
     row.append(info, value, button); list.append(row);
     const old = previous?.find(prior => prior.alternative.type === item.alternative.type && prior.alternative.vehicleId === item.alternative.vehicleId);
@@ -600,8 +715,15 @@ function applyCase(next) {
   // A later poll explicitly declaring availability is the recovery signal.
   else if (next.assistantAvailable === true) assistantOffline = false;
   showNotice(byId('case-state'), caseLabels[next.status] || next.status);
+  byId('replay-banner').hidden = next.assistantMode !== 'REPLAY';
   renderMessages(next.messages || []);
   renderProfile(next.profile || [], previous);
+  const hasComparison = next.comparison != null;
+  byId('profile-toggle').hidden = !hasComparison;
+  byId('profile-panel').classList.toggle('compact-profile', hasComparison);
+  document.body.classList.toggle('has-comparison', hasComparison && next.comparison.eligible !== false);
+  byId('profile-placeholder').hidden = hasComparison;
+  if (!hasComparison || !previous?.comparison) setProfileExpanded(!hasComparison);
   const estimateChanged = next.comparison?.estimates?.some(key => !same(previous?.profile?.find(field => field.key === key), next.profile.find(field => field.key === key)));
   if (!previous || !same(previous.comparison, next.comparison) || estimateChanged) renderComparison(next.comparison, previous?.comparison);
   if (!previous || !same(previous.ranking, next.ranking)) renderRanking(next.ranking, previous?.ranking);
@@ -616,12 +738,11 @@ function applyCase(next) {
 function selectChoices(key) {
   if (key === 'currentCar' && catalog.length) return [{ value: 'NONE', label: 'אין רכב חברה היום' }, ...catalog.map(car => ({ value: car.id, label: car.maker + ' ' + car.commercialName + ' (' + car.regYear + ')' }))];
   if (key === 'occupation' && occupations.length) return occupations.map(occupation => ({ value: occupation.name, label: occupation.name }));
-  if (key === 'group') return ['א', 'ב', 'ג', 'ד'].map(group => ({ value: group, label: 'קבוצה ' + group }));
   return null;
 }
 function openEditor(field) {
   if (busy || !current) return;
-  if (field.key === 'alternativeParticipation') { feedback('את ההשתתפות ברכב החלופי מאשר נציג התחבורה. השאלה אליו מופיעה בפס העליון.'); return; }
+  const readonly = ['group', 'alternativeParticipation'].includes(field.key);
   editSession = { key: field.key, version: current.version, original: field.value };
   showNotice(byId('edit-heading'), field.label);
   showNotice(byId('edit-source'), 'מקור הנתון: ' + sourceText(field.source));
@@ -629,7 +750,7 @@ function openEditor(field) {
   const wrapper = el('div', 'form-field');
   const label = el('label', '', field.label); label.htmlFor = 'edit-value';
   let control;
-  const choices = selectChoices(field.key);
+  const choices = readonly ? null : selectChoices(field.key);
   if (choices) {
     control = el('select');
     if (!choices.some(choice => choice.value === field.value)) { const option = el('option'); option.textContent = field.display || 'בחירה'; option.value = ''; control.append(option); }
@@ -639,16 +760,20 @@ function openEditor(field) {
     control = el('input');
     const numeric = typeof field.value === 'number' || ['baseSalary', 'commissions', 'bonus', 'pensionPercent', 'studyFundPercent', 'creditPoints', 'childrenUpTo23', 'currentParticipation'].includes(field.key);
     control.type = numeric ? 'number' : 'text';
+    if (readonly) control.readOnly = true;
     if (numeric) { control.step = field.key === 'childrenUpTo23' ? '1' : 'any'; control.dir = 'ltr'; if (field.key === 'childrenUpTo23') control.min = '0'; }
-    control.value = field.value === null ? '' : String(field.value);
+    control.value = field.value == null ? '' : String(field.value);
   }
   control.id = 'edit-value'; control.name = 'value'; control.required = true;
-  wrapper.append(label, control); byId('edit-control').replaceChildren(wrapper);
+  wrapper.append(label, control);
+  if (readonly) wrapper.append(el('p', 'readonly-note', field.key === 'group' ? 'קבוצת הזכאות נקבעת לפי התפקיד בטבלת העיסוקים. כדי לשנות אותה, עדכנו את העיסוק.' : 'נקבע על ידי נציג התחבורה. ההשתתפות בחלופה אינה ניתנת לעריכה על ידי העובד.'));
+  byId('save-profile').hidden = readonly; byId('cancel-edit').textContent = readonly ? 'סגירה' : 'ביטול';
+  byId('edit-control').replaceChildren(wrapper);
   byId('profile-dialog').showModal(); control.focus();
 }
 byId('profile-form').addEventListener('submit', async event => {
   event.preventDefault();
-  if (!editSession || busy || !byId('profile-form').reportValidity()) return;
+  if (!editSession || ['group', 'alternativeParticipation'].includes(editSession.key) || busy || !byId('profile-form').reportValidity()) return;
   const input = byId('edit-value');
   const value = input.type === 'number' ? input.valueAsNumber : input.value.trim();
   if (value === '' || (typeof value === 'number' && !Number.isFinite(value))) { showNotice(byId('edit-error'), 'יש להזין ערך תקין.'); return; }
@@ -662,8 +787,8 @@ byId('profile-dialog').addEventListener('cancel', event => { if (busy) event.pre
 byId('message-form').addEventListener('submit', async event => {
   event.preventDefault();
   const text = byId('message-input').value.trim();
-  if (!text || busy || unavailable()) return;
-  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { byId('message-input').value = ''; });
+  if (!text || busy || unavailable() || Date.now() < rateLimitedUntil) return;
+  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { if (byId('message-input').value.trim() === text) byId('message-input').value = ''; });
   if (ok) byId('message-input').focus();
 });
 byId('message-input').addEventListener('keydown', event => {
@@ -683,13 +808,30 @@ async function initialize() {
   if (loading) return;
   loading = true; clearError();
   const results = await Promise.allSettled([caseId ? api.getCase(caseId) : api.createCase(), api.getCatalog(), api.getOccupations()]);
+  if (results[1].status === 'fulfilled') catalog = results[1].value;
   if (results[2].status === 'fulfilled') occupations = results[2].value;
   if (results[0].status === 'fulfilled') applyCase(results[0].value);
   else { setError(results[0].reason, initialize); showNotice(byId('case-state'), 'אין חיבור לתיק'); }
-  if (results[1].status === 'fulfilled') catalog = results[1].value;
-  else if (results[0].status === 'fulfilled') setError(results[1].reason, async () => { try { catalog = await api.getCatalog(); clearError(); } catch (error) { setError(error, initialize); } });
+  if (results[1].status === 'rejected' && results[0].status === 'fulfilled') setError(results[1].reason, async () => { try { catalog = await api.getCatalog(); messageNodes.forEach(entry => { entry.data = null; }); renderMessages(current.messages || []); renderComparison(current.comparison, null); renderRanking(current.ranking, null); updateControls(); clearError(); } catch (error) { setError(error, initialize); } });
   loading = false;
   if (!pollTimer) pollTimer = setInterval(() => { if (!document.hidden) refresh(); }, 3000);
+}
+function setProfileExpanded(expanded) {
+  byId('profile-content').hidden = !expanded;
+  byId('profile-toggle').setAttribute('aria-expanded', String(expanded));
+  byId('profile-toggle').textContent = expanded ? 'כווץ' : 'הצג הכול';
+}
+function scrollToComparison() { byId('comparison-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }
+byId('profile-toggle').addEventListener('click', () => setProfileExpanded(byId('profile-content').hidden));
+byId('mobile-comparison').addEventListener('click', scrollToComparison);
+/** The phone bar must not sit on top of the full comparison, nor on the keyboard while typing. */
+{
+  const bar = byId('mobile-comparison');
+  let comparisonInView = false, typing = false;
+  const syncBar = () => bar.classList.toggle('bar-off', comparisonInView || typing);
+  if ('IntersectionObserver' in window) new IntersectionObserver(entries => { comparisonInView = entries[0].isIntersecting; syncBar(); }, { threshold: 0.15 }).observe(byId('comparison-panel'));
+  byId('message-input').addEventListener('focus', () => { typing = true; syncBar(); });
+  byId('message-input').addEventListener('blur', () => { typing = false; syncBar(); });
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 window.addEventListener('pagehide', () => clearInterval(pollTimer));
@@ -746,7 +888,8 @@ function renderAnswered() {
     content.append(el('p', '', question.question), el('p', '', 'ערך שאושר: ' + question.answer.display));
     if (question.answer.effectiveFrom) content.append(el('p', '', 'תחולה: ' + question.answer.effectiveFrom));
     if (question.answer.note) content.append(el('p', '', 'הערה: ' + question.answer.note));
-    if (question.answer.answeredBy) content.append(el('p', '', 'נענה על ידי: ' + question.answer.answeredBy));
+    if (question.answer.answeredBy) content.append(el('p', '', 'נענה על ידי ' + question.answer.answeredBy));
+    content.append(el('p', 'small-muted', 'נקבע על ידי נציג התחבורה · מקור: REP'));
     content.append(el('p', 'small-muted', 'נענה: ' + formatDate(question.answer.answeredAt)));
     details.append(content); byId('answered-list').append(details);
   }
@@ -871,23 +1014,9 @@ timer = setInterval(() => { if (!document.hidden) refresh(); }, 3000);
 ## `js/mock-api.js`
 
 ```js
-/** Demo data stays in memory. BroadcastChannel shares it with open demo tabs. */
+/** Demo only: memory-backed conversation, fixed supplied financial fixtures. */
 const timestamp = '2026-10-14T09:05:00Z';
-const initialCase = {
-  caseId: 'demo-noa', version: 7, status: 'READY', assistantAvailable: true,
-  profile: [
-    { key: 'occupation', label: 'עיסוק', value: 'מנהל/ת מוצר', display: 'מנהלת מוצר', status: 'PROVIDED', source: { type: 'EMPLOYEE_MESSAGE', ref: 'm-2', at: '2026-10-14T09:02:11Z' } },
-    { key: 'group', label: 'קבוצת זכאות', value: 'ג', display: 'ג', status: 'PROVIDED', source: { type: 'EMPLOYEE_MESSAGE', ref: 'm-2', at: '2026-10-14T09:02:11Z' } },
-    { key: 'baseSalary', label: 'שכר בסיס', value: 18500, display: '18,500 ₪', status: 'PROVIDED', source: { type: 'FORM', ref: null, at: '2026-10-14T09:03:40Z' } },
-    { key: 'currentCar', label: 'רכב היום', value: 'CAR-09', display: 'COROLLA CROSS (2025)', status: 'PROVIDED', source: { type: 'EMPLOYEE_MESSAGE', ref: 'm-4', at: '2026-10-14T09:04:02Z' } },
-    { key: 'alternativeParticipation', label: 'השתתפות ברכב החלופי', value: 300, display: '300 ₪', status: 'DEFAULT', source: { type: 'CATALOG_DEFAULT', ref: 'CAR-10', at: timestamp } },
-    { key: 'childrenUpTo23', label: 'ילדים עד גיל 23', value: null, display: '', status: 'MISSING', source: null }
-  ],
-  messages: [
-    { id: 'm-1', role: 'bot', text: 'שלום! אעזור לבדוק מה יקרה לנטו שלך. באיזה תפקיד את/ה ובאיזו קבוצת זכאות?', at: '2026-10-14T09:01:00Z', choices: [] },
-    { id: 'm-2', role: 'employee', text: 'מנהלת מוצר, קבוצה ג', at: '2026-10-14T09:02:11Z', choices: [] },
-    { id: 'm-5', role: 'bot', text: 'הבנתי: שכר בסיס 18,500 ₪, פנסיה 6%, קרן השתלמות 2.5%, 2.75 נקודות זיכוי. נכון?', at: '2026-10-14T09:04:30Z', choices: [{ id: 'c-confirm', label: 'נכון' }, { id: 'c-fix', label: 'צריך לתקן' }] }
-  ],
+const fixture = {
   comparison: {
     rulesVersion: 'mock-2026-10-12', eligible: true, eligibilityReason: 'הרכב מהקבוצה שלך או נמוכה ממנה',
     today: { label: 'COROLLA CROSS (2025)', net: 11032 }, alternative: { label: 'ATTO 3 (2025)', net: 11693 }, difference: 661, direction: 'GAIN',
@@ -904,138 +1033,221 @@ const initialCase = {
     { alternative: { type: 'car', vehicleId: 'CAR-10', label: 'ATTO 3 (2025)', group: 'ג', drive: 'חשמלי' }, difference: 661, participationEstimated: true },
     { alternative: { type: 'car', vehicleId: 'CAR-12', label: 'TUCSON (2025)', group: 'ג', drive: 'בנזין' }, difference: -440, participationEstimated: true }
   ],
-  pendingQuestions: [{ id: 'q-101', fieldKey: 'alternativeParticipation', question: 'מה סכום ההשתתפות של העובדת ב-ATTO 3 (2025)?', status: 'OPEN', createdAt: timestamp }]
 };
-const initialQuestion = {
-  id: 'q-101', caseId: 'demo-noa', employeeLabel: 'נועה ל. · מנהלת מוצר · קבוצה ג', fieldKey: 'alternativeParticipation', fieldLabel: 'השתתפות עובד ברכב החלופי', question: 'מה סכום ההשתתפות של העובדת ב-ATTO 3 (2025)?',
-  context: { known: [{ label: 'רכב היום', display: 'COROLLA CROSS (2025), השתתפות 300 ₪' }, { label: 'חלופה', display: 'ATTO 3 (2025)' }], assumption: 'בינתיים ההשוואה מחושבת לפי ברירת המחדל בקטלוג: 300 ₪', suggestedAnswer: { value: 300, display: '300 ₪', source: 'CATALOG_DEFAULT' } },
-  status: 'OPEN', stale: false, createdAt: timestamp, answer: null
-};
-// Only these complete catalog records are derivable from the supplied example.
+// These are demo catalog/occupation records, not the organization's live catalog.
 const catalog = [
-  { id: 'CAR-09', group: 'ג', maker: 'TOYOTA', commercialName: 'COROLLA CROSS', regYear: 2025, drive: null, monthlyUseValue: 4070, defaultParticipation: 300 },
-  { id: 'CAR-10', group: 'ג', maker: 'BYD', commercialName: 'ATTO 3', regYear: 2025, drive: 'חשמלי', monthlyUseValue: 3130, defaultParticipation: 300 }
+  { id: 'CAR-09', group: 'ג', maker: 'TOYOTA', commercialName: 'COROLLA CROSS', regYear: 2025, drive: 'היברידי', monthlyUseValue: 4070, defaultParticipation: 300 },
+  { id: 'CAR-10', group: 'ג', maker: 'BYD', commercialName: 'ATTO 3', regYear: 2025, drive: 'חשמלי', monthlyUseValue: 3130, defaultParticipation: 300 },
+  { id: 'CAR-06', group: 'ב', maker: 'MG', commercialName: 'MG4', regYear: 2025, drive: 'חשמלי', monthlyUseValue: null, defaultParticipation: null },
+  { id: 'CAR-12', group: 'ג', maker: 'HYUNDAI', commercialName: 'TUCSON', regYear: 2025, drive: 'בנזין', monthlyUseValue: null, defaultParticipation: null },
+  { id: 'CAR-03', group: 'א', maker: 'BYD', commercialName: 'DOLPHIN', regYear: 2025, drive: 'חשמלי', monthlyUseValue: null, defaultParticipation: null }
 ];
 const occupations = [
-  { name: 'מנהל/ת מוצר', group: 'ג', carRequiredByRole: false, waiverAllowed: true, waiverMaintenance: 2000 },
-  { name: 'מפתח/ת תוכנה', group: 'ב', carRequiredByRole: false, waiverAllowed: true, waiverMaintenance: 1500 },
-  { name: 'נציג/ת מכירות שטח', group: 'ב', carRequiredByRole: true, waiverAllowed: false, waiverMaintenance: 0 }
-];
+  ['מנהל/ת מוצר','ג'], ['מפתח/ת תוכנה','ב'], ['נציג/ת מכירות שטח','ב'],
+  ['מנהל/ת פרויקטים','ג'], ['מנהל/ת צוות','ג'], ['אנליסט/ית','ב'],
+  ['מנהל/ת תפעול','ג'], ['מנהל/ת רכש','ג'], ['מנהל/ת אזור','ג'],
+  ['מהנדס/ת','ב'], ['טכנאי/ת שטח','ב'], ['מנהל/ת כספים','ג'],
+  ['מנהל/ת לוגיסטיקה','ג'], ['מנהל/ת חטיבה','ד']
+].map(([name,group]) => ({ name, group, carRequiredByRole: name === 'נציג/ת מכירות שטח', waiverAllowed: name !== 'נציג/ת מכירות שטח', waiverMaintenance: 0 }));
 const clone = value => structuredClone(value);
-let state = { revision: 0, case: clone(initialCase), questions: [clone(initialQuestion)], requests: {} };
-const down = new URLSearchParams(globalThis.location?.search || '').get('down') === '1';
-const channel = typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('vehicle-advisor-demo-v1') : null;
-const waiters = new Set();
-if (channel) channel.onmessage = event => {
-  const data = event.data;
-  if (data?.kind === 'request') channel.postMessage({ kind: 'state', state });
-  if (data?.kind === 'state' && data.state?.revision > state.revision) state = clone(data.state);
-  if (data?.kind === 'state') for (const resolve of waiters) resolve();
+const now = () => new Date().toISOString();
+const query = new URLSearchParams(globalThis.location?.search || '');
+const down = query.get('down') === '1';
+const replay = query.get('replay') === '1';
+const required = ['occupation', 'baseSalary', 'childrenUpTo23', 'currentCar'];
+const fields = [
+  ['occupation','עיסוק',null], ['group','קבוצת זכאות',null],
+  ['baseSalary','שכר בסיס',null], ['childrenUpTo23','ילדים עד גיל 23',null],
+  ['currentCar','רכב היום',null], ['currentParticipation','השתתפות ברכב היום',300],
+  ['commissions','עמלות',0], ['bonus','בונוס',0], ['pensionPercent','פנסיה',6],
+  ['studyFundPercent','קרן השתלמות',2.5], ['creditPoints','נקודות זיכוי',2.75],
+  ['alternativeParticipation','השתתפות ברכב החלופי',null]
+];
+const moneyFields = ['baseSalary','currentParticipation','commissions','bonus','alternativeParticipation'];
+const percentFields = ['pensionPercent','studyFundPercent'];
+const money = new Intl.NumberFormat('he-IL', { style:'currency', currency:'ILS', minimumFractionDigits:0, maximumFractionDigits:20 });
+let state = { revision: 0, case: {
+  caseId:'demo-noa', version:1, status:'COLLECTING', assistantAvailable:true, assistantMode: replay ? 'REPLAY' : 'LIVE',
+  profile:fields.map(([key,label,value]) => ({ key,label,value,display:value === null ? '' : moneyFields.includes(key) ? money.format(value) : String(value) + (percentFields.includes(key) ? '%' : ''),status:value === null ? 'MISSING':'DEFAULT',source:value === null ? null:{type:'CATALOG_DEFAULT',ref:'demo',at:timestamp} })),
+  messages:[], comparison:null, ranking:null, pendingQuestions:[]
+}, questions:[], requests:{} };
+const handlers = new Map();
+const roleChoices = occupations.map((occupation,index) => {
+  const id = 'occupation-' + index;
+  handlers.set(id, () => setOccupation(occupation.name, 'EMPLOYEE_MESSAGE'));
+  return {id,label:occupation.name};
+});
+const childChoices = Array.from({length:6},(_,value) => {
+  const id = 'children-' + value;
+  handlers.set(id, () => setField('childrenUpTo23',value,'PROVIDED',{type:'EMPLOYEE_MESSAGE',ref:null,at:now()}));
+  return {id,label:String(value)};
+});
+const carChoices = catalog.slice(0,4).map((car,index) => {
+  const id = 'current-' + index;
+  handlers.set(id, () => setField('currentCar',car.id,'PROVIDED',{type:'EMPLOYEE_MESSAGE',ref:null,at:now()}));
+  return {id,label:car.maker + ' ' + car.commercialName + ' (' + car.regYear + ')'};
+});
+handlers.set('current-none', () => setField('currentCar','NONE','PROVIDED',{type:'EMPLOYEE_MESSAGE',ref:null,at:now()}));
+carChoices.push({id:'current-none',label:'אין לי רכב חברה'});
+const alternativeChoices = [{id:'best',label:'מה הכי משתלם לי?'},{id:'alt:waiver',label:'ויתור על רכב'},{id:'alt:CAR-06',label:'MG4 (2025)'},{id:'alt:CAR-10',label:'ATTO 3 (2025)'}];
+handlers.set('best', () => { state.case.ranking = clone(fixture.ranking); appendMessage('bot','אלה החלופות לפי סדר נתוני הדוגמה. לפירוט ההשוואה המלא אפשר לבחור ATTO 3 (2025).',alternativeChoices.slice(1)); });
+handlers.set('alt:waiver', () => selectAlternative({type:'waiver'}));
+handlers.set('alt:CAR-06', () => selectAlternative({type:'car',vehicleId:'CAR-06'}));
+handlers.set('alt:CAR-10', () => selectAlternative({type:'car',vehicleId:'CAR-10'}));
+function fail(status,code,message) { throw Object.assign(new Error(message),{status,code}); }
+function view() { const result=clone(state.case); result.assistantAvailable=!down; result.assistantMode=replay?'REPLAY':'LIVE'; return result; }
+function appendMessage(role,text,choices=[]) {
+  for (const message of state.case.messages) message.choices=[];
+  state.case.messages.push({id:'m-'+crypto.randomUUID(),role,text,choices:clone(choices),at:now()});
+}
+function setField(key,value,status,source) {
+  const field=state.case.profile.find(item=>item.key===key);
+  if (!field) fail(404,'UNKNOWN_FIELD','השדה לא נמצא.');
+  if (value !== null && moneyFields.concat(percentFields,['childrenUpTo23','creditPoints']).includes(key) && (typeof value !== 'number' || !Number.isFinite(value))) fail(400,'INVALID_VALUE','יש להזין ערך מספרי תקין.');
+  if (key === 'childrenUpTo23' && (!Number.isInteger(value) || value < 0)) fail(400,'INVALID_VALUE','מספר הילדים צריך להיות מספר שלם שאינו שלילי.');
+  if (key === 'currentCar' && value !== 'NONE' && !catalog.some(car=>car.id===value)) fail(400,'INVALID_VALUE','הרכב אינו בקטלוג.');
+  field.value=value; field.status=status; field.source=source;
+  const car=key==='currentCar' ? catalog.find(item=>item.id===value) : null;
+  field.display=value===null?'':car?car.maker+' '+car.commercialName+' ('+car.regYear+')':key==='currentCar'&&value==='NONE'?'אין לי רכב חברה':moneyFields.includes(key)?money.format(value):String(value)+(percentFields.includes(key)?'%':'');
+}
+function setOccupation(name,type) {
+  const occupation=occupations.find(item=>item.name===name);
+  if (!occupation) fail(400,'INVALID_VALUE','יש לבחור עיסוק מתוך הרשימה.');
+  setField('occupation',name,'PROVIDED',{type,ref:null,at:now()});
+  setField('group',occupation.group,'DEFAULT',{type:'CATALOG_DEFAULT',ref:'occupation',at:now()});
+}
+function nextField() { return required.find(key=>state.case.profile.find(field=>field.key===key).status==='MISSING'); }
+function askNext() {
+  const key=nextField(); state.case.status=key?'COLLECTING':state.case.pendingQuestions.length?'WAITING_FOR_REP':'READY';
+  if (key==='occupation') appendMessage('bot','שלום! נבדוק יחד את האפשרויות לרכב החברה. באיזה תפקיד את/ה עובד/ת?',roleChoices);
+  else if (key==='baseSalary') appendMessage('bot','מה שכר הבסיס החודשי שלך (ברוטו)? אפשר לכתוב כאן מספר, או לעדכן את שכר הבסיס בכרטיס הפרטים.');
+  else if (key==='childrenUpTo23') appendMessage('bot','כמה ילדים עד גיל 23 יש לך?',childChoices);
+  else if (key==='currentCar') appendMessage('bot','איזה רכב חברה יש לך היום?',carChoices);
+  else appendMessage('bot','יש לי את הפרטים הדרושים. אפשר לבדוק מה הכי משתלם, או לבחור חלופה להשוואה. בהדגמה הסכומים קבועים מנתוני הדוגמה.',alternativeChoices);
+}
+function invalidateComparison() {
+  state.case.comparison=null; state.case.ranking=null;
+  for (const question of state.questions) if (question.status==='OPEN') question.stale=true;
+  state.case.pendingQuestions=[];
+}
+function selectAlternative(body) {
+  if (nextField()) fail(400,'PROFILE_INCOMPLETE','צריך להשלים את הפרטים לפני בחירת חלופה.');
+  const row=fixture.ranking.find(item=>item.alternative.type===body.type&&(body.type==='waiver'||item.alternative.vehicleId===body.vehicleId));
+  if (!row) fail(400,'INVALID_ALTERNATIVE','החלופה אינה זמינה.');
+  invalidateComparison(); state.case.ranking=clone(fixture.ranking);
+  const participation=state.case.profile.find(field=>field.key==='alternativeParticipation');
+  if (body.type==='car' && body.vehicleId==='CAR-10') {
+    if (participation.status==='CONFIRMED' && participation.value!==300) {
+      state.case.status='READY';
+      appendMessage('bot','הנציג עדכן השתתפות שונה מנתוני הדוגמה. במוק אין חישוב מחדש, ולכן ההשוואה הקודמת הוסרה. במערכת המחוברת המספרים יגיעו מהשרת.',alternativeChoices);
+      return;
+    }
+    state.case.comparison=clone(fixture.comparison);
+    Object.assign(state.case.comparison.today,{type:'car',vehicleId:'CAR-09'});
+    Object.assign(state.case.comparison.alternative,{type:'car',vehicleId:'CAR-10'});
+    state.case.comparison.explanation+=' זו דוגמת השוואה קבועה בין COROLLA CROSS ל-ATTO 3, ואינה מחושבת מהפרטים שהוזנו בהדגמה.';
+    if (participation.status==='CONFIRMED') state.case.comparison.estimates=[];
+    else {
+      setField('alternativeParticipation',300,'DEFAULT',{type:'CATALOG_DEFAULT',ref:'CAR-10',at:now()});
+      const question={id:'q-'+crypto.randomUUID(),caseId:state.case.caseId,employeeLabel:'עובד/ת הדגמה · '+state.case.profile.find(field=>field.key==='occupation').display,fieldKey:'alternativeParticipation',fieldLabel:'השתתפות עובד ברכב החלופי',question:'מה סכום השתתפות העובד/ת ב-ATTO 3 (2025)?',context:{known:[{label:'רכב בדוגמת ההשוואה',display:'COROLLA CROSS (2025)'},{label:'חלופה',display:'ATTO 3 (2025)'}],assumption:'הדוגמה הקבועה משתמשת בהשתתפות של 300 ₪.',suggestedAnswer:{value:300,display:'300 ₪',source:'CATALOG_DEFAULT'}},status:'OPEN',stale:false,createdAt:now(),answer:null};
+      state.questions.push(question); state.case.pendingQuestions=[{id:question.id,fieldKey:question.fieldKey,question:question.question,status:'OPEN',createdAt:question.createdAt}];
+    }
+    state.case.status=state.case.pendingQuestions.length?'WAITING_FOR_REP':'READY';
+    appendMessage('bot','דוגמת ההשוואה המלאה של ATTO 3 מופיעה עכשיו לצד השיחה. נתוני הדוגמה מציגים עלייה של 661 ₪ בנטו החודשי.',alternativeChoices);
+  } else {
+    state.case.status='READY';
+    appendMessage('bot','נבחרה החלופה: '+row.alternative.label+'. סכום השינוי מופיע בדירוג. אין בנתוני ההדגמה פירוט כספי מלא לחלופה הזאת. לדוגמה מלאה אפשר לבחור ATTO 3.',alternativeChoices);
+  }
+}
+askNext();
+const channel=typeof window!=='undefined'&&typeof BroadcastChannel!=='undefined'?new BroadcastChannel('vehicle-advisor-demo-v3'):null;
+const waiters=new Set();
+if (channel) channel.onmessage=event=>{
+  const data=event.data;
+  if (data?.kind==='request') channel.postMessage({kind:'state',state});
+  if (data?.kind==='state'&&data.state?.revision>state.revision) state=clone(data.state);
+  if (data?.kind==='state') for (const resolve of waiters) resolve();
 };
 async function synchronize() {
   if (!channel) return;
-  await new Promise(resolve => {
-    const done = () => { clearTimeout(timer); waiters.delete(done); resolve(); };
-    const timer = setTimeout(done, 100);
-    waiters.add(done);
-    channel.postMessage({ kind: 'request' });
+  await new Promise(resolve=>{
+    const done=()=>{clearTimeout(timer);waiters.delete(done);resolve();};
+    const timer=setTimeout(done,100);waiters.add(done);channel.postMessage({kind:'request'});
   });
 }
-function publish() { state.revision += 1; channel?.postMessage({ kind: 'state', state }); }
-function fail(status, code, message) { throw Object.assign(new Error(message), { status, code }); }
-function view() { const result = clone(state.case); if (down) result.assistantAvailable = false; return result; }
-function appendMessage(role, text, choices = []) { state.case.messages.push({ id: 'm-' + crypto.randomUUID(), role, text, choices, at: new Date().toISOString() }); }
-const now = () => new Date().toISOString();
-function setField(key, value, status, source) {
-  const field = state.case.profile.find(item => item.key === key);
-  if (!field) fail(404, 'UNKNOWN_FIELD', 'השדה לא נמצא.');
-  field.value = value; field.status = status; field.source = source;
-  const car = key === 'currentCar' ? catalog.find(item => item.id === value) : null;
-  const monetary = ['baseSalary', 'alternativeParticipation'].includes(key);
-  field.display = value === null ? '' : car ? car.commercialName + ' (' + car.regYear + ')' : monetary ? new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 20 }).format(value) : String(value);
-}
-async function perform(path, { method = 'GET', body } = {}) {
-  await synchronize();
-  await new Promise(resolve => setTimeout(resolve, 300 + Math.floor(Math.random() * 301)));
-  const url = new URL(path, 'http://mock.invalid');
-  const parts = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
-  const requestKey = body?.clientRequestId ? method + ':' + url.pathname + ':' + body.clientRequestId : null;
-  if (requestKey && state.requests[requestKey]) return clone(state.requests[requestKey]);
+function publish() { state.revision+=1;channel?.postMessage({kind:'state',state}); }
+async function perform(path,{method='GET',body}={}) {
+  await synchronize(); await new Promise(resolve=>setTimeout(resolve,300));
+  const url=new URL(path,'http://mock.invalid'); const parts=url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  const requestKey=body?.clientRequestId?method+':'+url.pathname+':'+body.clientRequestId:null;
+  if (requestKey&&state.requests[requestKey]) return clone(state.requests[requestKey]);
+  if (method==='GET'&&url.pathname==='/api/catalog') return clone(catalog);
+  if (method==='GET'&&url.pathname==='/api/occupations') return clone(occupations);
+  if (method==='GET'&&url.pathname==='/api/rep/questions') return clone(state.questions.filter(question=>question.status===(url.searchParams.get('status')||'OPEN')));
+  if (method==='POST'&&url.pathname==='/api/cases') return view();
   let result;
-  let mutated = false;
-  if (method === 'GET' && url.pathname === '/api/catalog') return clone(catalog);
-  if (method === 'GET' && url.pathname === '/api/occupations') return clone(occupations);
-  if (method === 'GET' && url.pathname === '/api/rep/questions') return clone(state.questions.filter(question => question.status === (url.searchParams.get('status') || 'OPEN')));
-  if (method === 'POST' && url.pathname === '/api/cases') return view();
-  if (parts[0] === 'api' && parts[1] === 'cases') {
-    if (parts[2] !== state.case.caseId) fail(404, 'CASE_NOT_FOUND', 'התיק לא נמצא.');
-    if (method === 'GET' && parts.length === 3) return view();
-    if (method === 'POST' && parts[3] === 'messages') {
-      if (down) fail(503, 'ASSISTANT_UNAVAILABLE', 'העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.');
-      appendMessage('employee', body.text);
-      appendMessage('bot', 'קיבלתי את ההודעה. אפשר לעדכן את הפרטים בפרופיל ולבחור חלופה להשוואה. זו תשובה קבועה במצב הדגמה.');
-      state.case.version += 1; mutated = true; result = view();
-    } else if (method === 'POST' && parts[3] === 'choices') {
-      const choice = state.case.messages.flatMap(message => message.choices || []).find(item => item.id === body.choiceId);
-      if (!choice) fail(400, 'INVALID_CHOICE', 'הבחירה אינה זמינה.');
-      appendMessage('employee', choice.label);
-      appendMessage('bot', body.choiceId === 'c-fix' ? 'אפשר לתקן את הנתונים בלחיצה על השדה בפרופיל שלך.' : 'תודה על האישור. ההשוואה ופרטי המקור מוצגים לצד השיחה.');
-      for (const message of state.case.messages) message.choices = [];
-      state.case.version += 1; mutated = true; result = view();
-    } else if (method === 'PUT' && parts[3] === 'profile') {
-      if (body.expectedVersion !== state.case.version) fail(409, 'VERSION_CONFLICT', 'המידע התעדכן, בדקו שוב');
-      setField(parts[4], body.value, 'PROVIDED', { type: 'FORM', ref: null, at: now() });
-      // Never derive new financial results from an edited profile in this demo.
-      state.case.comparison = null; state.case.ranking = null;
-      if (['currentCar', 'group', 'occupation', 'alternativeParticipation'].includes(parts[4])) {
-        for (const question of state.questions) if (question.status === 'OPEN') question.stale = true;
-        state.case.pendingQuestions = [];
-      }
-      state.case.status = state.case.pendingQuestions.length ? 'WAITING_FOR_REP' : 'COLLECTING';
-      state.case.version += 1; mutated = true; result = view();
-    } else if (method === 'POST' && parts[3] === 'alternative') {
-      const alternative = initialCase.ranking.find(item => item.alternative.type === body.type && (body.type === 'waiver' || item.alternative.vehicleId === body.vehicleId));
-      if (!alternative) fail(400, 'INVALID_ALTERNATIVE', 'החלופה אינה זמינה.');
-      const exampleMatches = state.case.profile.every(field => ['alternativeParticipation', 'childrenUpTo23'].includes(field.key) || field.value === initialCase.profile.find(item => item.key === field.key)?.value);
-      const isAtto = body.type === 'car' && body.vehicleId === 'CAR-10';
-      state.case.comparison = isAtto && exampleMatches ? clone(initialCase.comparison) : null;
-      state.case.ranking = exampleMatches ? clone(initialCase.ranking) : null;
-      for (const question of state.questions) if (question.status === 'OPEN') question.stale = true;
-      state.case.pendingQuestions = [];
-      const participation = state.case.profile.find(field => field.key === 'alternativeParticipation');
-      if (isAtto && exampleMatches && participation.status !== 'CONFIRMED') {
-        const question = clone(initialQuestion);
-        question.id = 'q-' + crypto.randomUUID(); question.createdAt = now();
-        state.questions.push(question);
-        state.case.pendingQuestions = [{ id: question.id, fieldKey: question.fieldKey, question: question.question, status: 'OPEN', createdAt: question.createdAt }];
-      } else if (isAtto && participation.status === 'CONFIRMED' && state.case.comparison) state.case.comparison.estimates = [];
-      state.case.status = state.case.pendingQuestions.length ? 'WAITING_FOR_REP' : state.case.comparison ? 'READY' : 'COLLECTING';
-      appendMessage('bot', state.case.comparison ? 'החלופה ATTO 3 מוצגת להשוואה. במצב הדגמה הסכומים נשארים נתוני הדוגמה.' : 'נבחרה החלופה: ' + alternative.alternative.label + '. בקובץ ההדגמה אין פירוט כספי מלא לחלופה הזאת; במערכת המחוברת ההשוואה תגיע מהשרת.');
-      state.case.version += 1; mutated = true; result = view();
-    } else fail(404, 'NOT_FOUND', 'הפעולה לא נמצאה.');
-  } else if (method === 'POST' && parts[0] === 'api' && parts[1] === 'rep' && parts[2] === 'questions' && parts[4] === 'answer') {
-    const question = state.questions.find(item => item.id === parts[3]);
-    if (!question) fail(404, 'QUESTION_NOT_FOUND', 'השאלה לא נמצאה.');
-    if (question.stale || question.status !== 'OPEN') fail(409, 'STALE_QUESTION', 'התיישנה, העובד שינה בחירה');
-    const display = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 20 }).format(body.value);
-    question.status = 'ANSWERED'; question.answer = { value: body.value, display, effectiveFrom: body.effectiveFrom, note: body.note, answeredBy: 'נציג הדגמה', answeredAt: now() };
-    setField(question.fieldKey, body.value, 'CONFIRMED', { type: 'REP', ref: question.id, at: question.answer.answeredAt });
-    state.case.pendingQuestions = state.case.pendingQuestions.filter(item => item.id !== question.id);
-    if (state.case.comparison) state.case.comparison.estimates = state.case.comparison.estimates.filter(key => key !== question.fieldKey);
-    state.case.status = state.case.pendingQuestions.length ? 'WAITING_FOR_REP' : state.case.comparison ? 'READY' : 'COLLECTING';
-    appendMessage('bot', 'נציג התחבורה אישר את ההשתתפות: ' + display + '. התיק עודכן. במצב הדגמה סכומי הנטו אינם מחושבים מחדש.');
-    state.case.version += 1; mutated = true; result = clone(question);
-  } else fail(404, 'NOT_FOUND', 'הפעולה לא נמצאה.');
-  if (requestKey) state.requests[requestKey] = clone(result);
-  if (mutated) publish();
-  return result;
+  if (parts[0]==='api'&&parts[1]==='cases') {
+    if (parts[2]!==state.case.caseId) fail(404,'CASE_NOT_FOUND','התיק לא נמצא.');
+    if (method==='GET'&&parts.length===3) return view();
+    if (method==='POST'&&parts[3]==='messages') {
+      if (down) fail(503,'ASSISTANT_UNAVAILABLE','העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.');
+      if (!body?.text?.trim()||body.text.length>2000) fail(400,'INVALID_MESSAGE','יש להזין הודעה באורך עד 2000 תווים.');
+      if (replay && !['18500','18,500','מה הכי משתלם לי?'].includes(body.text.trim())) fail(503,'ASSISTANT_UNAVAILABLE','המשפט אינו כלול בשיחה המוקלטת. אפשר להמשיך בכפתורים או בטופס.');
+      const key=nextField(), text=body.text.trim();
+      const numeric=Number(text.replace(/[, ₪]/g,''));
+      let action;
+      if (key==='occupation'&&occupations.some(item=>item.name===text)) action=()=>setOccupation(text,'EMPLOYEE_MESSAGE');
+      else if (key==='baseSalary'&&Number.isFinite(numeric)&&numeric>=0) action=()=>setField(key,numeric,'PROVIDED',{type:'EMPLOYEE_MESSAGE',ref:null,at:now()});
+      else if (key==='childrenUpTo23'&&Number.isInteger(numeric)&&numeric>=0) action=()=>setField(key,numeric,'PROVIDED',{type:'EMPLOYEE_MESSAGE',ref:null,at:now()});
+      else if (key==='currentCar') {const choice=carChoices.find(item=>item.label===text);if(choice) action=handlers.get(choice.id);}
+      appendMessage('employee',body.text);
+      if (action) {invalidateComparison();action();askNext();}
+      else if (!key && text==='מה הכי משתלם לי?') handlers.get('best')();
+      else {appendMessage('bot','בהדגמה אני מבין תשובות קצרות לשאלה הפתוחה. אפשר לבחור בכפתורים או להשלים את הפרט בכרטיס.',key==='occupation'?roleChoices:key==='childrenUpTo23'?childChoices:key==='currentCar'?carChoices:!key?alternativeChoices:[]);}
+    } else if (method==='POST'&&parts[3]==='choices') {
+      const last=state.case.messages.at(-1);
+      const choice=last?.role==='bot'?last.choices.find(item=>item.id===body?.choiceId):null;
+      const action=choice&&handlers.get(choice.id);
+      if (!action) fail(400,'INVALID_CHOICE','האפשרות כבר לא זמינה');
+      const before=nextField(); appendMessage('employee',choice.label);
+      if (before) invalidateComparison(); action();
+      if (before) askNext();
+    } else if (method==='PUT'&&parts[3]==='profile') {
+      if (body.expectedVersion!==state.case.version) fail(409,'VERSION_CONFLICT','המידע התעדכן, בדקו שוב');
+      const key=parts[4];
+      if (key==='alternativeParticipation') fail(400,'REP_ONLY_FIELD','נקבע על ידי נציג התחבורה');
+      if (key==='group') fail(400,'GROUP_MISMATCH','קבוצת הזכאות נגזרת מהעיסוק. יש לעדכן את העיסוק.');
+      const before=nextField();
+      if (key==='occupation') setOccupation(body.value,'FORM');else setField(key,body.value,'PROVIDED',{type:'FORM',ref:null,at:now()});
+      invalidateComparison();
+      if (before!==nextField() || !nextField()) askNext();
+      else state.case.status='COLLECTING';
+    } else if (method==='POST'&&parts[3]==='alternative') {
+      if (body.expectedVersion!==undefined&&body.expectedVersion!==state.case.version) fail(409,'VERSION_CONFLICT','המידע התעדכן, בדקו שוב');
+      selectAlternative(body);
+    } else fail(404,'NOT_FOUND','הפעולה לא נמצאה.');
+    state.case.version+=1;result=view();
+  } else if (method==='POST'&&parts[0]==='api'&&parts[1]==='rep'&&parts[2]==='questions'&&parts[4]==='answer') {
+    const question=state.questions.find(item=>item.id===parts[3]);
+    if (!question) fail(404,'QUESTION_NOT_FOUND','השאלה לא נמצאה.');
+    if (question.stale||question.status!=='OPEN') fail(409,'STALE_QUESTION','התיישנה, העובד שינה בחירה');
+    if (typeof body.value!=='number'||!Number.isFinite(body.value)||!/^\d{4}-\d{2}-\d{2}$/.test(body.effectiveFrom||'')) fail(400,'INVALID_VALUE','יש להזין ערך ותאריך תחולה.');
+    question.status='ANSWERED';question.answer={value:body.value,display:money.format(body.value),effectiveFrom:body.effectiveFrom,note:body.note,answeredBy:'נציג הדגמה',answeredAt:now()};
+    setField(question.fieldKey,body.value,'CONFIRMED',{type:'REP',ref:question.id,at:question.answer.answeredAt});
+    state.case.pendingQuestions=state.case.pendingQuestions.filter(item=>item.id!==question.id);
+    if (body.value===300&&state.case.comparison) state.case.comparison.estimates=[];
+    else {state.case.comparison=null;state.case.ranking=null;}
+    state.case.status=state.case.pendingQuestions.length?'WAITING_FOR_REP':'READY';
+    appendMessage('system','נציג התחבורה אישר השתתפות של '+question.answer.display+'. נענה על ידי '+question.answer.answeredBy+'.'+(body.value!==300?' במוק אין חישוב מחדש, ולכן ההשוואה הקודמת הוסרה.':''));
+    askNext();state.case.version+=1;result=clone(question);
+  } else fail(404,'NOT_FOUND','הפעולה לא נמצאה.');
+  if (requestKey) state.requests[requestKey]=clone(result);
+  publish();return result;
 }
-let queue = Promise.resolve();
-export function mockRequest(path, options = {}) {
-  const execute = () => perform(path, options);
-  const locks = globalThis.navigator?.locks;
-  const result = queue.then(() => locks ? locks.request('vehicle-advisor-demo-request', execute) : execute());
-  queue = result.catch(() => {});
-  return result;
+let queue=Promise.resolve();
+export function mockRequest(path,options={}) {
+  const execute=()=>perform(path,options),locks=globalThis.navigator?.locks;
+  const result=queue.then(()=>locks?locks.request('vehicle-advisor-demo-v3-request',execute):execute());
+  queue=result.catch(()=>{});return result;
 }
 ```

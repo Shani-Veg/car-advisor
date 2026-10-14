@@ -1,5 +1,6 @@
 import { api, isMock } from './api.js';
 import { el, appendText, moneyNode, formatDate, sourceText, statusBadge, caseLabels, directionLabels, breakdownLabels, emptyState, showNotice, keepDemoLinks } from './format.js';
+import { vehicleIdentity, choiceVehicle } from './vehicle.js';
 
 const byId = id => document.getElementById(id);
 let current = null;
@@ -12,6 +13,8 @@ let pollTimer;
 let editSession = null;
 let assistantOffline = false;
 let retryAction = null;
+let rateLimitedUntil = 0;
+let rateTimer;
 const requestIds = new Map();
 const seenMessages = new Set();
 const messageNodes = new Map();
@@ -38,9 +41,9 @@ function setError(error, retry) {
 function clearError() { byId('error-banner').hidden = true; retryAction = null; }
 function feedback(message) { showNotice(byId('feedback'), message); }
 function updateControls() {
-  for (const button of document.querySelectorAll('[data-mutation]')) button.disabled = busy || !current || (button.dataset.chat === '1' && unavailable());
-  byId('message-input').disabled = busy || !current || unavailable();
-  byId('send-button').disabled = busy || !current || unavailable();
+  for (const button of document.querySelectorAll('[data-mutation]')) button.disabled = busy || !current;
+  byId('message-input').disabled = !current;
+  byId('send-button').disabled = busy || !current || unavailable() || Date.now() < rateLimitedUntil;
   byId('close-dialog').disabled = busy;
   byId('cancel-edit').disabled = busy;
   byId('assistant-banner').hidden = !unavailable();
@@ -68,6 +71,17 @@ async function mutate(key, action, onSuccess) {
       byId('profile-dialog').close();
       editSession = null;
       feedback('המידע התעדכן, בדקו שוב');
+    } else if (error.status === 400 && error.code === 'INVALID_CHOICE') {
+      requestIds.delete(key);
+      try { applyCase(await api.getCase(caseId)); }
+      catch (refreshError) { setError(refreshError, refresh); }
+      feedback('האפשרות כבר לא זמינה');
+    } else if (error.code === 'RATE_LIMITED') {
+      requestIds.delete(key);
+      rateLimitedUntil = Date.now() + 60000;
+      clearTimeout(rateTimer);
+      rateTimer = setTimeout(updateControls, 60000);
+      setError(error);
     } else if (error.code === 'ASSISTANT_UNAVAILABLE') {
       requestIds.delete(key);
       try { applyCase(await api.getCase(caseId)); } catch (refreshError) { setError(refreshError, refresh); }
@@ -89,9 +103,18 @@ function renderMessages(messages) {
   const incoming = new Set(messages.map(message => message.id));
   for (const [id, entry] of messageNodes) if (!incoming.has(id)) { entry.node.remove(); messageNodes.delete(id); }
   const announcements = [];
-  for (const message of messages) {
+  for (const [index, message] of messages.entries()) {
     const existing = messageNodes.get(message.id);
-    if (existing && same(existing.data, message)) continue;
+    const active = message.role === 'bot' && index === messages.length - 1;
+    if (existing && same(existing.data, message) && existing.active === active) continue;
+    if (message.role === 'system') {
+      const node = el('p', 'system-message', message.text);
+      if (existing) existing.node.replaceWith(node); else container.append(node);
+      messageNodes.set(message.id, { node, data: structuredClone(message), active });
+      if (!seenMessages.has(message.id)) announcements.push(message.text);
+      seenMessages.add(message.id);
+      continue;
+    }
     const node = el('article', 'message ' + (message.role === 'employee' ? 'employee' : 'bot'));
     const avatar = el('img', 'message-avatar');
     avatar.src = message.role === 'employee' ? 'assets/avatar-client.webp' : 'assets/avatar-bot.webp';
@@ -101,19 +124,39 @@ function renderMessages(messages) {
     const meta = el('div', 'message-meta');
     meta.append(el('strong', '', message.role === 'employee' ? 'אני' : 'יועץ הרכב'), el('span', '', formatDate(message.at, true)));
     content.append(meta, el('p', 'message-text', message.text));
-    if (message.choices?.length) {
-      const choices = el('div', 'message-choices');
+    if (active && message.choices?.length) {
+      const longList = message.choices.length > 8;
+      const choices = el('div', longList ? 'choices-list' : 'message-choices');
+      choices.setAttribute('aria-label', 'אפשרויות תשובה');
+      let filter;
+      if (longList) {
+        const search = el('div', 'choices-search');
+        const label = el('label', '', 'חיפוש');
+        filter = el('input'); filter.type = 'search'; filter.id = 'search-' + message.id;
+        filter.placeholder = 'סינון האפשרויות…'; label.htmlFor = filter.id;
+        search.append(label, filter); content.append(search);
+      }
       for (const choice of message.choices) {
-        const button = el('button', 'choice-button', choice.label);
-        button.type = 'button'; button.dataset.mutation = ''; button.dataset.chat = '1';
+        const button = el('button', 'choice-button');
+        const vehicle = choiceVehicle(choice.label, catalog);
+        if (vehicle) button.append(vehicleIdentity(vehicle, catalog, true));
+        else { const label = el('bdi', '', choice.label); label.dir = 'auto'; button.append(label); }
+        button.type = 'button'; button.dataset.mutation = ''; button.setAttribute('aria-label', choice.label);
+        if (filter) filter.addEventListener('input', () => { button.hidden = !choice.label.toLocaleLowerCase('he-IL').includes(filter.value.trim().toLocaleLowerCase('he-IL')); });
         button.addEventListener('click', () => mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id)));
         choices.append(button);
       }
       content.append(choices);
+      if (filter) {
+        const empty = el('p', 'choices-empty', 'לא נמצאו אפשרויות. אפשר לשנות את החיפוש.'); empty.hidden = true;
+        filter.addEventListener('input', () => { empty.hidden = [...choices.children].some(button => !button.hidden); });
+        content.append(empty);
+      }
+      content.append(el('p', 'choices-hint', 'אפשר גם לכתוב במילים שלך'));
     }
     node.append(content);
     if (existing) existing.node.replaceWith(node); else container.append(node);
-    messageNodes.set(message.id, { node, data: structuredClone(message) });
+    messageNodes.set(message.id, { node, data: structuredClone(message), active });
     if (message.role !== 'employee' && !seenMessages.has(message.id)) announcements.push(message.text);
     seenMessages.add(message.id);
   }
@@ -124,8 +167,9 @@ function renderMessages(messages) {
 }
 
 function renderProfile(profile, previous) {
-  const container = byId('profile');
-  if (!profileNodes.size) container.replaceChildren();
+  const container = byId('profile'); const other = byId('profile-other');
+  const keyFields = ['occupation', 'group', 'baseSalary', 'childrenUpTo23', 'currentCar'];
+  if (!profileNodes.size) { container.replaceChildren(); other.replaceChildren(); }
   const incoming = new Set(profile.map(field => field.key));
   for (const [key, entry] of profileNodes) if (!incoming.has(key)) { entry.node.remove(); profileNodes.delete(key); }
   for (const field of profile) {
@@ -134,16 +178,25 @@ function renderProfile(profile, previous) {
     const button = el('button', 'profile-field');
     button.type = 'button'; button.dataset.mutation = '';
     button.title = sourceText(field.source);
-    button.setAttribute('aria-label', field.label + ': ' + (field.display || 'חסר') + '. עריכת השדה. מקור: ' + sourceText(field.source));
+    button.setAttribute('aria-label', field.label + ': ' + (field.display || 'חסר') + '. הצגת פרטי השדה. מקור: ' + sourceText(field.source));
     const heading = el('span', 'field-heading');
     heading.append(el('span', '', field.label), statusBadge(field.status));
-    button.append(heading, el('span', 'field-value' + (field.status === 'MISSING' ? ' missing-value' : ''), field.display || 'השלמת נתון'));
+    const value = el('span', 'field-value' + (field.status === 'MISSING' ? ' missing-value' : ''), field.display || 'טרם הושלם');
+    if (field.key === 'currentCar') value.dir = 'auto';
+    button.append(heading, value);
     button.addEventListener('click', () => openEditor(field));
-    if (existing) existing.node.replaceWith(button); else container.append(button);
+    if (existing) existing.node.replaceWith(button); else (keyFields.includes(field.key) ? container : other).append(button);
     profileNodes.set(field.key, { node: button, data: structuredClone(field) });
     const old = previous?.profile?.find(item => item.key === field.key);
     if (old && !same(old, field)) highlight(button);
   }
+  for (const key of keyFields) { const entry = profileNodes.get(key); if (entry) container.append(entry.node); }
+  byId('profile-extra').hidden = !profile.some(field => !keyFields.includes(field.key));
+  const counted = profile.filter(field => field.key !== 'alternativeParticipation');
+  const complete = counted.filter(field => field.status !== 'MISSING').length;
+  showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + counted.length);
+  byId('profile-progress').max = Math.max(1, counted.length); byId('profile-progress').value = complete;
+  showNotice(byId('profile-count'), complete + ' מתוך ' + counted.length + ' פרטים');
   container.setAttribute('aria-busy', 'false');
 }
 
@@ -157,8 +210,7 @@ function modelLink(url, label) {
 }
 function netCard(data, alternative, estimates, key) {
   const node = el('div', 'net-card' + (alternative ? ' alternative-net' : ''));
-  node.append(el('span', 'net-label', alternative ? 'עם החלופה' : 'היום'), el('div', 'vehicle-name', data.label));
-  node.querySelector('.vehicle-name').dir = 'auto';
+  node.append(el('span', 'net-label', alternative ? 'עם החלופה' : 'היום'), vehicleIdentity(data, catalog));
   const link = modelLink(data.officialUrl, data.label);
   if (link) node.append(link);
   node.append(moneyNode(data.net, false, 'net-amount'), el('p', 'net-unit', 'נטו לחודש'));
@@ -175,11 +227,14 @@ function renderComparison(comparison, previous) {
   const wasOpen = container.querySelector('details')?.open || false;
   container.replaceChildren();
   container.setAttribute('aria-busy', 'false');
-  if (!comparison) {
-    container.append(emptyState('עוד רגע, והתמונה מתבהרת.', isMock ? 'תרחיש ההדגמה כולל השוואה מלאה ל־ATTO 3 בלבד. אחרי עריכת פרופיל, פירוט כספי חדש אינו מחושב במוק.' : 'השלימו את הפרופיל ובחרו חלופה. ההשוואה תופיע כשיהיו נתונים מתאימים.'));
-    return;
-  }
+  byId('comparison-panel').hidden = comparison == null;
+  byId('mobile-comparison').hidden = !comparison || comparison.eligible === false;
+  if (!comparison) return;
   if (comparison.eligible === false) { container.append(emptyState(comparison.eligibilityReason || 'החלופה אינה זמינה לפי הזכאות.')); return; }
+  showNotice(byId('mobile-direction'), directionLabels[comparison.direction] || 'שינוי בנטו החודשי');
+  byId('mobile-difference').replaceChildren(moneyNode(comparison.difference, true));
+  byId('mobile-comparison').classList.toggle('loss', comparison.direction === 'LOSS');
+  byId('mobile-comparison').classList.toggle('none', comparison.direction === 'NONE');
   const estimates = comparison.estimates || [];
   const content = el('div', 'comparison-content');
   const pair = el('div', 'net-pair');
@@ -246,12 +301,13 @@ function renderComparison(comparison, previous) {
 
 function renderRanking(ranking, previous) {
   const container = byId('ranking'); container.replaceChildren(); container.setAttribute('aria-busy', 'false');
-  if (!ranking?.length) { container.append(emptyState('החלופות יופיעו כאן.', 'אחרי השלמת הנתונים יוצגו אפשרויות לפי סדר השרת.')); return; }
+  byId('ranking-panel').hidden = ranking == null;
+  if (!ranking) return;
   const list = el('ul', 'ranking-list');
   for (const item of ranking) {
     const row = el('li', 'ranking-row');
     const info = el('div', 'ranking-info');
-    const vehicleLabel = el('strong', '', item.alternative.label); vehicleLabel.dir = 'auto'; info.append(vehicleLabel);
+    info.append(vehicleIdentity(item.alternative, catalog, true));
     const metadata = [item.alternative.drive, item.alternative.group ? 'קבוצה ' + item.alternative.group : 'ללא רכב חברה'].filter(Boolean);
     info.append(el('small', '', metadata.join(' · ')));
     if (item.participationEstimated) info.append(el('span', 'badge status-default', 'השתתפות משוערת'));
@@ -262,7 +318,7 @@ function renderRanking(ranking, previous) {
     button.setAttribute('aria-label', 'השוואת החלופה ' + item.alternative.label);
     button.addEventListener('click', async () => {
       const ok = await mutate('alternative:' + item.alternative.type + ':' + item.alternative.vehicleId, id => api.selectAlternative(caseId, item.alternative, id));
-      if (ok) byId('comparison-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (ok && !byId('comparison-panel').hidden) scrollToComparison();
     });
     row.append(info, value, button); list.append(row);
     const old = previous?.find(prior => prior.alternative.type === item.alternative.type && prior.alternative.vehicleId === item.alternative.vehicleId);
@@ -280,8 +336,15 @@ function applyCase(next) {
   // A later poll explicitly declaring availability is the recovery signal.
   else if (next.assistantAvailable === true) assistantOffline = false;
   showNotice(byId('case-state'), caseLabels[next.status] || next.status);
+  byId('replay-banner').hidden = next.assistantMode !== 'REPLAY';
   renderMessages(next.messages || []);
   renderProfile(next.profile || [], previous);
+  const hasComparison = next.comparison != null;
+  byId('profile-toggle').hidden = !hasComparison;
+  byId('profile-panel').classList.toggle('compact-profile', hasComparison);
+  document.body.classList.toggle('has-comparison', hasComparison && next.comparison.eligible !== false);
+  byId('profile-placeholder').hidden = hasComparison;
+  if (!hasComparison || !previous?.comparison) setProfileExpanded(!hasComparison);
   const estimateChanged = next.comparison?.estimates?.some(key => !same(previous?.profile?.find(field => field.key === key), next.profile.find(field => field.key === key)));
   if (!previous || !same(previous.comparison, next.comparison) || estimateChanged) renderComparison(next.comparison, previous?.comparison);
   if (!previous || !same(previous.ranking, next.ranking)) renderRanking(next.ranking, previous?.ranking);
@@ -296,12 +359,11 @@ function applyCase(next) {
 function selectChoices(key) {
   if (key === 'currentCar' && catalog.length) return [{ value: 'NONE', label: 'אין רכב חברה היום' }, ...catalog.map(car => ({ value: car.id, label: car.maker + ' ' + car.commercialName + ' (' + car.regYear + ')' }))];
   if (key === 'occupation' && occupations.length) return occupations.map(occupation => ({ value: occupation.name, label: occupation.name }));
-  if (key === 'group') return ['א', 'ב', 'ג', 'ד'].map(group => ({ value: group, label: 'קבוצה ' + group }));
   return null;
 }
 function openEditor(field) {
   if (busy || !current) return;
-  if (field.key === 'alternativeParticipation') { feedback('את ההשתתפות ברכב החלופי מאשר נציג התחבורה. השאלה אליו מופיעה בפס העליון.'); return; }
+  const readonly = ['group', 'alternativeParticipation'].includes(field.key);
   editSession = { key: field.key, version: current.version, original: field.value };
   showNotice(byId('edit-heading'), field.label);
   showNotice(byId('edit-source'), 'מקור הנתון: ' + sourceText(field.source));
@@ -309,7 +371,7 @@ function openEditor(field) {
   const wrapper = el('div', 'form-field');
   const label = el('label', '', field.label); label.htmlFor = 'edit-value';
   let control;
-  const choices = selectChoices(field.key);
+  const choices = readonly ? null : selectChoices(field.key);
   if (choices) {
     control = el('select');
     if (!choices.some(choice => choice.value === field.value)) { const option = el('option'); option.textContent = field.display || 'בחירה'; option.value = ''; control.append(option); }
@@ -319,16 +381,20 @@ function openEditor(field) {
     control = el('input');
     const numeric = typeof field.value === 'number' || ['baseSalary', 'commissions', 'bonus', 'pensionPercent', 'studyFundPercent', 'creditPoints', 'childrenUpTo23', 'currentParticipation'].includes(field.key);
     control.type = numeric ? 'number' : 'text';
+    if (readonly) control.readOnly = true;
     if (numeric) { control.step = field.key === 'childrenUpTo23' ? '1' : 'any'; control.dir = 'ltr'; if (field.key === 'childrenUpTo23') control.min = '0'; }
-    control.value = field.value === null ? '' : String(field.value);
+    control.value = field.value == null ? '' : String(field.value);
   }
   control.id = 'edit-value'; control.name = 'value'; control.required = true;
-  wrapper.append(label, control); byId('edit-control').replaceChildren(wrapper);
+  wrapper.append(label, control);
+  if (readonly) wrapper.append(el('p', 'readonly-note', field.key === 'group' ? 'קבוצת הזכאות נקבעת לפי התפקיד בטבלת העיסוקים. כדי לשנות אותה, עדכנו את העיסוק.' : 'נקבע על ידי נציג התחבורה. ההשתתפות בחלופה אינה ניתנת לעריכה על ידי העובד.'));
+  byId('save-profile').hidden = readonly; byId('cancel-edit').textContent = readonly ? 'סגירה' : 'ביטול';
+  byId('edit-control').replaceChildren(wrapper);
   byId('profile-dialog').showModal(); control.focus();
 }
 byId('profile-form').addEventListener('submit', async event => {
   event.preventDefault();
-  if (!editSession || busy || !byId('profile-form').reportValidity()) return;
+  if (!editSession || ['group', 'alternativeParticipation'].includes(editSession.key) || busy || !byId('profile-form').reportValidity()) return;
   const input = byId('edit-value');
   const value = input.type === 'number' ? input.valueAsNumber : input.value.trim();
   if (value === '' || (typeof value === 'number' && !Number.isFinite(value))) { showNotice(byId('edit-error'), 'יש להזין ערך תקין.'); return; }
@@ -342,8 +408,8 @@ byId('profile-dialog').addEventListener('cancel', event => { if (busy) event.pre
 byId('message-form').addEventListener('submit', async event => {
   event.preventDefault();
   const text = byId('message-input').value.trim();
-  if (!text || busy || unavailable()) return;
-  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { byId('message-input').value = ''; });
+  if (!text || busy || unavailable() || Date.now() < rateLimitedUntil) return;
+  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { if (byId('message-input').value.trim() === text) byId('message-input').value = ''; });
   if (ok) byId('message-input').focus();
 });
 byId('message-input').addEventListener('keydown', event => {
@@ -363,13 +429,30 @@ async function initialize() {
   if (loading) return;
   loading = true; clearError();
   const results = await Promise.allSettled([caseId ? api.getCase(caseId) : api.createCase(), api.getCatalog(), api.getOccupations()]);
+  if (results[1].status === 'fulfilled') catalog = results[1].value;
   if (results[2].status === 'fulfilled') occupations = results[2].value;
   if (results[0].status === 'fulfilled') applyCase(results[0].value);
   else { setError(results[0].reason, initialize); showNotice(byId('case-state'), 'אין חיבור לתיק'); }
-  if (results[1].status === 'fulfilled') catalog = results[1].value;
-  else if (results[0].status === 'fulfilled') setError(results[1].reason, async () => { try { catalog = await api.getCatalog(); clearError(); } catch (error) { setError(error, initialize); } });
+  if (results[1].status === 'rejected' && results[0].status === 'fulfilled') setError(results[1].reason, async () => { try { catalog = await api.getCatalog(); messageNodes.forEach(entry => { entry.data = null; }); renderMessages(current.messages || []); renderComparison(current.comparison, null); renderRanking(current.ranking, null); updateControls(); clearError(); } catch (error) { setError(error, initialize); } });
   loading = false;
   if (!pollTimer) pollTimer = setInterval(() => { if (!document.hidden) refresh(); }, 3000);
+}
+function setProfileExpanded(expanded) {
+  byId('profile-content').hidden = !expanded;
+  byId('profile-toggle').setAttribute('aria-expanded', String(expanded));
+  byId('profile-toggle').textContent = expanded ? 'כווץ' : 'הצג הכול';
+}
+function scrollToComparison() { byId('comparison-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }
+byId('profile-toggle').addEventListener('click', () => setProfileExpanded(byId('profile-content').hidden));
+byId('mobile-comparison').addEventListener('click', scrollToComparison);
+/** The phone bar must not sit on top of the full comparison, nor on the keyboard while typing. */
+{
+  const bar = byId('mobile-comparison');
+  let comparisonInView = false, typing = false;
+  const syncBar = () => bar.classList.toggle('bar-off', comparisonInView || typing);
+  if ('IntersectionObserver' in window) new IntersectionObserver(entries => { comparisonInView = entries[0].isIntersecting; syncBar(); }, { threshold: 0.15 }).observe(byId('comparison-panel'));
+  byId('message-input').addEventListener('focus', () => { typing = true; syncBar(); });
+  byId('message-input').addEventListener('blur', () => { typing = false; syncBar(); });
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 window.addEventListener('pagehide', () => clearInterval(pollTimer));

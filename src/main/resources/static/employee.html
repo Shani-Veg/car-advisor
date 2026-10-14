@@ -7,51 +7,51 @@
   <title>ההשוואה שלי · יועץ הרכב</title>
   <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
+<body class="employee-page">
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header">
     <a class="wordmark" id="home-link" href="index.html">יועץ הרכב<span>סביבת ההחלטה שלך</span></a>
     <nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">ההשוואה שלי</span><a id="rep-link" href="rep.html">מסך נציג <span aria-hidden="true">↗</span></a></nav>
   </header>
   <main id="main" class="app-main">
-    <div class="page-intro"><div><span class="eyebrow">התמונה שלך, בדרך לרכב הבא</span><h1>מה יקרה לנטו שלי?</h1><p>שואלים, משווים, ומבינים מה עומד מאחורי המספרים.</p></div><span id="case-state" class="badge">טוען תיק…</span></div>
-    <div id="mock-banner" class="notice mock-notice" hidden>מצב הדגמה · נתוני דמה בלבד. אישור נציג לא מחשב מחדש את ההשוואה במוק.</div>
+    <div class="case-strip"><span>השיחה והפרטים שלך, במקום אחד</span><span id="case-state" class="badge">טוען תיק…</span></div>
+    <div id="mock-banner" class="notice mock-notice" hidden>הדגמה · נתוני דמה בלבד. הסכומים הם דוגמאות קבועות ואינם מחושבים לפי הפרטים שהוזנו.</div>
+    <div id="replay-banner" class="notice replay-notice" role="status" hidden>הדגמה: השמעה של שיחה מוקלטת</div>
     <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.</div>
     <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" type="button" class="text-button">נסה שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
-    <div id="pending-banner" class="notice pending-notice" hidden><strong>שאלה נשלחה לנציג התחבורה, ההשוואה תתעדכן כשתגיע תשובה</strong><ul id="pending-list"></ul></div>
-    <nav class="mobile-jumps" aria-label="מעבר בין אזורי המסך"><a href="#chat-panel">שיחה</a><a href="#comparison-panel">השוואה</a><a href="#profile-panel">הפרופיל שלי</a></nav>
     <div class="employee-grid">
       <section id="chat-panel" class="panel chat-panel" aria-labelledby="chat-heading">
-        <div class="panel-heading"><div><span class="section-kicker">מתקדמים יחד</span><h2 id="chat-heading">השיחה שלך</h2></div><span class="assistant-symbol" aria-hidden="true">✳</span></div>
-        <div class="chat-intro"><span class="tiny-dot"></span><span>אפשר לשאול במילים שלך, או לעדכן את הפרופיל.</span></div>
+        <div class="chat-heading"><img class="header-avatar" src="assets/avatar-bot.webp" alt="" width="48" height="48"><div><h1 id="chat-heading">יועץ הרכב</h1><p>הכללים והחישוב מהשרת, לא מהמודל</p></div><span class="chat-label">השיחה שלי</span></div>
+        <div class="chat-progress"><div><span id="progress-label">הפרטים שלי: טוען…</span><span class="small-muted">צעד אחר צעד</span></div><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
         <div id="messages" class="messages" role="log" aria-label="היסטוריית השיחה" aria-live="off" aria-busy="true"><p class="empty-state">טוען את השיחה…</p></div>
         <div id="chat-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="typing" class="typing" role="status" hidden><span class="typing-dots" aria-hidden="true">•••</span>העוזר מכין תשובה…</div>
         <form id="message-form" class="composer">
           <label for="message-input">מה תרצו לבדוק?</label>
-          <div class="composer-input"><textarea id="message-input" name="message" placeholder="למשל, מה יקרה אם אעבור לרכב חשמלי?" rows="2" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
+          <div class="composer-input"><textarea id="message-input" name="message" placeholder="אפשר גם לענות במילים שלך…" rows="2" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
           <p class="composer-hint">Enter לשליחה · Shift + Enter לשורה חדשה</p>
         </form>
       </section>
       <div class="decision-workspace">
-        <section id="comparison-panel" class="panel comparison-panel" aria-labelledby="comparison-heading">
-          <div class="panel-heading"><div><span class="section-kicker">מבט על הנטו החודשי</span><h2 id="comparison-heading">היום מול החלופה</h2></div><span class="badge soft-teal">התמונה הכספית</span></div>
-          <div id="comparison" aria-busy="true"><div class="skeleton comparison-skeleton"></div><p class="empty-state">טוען את ההשוואה…</p></div>
-        </section>
         <section id="profile-panel" class="panel profile-panel" aria-labelledby="profile-heading">
-          <div class="panel-heading"><div><span class="section-kicker">הבסיס להשוואה</span><h2 id="profile-heading">הפרופיל שלי</h2></div><span class="small-muted">לחצו על נתון לעריכה</span></div>
-          <div id="profile" class="profile-grid" aria-busy="true"><p class="empty-state">טוען את הפרטים…</p></div>
-          <div class="profile-legend"><span class="status-dot confirmed-dot"></span>אושר<span class="status-dot default-dot"></span>הערכה<span class="status-dot missing-dot"></span>חסר</div>
+          <div class="panel-heading"><div><span class="section-kicker">הבסיס להחלטה</span><h2 id="profile-heading">מה אני יודע עליך</h2></div><button id="profile-toggle" class="text-button" type="button" aria-expanded="true" aria-controls="profile-content" hidden>הצג הכול</button><span id="profile-count" class="badge neutral">טוען…</span></div>
+          <div id="profile-content"><p class="profile-hint">לחיצה על פרט פותחת את אפשרויות העריכה שלו.</p><div id="profile" class="profile-grid" aria-busy="true"><p class="empty-state">טוען את הפרטים…</p></div><details id="profile-extra" class="profile-extra"><summary>שאר הפרטים להשוואה</summary><div id="profile-other" class="profile-grid"></div></details><p id="profile-placeholder" class="profile-placeholder">כשאדע מספיק, ההשוואה תופיע כאן.</p></div>
         </section>
-        <section id="ranking-panel" class="panel ranking-panel" aria-labelledby="ranking-heading">
+        <div id="pending-banner" class="notice pending-notice" role="status" hidden><strong>שאלה נשלחה לנציג התחבורה, ההשוואה תתעדכן כשתגיע תשובה</strong><ul id="pending-list"></ul></div>
+        <section id="comparison-panel" class="panel comparison-panel" aria-labelledby="comparison-heading" hidden>
+          <div class="panel-heading"><div><span class="section-kicker">מבט על הנטו החודשי</span><h2 id="comparison-heading">היום מול החלופה</h2></div><span class="badge soft-teal">התמונה הכספית</span></div>
+          <div id="comparison"></div>
+        </section>
+        <section id="ranking-panel" class="panel ranking-panel" aria-labelledby="ranking-heading" hidden>
           <div class="panel-heading"><div><span class="section-kicker">עוד אפשרויות בדרך</span><h2 id="ranking-heading">חלופות להשוואה</h2></div><span class="small-muted">לפי סדר השרת</span></div>
-          <div id="ranking" aria-busy="true"><p class="empty-state">טוען חלופות…</p></div>
+          <div id="ranking"></div>
         </section>
       </div>
     </div>
     <footer class="app-footer"><span>הערכות מסומנות עד לאישור · הנתונים מתעדכנים במהלך השיחה</span><span id="sync-label" role="status">מתחבר…</span></footer>
   </main>
+  <button id="mobile-comparison" class="mobile-comparison" type="button" aria-controls="comparison-panel" hidden><span><strong id="mobile-direction"></strong><small>להשוואה המלאה <span aria-hidden="true">↑</span></small></span><bdi id="mobile-difference" dir="ltr"></bdi></button>
   <dialog id="profile-dialog" aria-labelledby="edit-heading">
     <form id="profile-form">
       <div class="dialog-heading"><h2 id="edit-heading">עדכון פרופיל</h2><button id="close-dialog" class="icon-button" type="button" aria-label="סגירת העריכה">×</button></div>
