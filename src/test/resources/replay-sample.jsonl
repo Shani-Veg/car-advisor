@@ -1,0 +1,2 @@
+{"employeeText":"אני מנהלת מוצר ושכר הבסיס שלי 18,500","step":0,"model":"recorded","text":"","calls":[{"name":"record_facts","args":{"occupation":"מנהל/ת מוצר","baseSalary":18500}}]}
+{"employeeText":"אני מנהלת מוצר ושכר הבסיס שלי 18,500","step":1,"model":"recorded","text":"תודה! כמה אחוזים מפרישים לפנסיה?","calls":[]}

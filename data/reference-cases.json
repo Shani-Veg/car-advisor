@@ -1,0 +1,203 @@
+[
+  {
+    "id": "E-001",
+    "occupation": "מנהל/ת מוצר",
+    "group": "ג",
+    "baseSalary": 18500,
+    "commissions": 0,
+    "bonus": 0,
+    "pensionPct": 6,
+    "studyFundPct": 2.5,
+    "creditPoints": 2.75,
+    "childrenUpTo23": 2,
+    "today": {
+      "type": "car",
+      "commercialName": "COROLLA CROSS",
+      "participation": 300
+    },
+    "alternative": {
+      "type": "car",
+      "commercialName": "ATTO 3"
+    },
+    "question": "אם אעבור מהקורולה קרוס ל-BYD Atto 3 החשמלי - כמה זה ישנה לי בנטו?",
+    "expected": {
+      "eligible": true,
+      "netToday": 11032,
+      "netAlternative": 11693,
+      "difference": 661,
+      "taxToday": 3443,
+      "taxAlternative": 3283,
+      "socialToday": 2153,
+      "socialAlternative": 2092,
+      "evGrossUp": 440,
+      "familyShare": 0
+    }
+  },
+  {
+    "id": "E-002",
+    "occupation": "נציג/ת מכירות שטח",
+    "group": "ב",
+    "baseSalary": 9800,
+    "commissions": 2400,
+    "bonus": 0,
+    "pensionPct": 6,
+    "studyFundPct": 0,
+    "creditPoints": 2.25,
+    "childrenUpTo23": 5,
+    "today": {
+      "type": "car",
+      "commercialName": "NIRO",
+      "participation": 250
+    },
+    "alternative": {
+      "type": "car",
+      "commercialName": "CARNIVAL"
+    },
+    "question": "יש לי 5 ילדים. אם אקח קרניבל במסלול ברוכת ילדים - מה יקרה לנטו?",
+    "expected": {
+      "eligible": true,
+      "netToday": 8600,
+      "netAlternative": 5078,
+      "difference": -3522,
+      "taxToday": 1369,
+      "taxAlternative": 2861,
+      "socialToday": 1250,
+      "socialAlternative": 1879,
+      "evGrossUp": 0,
+      "familyShare": 1150
+    }
+  },
+  {
+    "id": "E-003",
+    "occupation": "מפתח/ת תוכנה",
+    "group": "ב",
+    "baseSalary": 21000,
+    "commissions": 0,
+    "bonus": 0,
+    "pensionPct": 6.5,
+    "studyFundPct": 2.5,
+    "creditPoints": 2.75,
+    "childrenUpTo23": 0,
+    "today": {
+      "type": "waiver"
+    },
+    "alternative": {
+      "type": "car",
+      "commercialName": "MG4"
+    },
+    "question": "היום אני מקבלת אחזקת רכב. אם אקח MG4 חשמלי - כמה אפסיד או ארוויח בנטו?",
+    "expected": {
+      "eligible": true,
+      "netToday": 15047,
+      "netAlternative": 13109,
+      "difference": -1938,
+      "taxToday": 3419,
+      "taxAlternative": 3910,
+      "socialToday": 2144,
+      "socialAlternative": 2315,
+      "evGrossUp": 473,
+      "familyShare": 0
+    }
+  },
+  {
+    "id": "E-004",
+    "occupation": "מנהל/ת אזור מכירות",
+    "group": "ג",
+    "baseSalary": 16000,
+    "commissions": 3000,
+    "bonus": 0,
+    "pensionPct": 6,
+    "studyFundPct": 2.5,
+    "creditPoints": 2.25,
+    "childrenUpTo23": 3,
+    "today": {
+      "type": "car",
+      "commercialName": "TUCSON",
+      "participation": 400
+    },
+    "alternative": {
+      "type": "car",
+      "commercialName": "EV3"
+    },
+    "question": "אם אחליף את הטוסון ב-EV3 - מה ההפרש בנטו?",
+    "expected": {
+      "eligible": true,
+      "netToday": 10693,
+      "netAlternative": 11900,
+      "difference": 1207,
+      "taxToday": 3991,
+      "taxAlternative": 3497,
+      "socialToday": 2301,
+      "socialAlternative": 2128,
+      "evGrossUp": 440,
+      "familyShare": 0
+    }
+  },
+  {
+    "id": "E-005",
+    "occupation": "מנהל/ת פיתוח",
+    "group": "ג",
+    "baseSalary": 27000,
+    "commissions": 0,
+    "bonus": 0,
+    "pensionPct": 7,
+    "studyFundPct": 2.5,
+    "creditPoints": 2.75,
+    "childrenUpTo23": 1,
+    "today": {
+      "type": "car",
+      "commercialName": "MAZDA 3",
+      "participation": 350
+    },
+    "alternative": {
+      "type": "waiver"
+    },
+    "question": "אם אוותר על הרכב ואקבל אחזקה - כמה אקבל בנטו?",
+    "expected": {
+      "eligible": true,
+      "netToday": 14244,
+      "netAlternative": 17806,
+      "difference": 3562,
+      "taxToday": 6593,
+      "taxAlternative": 5694,
+      "socialToday": 3248,
+      "socialAlternative": 2935,
+      "evGrossUp": 0,
+      "familyShare": 0
+    }
+  },
+  {
+    "id": "E-006",
+    "occupation": "מנהל/ת מחלקה",
+    "group": "ד",
+    "baseSalary": 32000,
+    "commissions": 0,
+    "bonus": 2000,
+    "pensionPct": 6,
+    "studyFundPct": 2.5,
+    "creditPoints": 2.25,
+    "childrenUpTo23": 4,
+    "today": {
+      "type": "car",
+      "commercialName": "OCTAVIA",
+      "participation": 500
+    },
+    "alternative": {
+      "type": "car",
+      "commercialName": "MODEL 3"
+    },
+    "question": "אם אעבור מהאוקטביה לטסלה מודל 3 - מה יקרה לנטו?",
+    "expected": {
+      "eligible": true,
+      "netToday": 17073,
+      "netAlternative": 17794,
+      "difference": 721,
+      "taxToday": 9367,
+      "taxAlternative": 9183,
+      "socialToday": 4170,
+      "socialAlternative": 4106,
+      "evGrossUp": 473,
+      "familyShare": 0
+    }
+  }
+]

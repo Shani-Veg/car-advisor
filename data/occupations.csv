@@ -1,0 +1,15 @@
+occupation,group,carMandatory,waiverAllowed,waiverMaintenance
+נציג/ת מכירות שטח,ב,true,false,0
+מנהל/ת אזור מכירות,ג,true,false,0
+טכנאי/ת שירות,א,true,false,0
+נהג/ת הפצה,א,true,false,0
+מפקח/ת איכות במפעל,א,false,true,1200
+רכז/ת רכש,א,false,true,1200
+מהנדס/ת תהליך,ב,false,true,1500
+מפתח/ת תוכנה,ב,false,true,1500
+אנליסט/ית נתונים,ב,false,true,1500
+מנהל/ת מוצר,ג,false,true,2000
+מנהל/ת פיתוח,ג,false,true,2000
+מנהל/ת משאבי אנוש,ג,false,true,2000
+מנהל/ת מחלקה,ד,false,true,2600
+מנהל/ת חטיבה,ד,false,true,3000

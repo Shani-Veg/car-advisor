@@ -1,0 +1,5 @@
+/mvnw text eol=lf
+*.cmd text eol=crlf
+
+# Tax authority file: keep the bytes exactly as received (windows-1255, CRLF)
+data/use-value-2026.csv binary
