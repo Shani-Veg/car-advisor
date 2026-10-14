@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <rect width="1600" height="900" fill="#F6F2EC"/>
+  <!-- flat pills in the product colours: red, sun, turquoise, green. No gradients. -->
+  <rect x="-140" y="-120" width="520" height="190" rx="95" transform="rotate(-24 120 -25)" fill="#E25845" opacity=".13"/>
+  <rect x="1180" y="-40" width="170" height="440" rx="85" transform="rotate(18 1265 180)" fill="#FAC172" opacity=".34"/>
+  <rect x="1330" y="560" width="520" height="190" rx="95" transform="rotate(-24 1590 655)" fill="#89D5C9" opacity=".42"/>
+  <rect x="-110" y="640" width="150" height="420" rx="75" transform="rotate(22 -35 850)" fill="#ADC865" opacity=".30"/>
+  <circle cx="1450" cy="130" r="54" fill="#E25845" opacity=".10"/>
+  <circle cx="190" cy="500" r="38" fill="#89D5C9" opacity=".40"/>
+</svg>
