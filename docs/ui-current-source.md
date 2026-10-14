@@ -1,4 +1,4 @@
-# קוד ה-UI הנוכחי (אחרי סבב 5)
+# קוד ה-UI הנוכחי (אחרי סבב 7)
 נוצר אוטומטית מ-`src/main/resources/static/`. כל קובץ בשלמותו. `proof.html`, `css/proof.css` ו-`js/proof.js` שייכים לדף ההוכחה. נכסים: `assets/` (איקונים, `makers/` לוגואים, `fonts/`, `page-shapes.svg`). `js/mock-api.js` עדיין מדמה את מסלול עשר השאלות הישן.
 
 ## `index.html`
@@ -85,12 +85,11 @@
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header">
     <a class="wordmark" id="home-link" href="index.html">יועץ הרכב</a>
-    <nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">ההשוואה שלי</span><a id="rep-link" href="rep.html">מסך נציג <span aria-hidden="true">↗</span></a></nav>
+    <div class="header-end"><span id="replay-banner" class="mode-chip" role="status" hidden>הדגמה: השמעה של שיחה מוקלטת</span><nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">ההשוואה שלי</span><a id="rep-link" href="rep.html">מסך נציג <span aria-hidden="true">↗</span></a></nav></div>
   </header>
   <main id="main" class="app-main">
     <span id="case-state" class="sr-only" role="status">טוען תיק…</span>
     <div id="mock-banner" class="notice mock-notice" hidden>הדגמה · נתוני דמה בלבד. הסכומים הם דוגמאות קבועות ואינם מחושבים לפי הפרטים שהוזנו.</div>
-    <div id="replay-banner" class="notice replay-notice" role="status" hidden>הדגמה: השמעה של שיחה מוקלטת</div>
     <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר לענות בקצרה על השאלה (מספר או מילה), ללחוץ על כפתור, או לעדכן ב"המידע שלך".</div>
     <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" type="button" class="text-button">נסה שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
@@ -107,6 +106,12 @@
         </form>
       </section>
       <div class="decision-workspace">
+        <section id="journey-panel" class="panel journey-panel" aria-labelledby="journey-heading">
+          <span class="section-kicker">בדיקה של דקה</span>
+          <h2 id="journey-heading">ארבע שאלות קצרות, ואז רואים מה יקרה לנטו</h2>
+          <ol id="journey-steps" class="journey-steps"></ol>
+          <p id="journey-note" class="journey-note"></p>
+        </section>
         <section id="profile-panel" class="panel profile-panel" aria-label="המידע שלך">
           <button id="profile-toggle" class="profile-toggle" type="button" aria-expanded="false" aria-controls="profile-content"><span class="profile-title">המידע שלך</span><span id="profile-count" class="badge neutral">טוען…</span><span class="chevron" aria-hidden="true">▾</span></button>
           <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן או להשלים כל פרט בלחיצה עליו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
@@ -337,6 +342,61 @@ h2{font-weight:600}
 .message,.estimate-note{animation:pop .22s ease-out both}
 .choice-button{transition:background .15s,color .15s}
 @media(prefers-reduced-motion:reduce){.message,.estimate-note{animation:none}.choice-button{transition:none}}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-hebrew-400.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-latin-400.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-hebrew-500.woff2) format("woff2");font-weight:500;font-display:swap;unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-latin-500.woff2) format("woff2");font-weight:500;font-display:swap;unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-hebrew-600.woff2) format("woff2");font-weight:600;font-display:swap;unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-latin-600.woff2) format("woff2");font-weight:600;font-display:swap;unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-hebrew-700.woff2) format("woff2");font-weight:700;font-display:swap;unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F}
+@font-face{font-family:"IBM Plex Sans Hebrew";src:url(../assets/fonts/plex-latin-700.woff2) format("woff2");font-weight:700;font-display:swap;unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"Frank Ruhl Libre";src:url(../assets/fonts/frank-hebrew-500-900.woff2) format("woff2");font-weight:500 900;font-display:swap;unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F}
+@font-face{font-family:"Frank Ruhl Libre";src:url(../assets/fonts/frank-latin-500-900.woff2) format("woff2");font-weight:500 900;font-display:swap;unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+
+/* ===== Round 7: typography (IBM Plex Sans Hebrew + Frank Ruhl Libre), calmer chrome, a path for the empty state ===== */
+:root{--display:"Frank Ruhl Libre","David Libre",Georgia,serif;font-family:"IBM Plex Sans Hebrew","Segoe UI",Arial,sans-serif;--line:#e9e2d6;--shadow:0 1px 2px #2437460d,0 14px 30px -14px #24374626}
+body{font-size:15px;line-height:1.6;letter-spacing:0}
+h1,h2,.welcome h1,.page-intro h1{font-family:var(--display);font-weight:700;letter-spacing:-.2px}
+h2{font-size:24px}
+.chat-heading h1{font-family:var(--display);font-size:22px;font-weight:700}
+.wordmark{font-family:var(--display);font-size:22px;font-weight:800}
+.section-kicker,.eyebrow{font-size:12px;letter-spacing:.3px;font-weight:600}
+.net-amount,.difference-amount,.ranking-value bdi,.mobile-comparison bdi{font-family:var(--display);font-weight:800;letter-spacing:-.3px}
+.net-amount{font-size:34px}
+.difference-amount{font-size:46px}
+.panel{box-shadow:var(--shadow);border-color:var(--line)}
+/* mode chip in the header instead of a full-width banner */
+.header-end{display:flex;align-items:center;gap:18px}
+.mode-chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#6d4a12;background:#fff3df;border:1px solid #ecd2a2;border-radius:999px;padding:4px 12px}
+.mode-chip::before{content:"";width:8px;height:8px;border-radius:50%;background:#e8a23c}
+.mode-chip[hidden]{display:none}
+.site-header{min-height:54px}
+.header-nav{font-size:14px;font-weight:500}
+/* quieter background: shapes only at the edges */
+.mock-notice,.warning,.error-notice{border-radius:14px;margin-bottom:12px}
+/* chat: role and car lists as a compact grid */
+.choices-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:260px}
+.choices-list:has(.vehicle-identity){grid-template-columns:minmax(0,1fr)}
+.choices-list .choice-button{border-radius:14px;padding:10px 12px;font-size:14px;text-align:center;line-height:1.35}
+.choices-list .choice-button:has(.vehicle-identity){text-align:start}
+.message-text{font-size:15px;line-height:1.75}
+/* the path for the empty state */
+.journey-panel{padding:26px 28px 24px}
+.journey-panel h2{font-size:28px;line-height:1.25;margin:2px 0 20px}
+.journey-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.journey-step{position:relative;display:flex;flex-direction:column;gap:10px;padding:14px 14px 16px;border:1.5px solid var(--line);border-radius:18px;background:#fff;min-height:112px}
+.step-dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:#efe8de;color:var(--muted)}
+.step-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.step-label{font-size:13px;color:var(--muted);font-weight:500}
+.step-value{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.journey-step.done{border-color:#bfe0da;background:#f3fbf9}
+.journey-step.done .step-dot{background:var(--turq);color:#fff}
+.journey-step.current{border-color:var(--coral);background:#fff7f4}
+.journey-step.current .step-dot{background:var(--coral);color:#fff}
+.journey-step.current .step-label{color:var(--ink);font-weight:600}
+.journey-note{margin-top:16px;font-size:13px;color:var(--muted)}
+@media(max-width:1000px){.journey-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.journey-panel{padding:20px 18px}.journey-panel h2{font-size:23px}}
+@media(max-width:700px){.site-header{flex-wrap:wrap;row-gap:6px;padding-block:8px}.wordmark{white-space:nowrap;font-size:20px}.header-end{display:contents}.header-nav{white-space:nowrap;font-size:13px}.mode-chip{order:3;flex:1 0 100%;justify-content:center;font-size:12px}}
 ```
 
 ## `js/api.js`
@@ -750,6 +810,31 @@ function renderMessages(messages) {
   container.setAttribute('aria-busy', 'false');
 }
 
+/** The four questions the chat asks, as a path: done (with the answer), current, and still ahead. */
+const JOURNEY = [['occupation', 'תפקיד'], ['baseSalary', 'שכר בסיס'], ['childrenUpTo23', 'ילדים עד גיל 23'], ['currentCar', 'רכב היום']];
+function renderJourney(profile, comparison) {
+  byId('journey-panel').hidden = comparison != null;
+  if (comparison != null) return;
+  const steps = byId('journey-steps');
+  const fields = JOURNEY.map(([key, label]) => ({ label, field: profile.find(item => item.key === key) }));
+  const currentIndex = fields.findIndex(({ field }) => !field || field.status === 'MISSING');
+  steps.replaceChildren();
+  for (const [index, { label, field }] of fields.entries()) {
+    const state = currentIndex === -1 || index < currentIndex ? 'done' : index === currentIndex ? 'current' : 'todo';
+    const item = el('li', 'journey-step ' + state);
+    const dot = el('span', 'step-dot', state === 'done' ? '✓' : String(index + 1)); dot.setAttribute('aria-hidden', 'true');
+    const text = el('span', 'step-text');
+    text.append(el('span', 'step-label', label));
+    if (state === 'done') { const value = el('span', 'step-value', field.display); value.dir = 'auto'; text.append(value); }
+    item.append(dot, text);
+    if (state === 'current') item.setAttribute('aria-current', 'step');
+    steps.append(item);
+  }
+  showNotice(byId('journey-note'), currentIndex === -1
+    ? 'הכול מוכן. בחרו חלופה בצ\'אט, או שאלו מה הכי משתלם.'
+    : 'פרטים משניים (עמלות, בונוס, פנסיה, קרן השתלמות, נקודות זיכוי) נניח בינתיים ונסמן אותם כהערכה.');
+}
+
 function renderProfile(profile, previous) {
   const container = byId('profile');
   if (!profileNodes.size) container.replaceChildren();
@@ -778,7 +863,7 @@ function renderProfile(profile, previous) {
   const estimated = profile.filter(field => field.status === 'DEFAULT' && !['group', 'alternativeParticipation'].includes(field.key)).length;
   showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + asked.length);
   byId('profile-progress').max = Math.max(1, asked.length); byId('profile-progress').value = complete;
-  showNotice(byId('profile-count'), complete + ' מתוך ' + asked.length + (estimated ? ' · ' + estimated + ' הערכות' : ''));
+  showNotice(byId('profile-count'), complete + ' מתוך ' + asked.length + ' נענו' + (estimated ? ' · ' + estimated + ' הנחות' : ''));
   container.setAttribute('aria-busy', 'false');
 }
 
@@ -940,6 +1025,7 @@ function applyCase(next) {
   renderMessages(next.messages || []);
   byId('message-input').placeholder = (next.messages || []).some(message => message.role === 'employee') ? 'הקלידו כאן…' : 'מה תרצו לבדוק?';
   renderProfile(next.profile || [], previous);
+  renderJourney(next.profile || [], next.comparison);
   document.body.classList.toggle('has-comparison', next.comparison != null && next.comparison.eligible !== false);
   const estimateChanged = next.comparison?.estimates?.some(key => !same(previous?.profile?.find(field => field.key === key), next.profile.find(field => field.key === key)));
   if (!previous || !same(previous.comparison, next.comparison) || estimateChanged) renderComparison(next.comparison, previous?.comparison);

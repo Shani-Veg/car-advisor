@@ -174,6 +174,31 @@ function renderMessages(messages) {
   container.setAttribute('aria-busy', 'false');
 }
 
+/** The four questions the chat asks, as a path: done (with the answer), current, and still ahead. */
+const JOURNEY = [['occupation', 'תפקיד'], ['baseSalary', 'שכר בסיס'], ['childrenUpTo23', 'ילדים עד גיל 23'], ['currentCar', 'רכב היום']];
+function renderJourney(profile, comparison) {
+  byId('journey-panel').hidden = comparison != null;
+  if (comparison != null) return;
+  const steps = byId('journey-steps');
+  const fields = JOURNEY.map(([key, label]) => ({ label, field: profile.find(item => item.key === key) }));
+  const currentIndex = fields.findIndex(({ field }) => !field || field.status === 'MISSING');
+  steps.replaceChildren();
+  for (const [index, { label, field }] of fields.entries()) {
+    const state = currentIndex === -1 || index < currentIndex ? 'done' : index === currentIndex ? 'current' : 'todo';
+    const item = el('li', 'journey-step ' + state);
+    const dot = el('span', 'step-dot', state === 'done' ? '✓' : String(index + 1)); dot.setAttribute('aria-hidden', 'true');
+    const text = el('span', 'step-text');
+    text.append(el('span', 'step-label', label));
+    if (state === 'done') { const value = el('span', 'step-value', field.display); value.dir = 'auto'; text.append(value); }
+    item.append(dot, text);
+    if (state === 'current') item.setAttribute('aria-current', 'step');
+    steps.append(item);
+  }
+  showNotice(byId('journey-note'), currentIndex === -1
+    ? 'הכול מוכן. בחרו חלופה בצ\'אט, או שאלו מה הכי משתלם.'
+    : 'פרטים משניים (עמלות, בונוס, פנסיה, קרן השתלמות, נקודות זיכוי) נניח בינתיים ונסמן אותם כהערכה.');
+}
+
 function renderProfile(profile, previous) {
   const container = byId('profile');
   if (!profileNodes.size) container.replaceChildren();
@@ -202,7 +227,7 @@ function renderProfile(profile, previous) {
   const estimated = profile.filter(field => field.status === 'DEFAULT' && !['group', 'alternativeParticipation'].includes(field.key)).length;
   showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + asked.length);
   byId('profile-progress').max = Math.max(1, asked.length); byId('profile-progress').value = complete;
-  showNotice(byId('profile-count'), complete + ' מתוך ' + asked.length + (estimated ? ' · ' + estimated + ' הערכות' : ''));
+  showNotice(byId('profile-count'), complete + ' מתוך ' + asked.length + ' נענו' + (estimated ? ' · ' + estimated + ' הנחות' : ''));
   container.setAttribute('aria-busy', 'false');
 }
 
@@ -364,6 +389,7 @@ function applyCase(next) {
   renderMessages(next.messages || []);
   byId('message-input').placeholder = (next.messages || []).some(message => message.role === 'employee') ? 'הקלידו כאן…' : 'מה תרצו לבדוק?';
   renderProfile(next.profile || [], previous);
+  renderJourney(next.profile || [], next.comparison);
   document.body.classList.toggle('has-comparison', next.comparison != null && next.comparison.eligible !== false);
   const estimateChanged = next.comparison?.estimates?.some(key => !same(previous?.profile?.find(field => field.key === key), next.profile.find(field => field.key === key)));
   if (!previous || !same(previous.comparison, next.comparison) || estimateChanged) renderComparison(next.comparison, previous?.comparison);
