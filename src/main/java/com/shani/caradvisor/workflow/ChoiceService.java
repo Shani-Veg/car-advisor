@@ -23,14 +23,37 @@ public class ChoiceService {
     private final CaseViewAssembler views;
     private final ChoiceOptions options;
     private final CaseWorkflowService workflow;
+    private final DirectAnswers directAnswers;
 
     ChoiceService(CaseRepository cases, MessageRepository messages, CaseViewAssembler views, ChoiceOptions options,
-                  CaseWorkflowService workflow) {
+                  CaseWorkflowService workflow, DirectAnswers directAnswers) {
         this.cases = cases;
         this.messages = messages;
         this.views = views;
         this.options = options;
         this.workflow = workflow;
+        this.directAnswers = directAnswers;
+    }
+
+    /**
+     * A typed reply that is plainly the answer to the open question ("24000" to the salary question) is handled by
+     * code: no assistant needed, so it also works when the assistant is down. Empty when the text is anything else.
+     */
+    public Optional<CaseView> answerDirectly(String caseId, String text, String clientRequestId) {
+        CaseEntity caseEntity = cases.findById(caseId)
+                .orElseThrow(() -> ApiException.notFound("UNKNOWN_CASE", "התיק לא נמצא"));
+        if (clientRequestId != null && messages.findByCaseIdAndClientRequestId(caseId, clientRequestId).isPresent()) {
+            return Optional.of(views.caseView(caseEntity));
+        }
+        Optional<DirectAnswers.Answer> answer = firstMissing(caseEntity).flatMap(key -> directAnswers.parse(key, text));
+        if (answer.isEmpty()) {
+            return Optional.empty();
+        }
+        long messageId = workflow.recordEmployeeMessage(caseId, text, clientRequestId).orElseThrow();
+        workflow.setFact(caseId, answer.get().key(), answer.get().value(), FactEntity.Source.EMPLOYEE_MESSAGE,
+                "m-" + messageId, null);
+        workflow.addBotMessage(caseId, nextQuestionOrDone(caseEntity));
+        return Optional.of(workflow.view(caseId));
     }
 
     public CaseView choose(String caseId, String choiceId, String clientRequestId) {

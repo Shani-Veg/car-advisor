@@ -148,3 +148,18 @@ h2{font-weight:600}
 .drive-badge.electric{background:var(--teal-soft);color:#0b6a61}
 .welcome{border-radius:30px;border:1px solid var(--line)}
 .header-caption{color:var(--muted)}
+/* why the net changed: one bar per factor, drawn from the server's numbers */
+.impact-chart{display:grid;gap:11px;margin:0 0 20px}
+.impact-row{display:grid;grid-template-columns:minmax(96px,.9fr) 2fr minmax(72px,auto);align-items:center;gap:12px;font-size:13px}
+.impact-label{font-weight:500}
+.impact-track{position:relative;height:16px;background:#f3ede4;border-radius:999px}
+.impact-track::after{content:"";position:absolute;inset-block:-3px;inset-inline-start:50%;width:2px;background:#cfc6b8}
+.impact-bar{position:absolute;inset-block:0;border-radius:999px}
+.impact-bar.gain{inset-inline-start:50%;background:var(--turq)}
+.impact-bar.loss{inset-inline-end:50%;background:var(--red)}
+.impact-value{font-weight:700;text-align:end}
+/* gentle entrance */
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.message,.estimate-note{animation:pop .22s ease-out both}
+.choice-button{transition:background .15s,color .15s}
+@media(prefers-reduced-motion:reduce){.message,.estimate-note{animation:none}.choice-button{transition:none}}

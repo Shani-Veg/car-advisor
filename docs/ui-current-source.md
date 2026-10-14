@@ -1,4 +1,4 @@
-# קוד ה-UI הנוכחי (אחרי סבב 5: פלטת צבעים שטוחה)
+# קוד ה-UI הנוכחי (אחרי סבב 5)
 נוצר אוטומטית מ-`src/main/resources/static/`. כל קובץ בשלמותו. `proof.html`, `css/proof.css` ו-`js/proof.js` שייכים לדף ההוכחה. נכסים: `assets/` (איקונים, `makers/` לוגואים, `fonts/`, `page-shapes.svg`). `js/mock-api.js` עדיין מדמה את מסלול עשר השאלות הישן.
 
 ## `index.html`
@@ -91,7 +91,7 @@
     <span id="case-state" class="sr-only" role="status">טוען תיק…</span>
     <div id="mock-banner" class="notice mock-notice" hidden>הדגמה · נתוני דמה בלבד. הסכומים הם דוגמאות קבועות ואינם מחושבים לפי הפרטים שהוזנו.</div>
     <div id="replay-banner" class="notice replay-notice" role="status" hidden>הדגמה: השמעה של שיחה מוקלטת</div>
-    <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.</div>
+    <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר לענות בקצרה על השאלה (מספר או מילה), ללחוץ על כפתור, או לעדכן ב"המידע שלך".</div>
     <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" type="button" class="text-button">נסה שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
     <div class="employee-grid">
@@ -322,6 +322,21 @@ h2{font-weight:600}
 .drive-badge.electric{background:var(--teal-soft);color:#0b6a61}
 .welcome{border-radius:30px;border:1px solid var(--line)}
 .header-caption{color:var(--muted)}
+/* why the net changed: one bar per factor, drawn from the server's numbers */
+.impact-chart{display:grid;gap:11px;margin:0 0 20px}
+.impact-row{display:grid;grid-template-columns:minmax(96px,.9fr) 2fr minmax(72px,auto);align-items:center;gap:12px;font-size:13px}
+.impact-label{font-weight:500}
+.impact-track{position:relative;height:16px;background:#f3ede4;border-radius:999px}
+.impact-track::after{content:"";position:absolute;inset-block:-3px;inset-inline-start:50%;width:2px;background:#cfc6b8}
+.impact-bar{position:absolute;inset-block:0;border-radius:999px}
+.impact-bar.gain{inset-inline-start:50%;background:var(--turq)}
+.impact-bar.loss{inset-inline-end:50%;background:var(--red)}
+.impact-value{font-weight:700;text-align:end}
+/* gentle entrance */
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.message,.estimate-note{animation:pop .22s ease-out both}
+.choice-button{transition:background .15s,color .15s}
+@media(prefers-reduced-motion:reduce){.message,.estimate-note{animation:none}.choice-button{transition:none}}
 ```
 
 ## `js/api.js`
@@ -601,10 +616,19 @@ function setError(error, retry) {
 }
 function clearError() { byId('error-banner').hidden = true; retryAction = null; }
 function feedback(message) { showNotice(byId('feedback'), message); }
+/** The bot's face follows the moment: thinking while it works, happy when the change in net is a gain. */
+function setMood() {
+  const mood = busy && !byId('profile-dialog').open ? 'think' : current?.comparison?.direction === 'GAIN' ? 'happy' : 'default';
+  const src = { think: 'assets/avatar-bot-think.webp', happy: 'assets/avatar-bot-happy.webp', default: 'assets/avatar-bot.webp' }[mood];
+  const avatar = document.querySelector('.header-avatar');
+  if (avatar && !avatar.src.endsWith(src)) avatar.src = src;
+}
 function updateControls() {
+  setMood();
   for (const button of document.querySelectorAll('[data-mutation]')) button.disabled = busy || !current;
   byId('message-input').disabled = !current;
-  byId('send-button').disabled = busy || !current || unavailable() || Date.now() < rateLimitedUntil;
+  // Sending stays possible when the assistant is down: the server still understands a plain answer to the open question.
+  byId('send-button').disabled = busy || !current || Date.now() < rateLimitedUntil;
   byId('close-dialog').disabled = busy;
   byId('cancel-edit').disabled = busy;
   byId('assistant-banner').hidden = !unavailable();
@@ -775,6 +799,24 @@ function netCard(data, alternative, estimates, key) {
   if (estimates.includes(key + '.net')) node.append(statusBadge('DEFAULT'));
   return node;
 }
+/** Bars only draw the server's per-factor impacts: widths are proportions of the largest one, every number shown is the server's. */
+function impactChart(factors = []) {
+  const rows = factors.filter(factor => typeof factor.netImpact === 'number' && factor.netImpact !== 0);
+  if (!rows.length) return document.createDocumentFragment();
+  const largest = Math.max(...rows.map(factor => Math.abs(factor.netImpact)));
+  const chart = el('div', 'impact-chart');
+  chart.setAttribute('aria-hidden', 'true'); // the table below carries the same numbers for screen readers
+  for (const factor of rows) {
+    const track = el('div', 'impact-track');
+    const bar = el('span', 'impact-bar ' + (factor.netImpact > 0 ? 'gain' : 'loss'));
+    bar.style.width = (Math.abs(factor.netImpact) / largest * 50) + '%';
+    track.append(bar);
+    const row = el('div', 'impact-row');
+    row.append(el('span', 'impact-label', factor.label), track, moneyNode(factor.netImpact, true, 'impact-value'));
+    chart.append(row);
+  }
+  return chart;
+}
 function tableHead(labels) {
   const head = el('thead'); const row = el('tr');
   for (const label of labels) { const cell = el('th', '', label); cell.scope = 'col'; row.append(cell); }
@@ -808,7 +850,7 @@ function renderComparison(comparison, previous) {
   label.append(el('span', 'difference-label', directionLabels[comparison.direction] || 'שינוי בנטו החודשי'), el('span', 'difference-subtitle', estimates.length ? 'תוצאה משוערת · לפי הנתונים בתיק' : 'לפי הנתונים בתיק'));
   difference.append(label, moneyNode(comparison.difference, true, 'difference-amount'));
   if (previous && (previous.difference !== comparison.difference || previous.direction !== comparison.direction || !same(previous.estimates, estimates))) highlight(difference);
-  content.append(pair, difference, el('h3', 'factors-heading', 'מה עומד מאחורי השינוי?'));
+  content.append(pair, difference, el('h3', 'factors-heading', 'מה עומד מאחורי השינוי?'), impactChart(comparison.factors));
   const wrapper = el('div', 'table-wrapper');
   const table = el('table', 'data-table');
   table.setAttribute('aria-label', 'גורמים לשינוי בנטו');
@@ -962,7 +1004,7 @@ byId('profile-dialog').addEventListener('cancel', event => { if (busy) event.pre
 byId('message-form').addEventListener('submit', async event => {
   event.preventDefault();
   const text = byId('message-input').value.trim();
-  if (!text || busy || unavailable() || Date.now() < rateLimitedUntil) return;
+  if (!text || busy || Date.now() < rateLimitedUntil) return;
   const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { if (byId('message-input').value.trim() === text) { byId('message-input').value = ''; fitInput(); } });
   if (ok) byId('message-input').focus();
 });

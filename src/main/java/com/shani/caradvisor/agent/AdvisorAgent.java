@@ -3,6 +3,7 @@ package com.shani.caradvisor.agent;
 import com.shani.caradvisor.workflow.ApiException;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
 import com.shani.caradvisor.workflow.ChatSummaries;
+import com.shani.caradvisor.workflow.ChoiceService;
 import com.shani.caradvisor.workflow.Views.CaseView;
 import com.shani.caradvisor.workflow.Views.MessageView;
 import org.slf4j.Logger;
@@ -27,25 +28,33 @@ public class AdvisorAgent {
     private static final Logger log = LoggerFactory.getLogger(AdvisorAgent.class);
     private static final int MAX_STEPS = 6;
     private static final int HISTORY_MESSAGES = 16;
-    private static final String UNAVAILABLE = "העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.";
+    private static final String UNAVAILABLE = "העוזר לא זמין כרגע. אפשר לענות על השאלה במספר או במילה, ללחוץ על כפתור, או לעדכן ב\"המידע שלך\".";
+    private static final String REPLAY_UNAVAILABLE = "במצב השמעה העוזר מכיר רק משפטים שהוקלטו. אפשר לענות על השאלה במספר או במילה, ללחוץ על כפתור, או לעדכן ב\"המידע שלך\".";
 
     private final CaseWorkflowService workflow;
+    private final ChoiceService choices;
     private final AgentTools tools;
     private final LlmClient llm;
     private final RateLimiter rateLimiter;
 
-    public AdvisorAgent(CaseWorkflowService workflow, AgentTools tools, LlmClient llm,
+    public AdvisorAgent(CaseWorkflowService workflow, ChoiceService choices, AgentTools tools, LlmClient llm,
                         @Value("${advisor.assistant.max-messages-per-case-per-minute:6}") int perCase,
                         @Value("${advisor.assistant.max-messages-per-minute:30}") int overall) {
         this.workflow = workflow;
+        this.choices = choices;
         this.tools = tools;
         this.llm = llm;
         this.rateLimiter = new RateLimiter(perCase, overall);
     }
 
     public CaseView reply(String caseId, String text, String clientRequestId) {
+        // A plain answer to the open question is understood by code, before (and without) the model.
+        Optional<CaseView> direct = choices.answerDirectly(caseId, text, clientRequestId);
+        if (direct.isPresent()) {
+            return direct.get();
+        }
         if (!workflow.assistantAvailable()) {
-            throw ApiException.unavailable("ASSISTANT_UNAVAILABLE", UNAVAILABLE);
+            throw ApiException.unavailable("ASSISTANT_UNAVAILABLE", unavailableText());
         }
         if (!rateLimiter.tryAcquire(caseId, Instant.now())) {
             throw new ApiException(429, "RATE_LIMITED", "יותר מדי הודעות בזמן קצר. נסו שוב בעוד דקה.");
@@ -63,8 +72,8 @@ public class AdvisorAgent {
             reply = guarded(reply, contents);
         } catch (LlmClient.UnavailableException e) {
             log.warn("Assistant unavailable: {}", e.getMessage());
-            workflow.addBotMessage(caseId, "העוזר לא זמין כרגע. מה שכתבת נשמר, ואפשר להמשיך במילוי הטופס.");
-            throw ApiException.unavailable("ASSISTANT_UNAVAILABLE", UNAVAILABLE);
+            workflow.addBotMessage(caseId, unavailableText());
+            throw ApiException.unavailable("ASSISTANT_UNAVAILABLE", unavailableText());
         }
 
         CaseView after = workflow.view(caseId);
@@ -81,6 +90,10 @@ public class AdvisorAgent {
             workflow.addBotMessage(caseId, ChatSummaries.rankingSummary(after));
         }
         return workflow.view(caseId);
+    }
+
+    private String unavailableText() {
+        return "REPLAY".equals(llm.mode()) ? REPLAY_UNAVAILABLE : UNAVAILABLE;
     }
 
     /** Small models sometimes slip an Arabic waw into a Hebrew word. */
