@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
-  <rect width="1600" height="900" fill="#F6F2EC"/>
-  <!-- flat pills in the product colours, only at the edges so content stays calm -->
-  <rect x="-160" y="-130" width="520" height="190" rx="95" transform="rotate(-24 100 -35)" fill="#E25845" opacity=".12"/>
-  <rect x="1250" y="-90" width="170" height="380" rx="85" transform="rotate(18 1335 100)" fill="#FAC172" opacity=".30"/>
-  <rect x="1340" y="640" width="520" height="190" rx="95" transform="rotate(-24 1600 735)" fill="#89D5C9" opacity=".38"/>
-</svg>
