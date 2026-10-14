@@ -69,9 +69,13 @@ public final class NetCalculator {
             taxableIncome = taxableIncome.subtract(benefits.maintenance());
         }
 
-        BigDecimal pensionBase = waiver.maintenancePensionable() ? salary.add(benefits.maintenance()) : salary;
+        // Rules file: contributions are computed on the whole gross (base + commissions + bonus), or on the base only.
+        BigDecimal contributionBase = method.contributionsOnGross() ? salary : employee.baseSalary();
+        BigDecimal pensionBase = waiver.maintenancePensionable()
+                ? contributionBase.add(benefits.maintenance())
+                : contributionBase;
         BigDecimal pension = Money.percentOf(pensionBase, employee.pensionPercent());
-        BigDecimal studyFund = Money.percentOf(salary, employee.studyFundPercent());
+        BigDecimal studyFund = Money.percentOf(contributionBase, employee.studyFundPercent());
 
         BigDecimal credits = employee.creditPoints().multiply(method.creditPointValue()).add(pensionCredit(pension));
         BigDecimal incomeTax = Money.max(Money.ZERO, bracketTax(taxableIncome).subtract(credits));
@@ -90,7 +94,7 @@ public final class NetCalculator {
         return new Breakdown(grossCash, taxableIncome, incomeTax, nationalInsurance, healthTax, pension, studyFund, net);
     }
 
-    /** 35% credit on the employee's pension deposit, up to maxDepositRate of the income ceiling. */
+    /** 35% credit on the employee's pension deposit, up to maxContributionRate of the income ceiling. */
     private BigDecimal pensionCredit(BigDecimal pension) {
         Rules.PensionCredit credit = method.pensionCredit();
         return credit.rate().multiply(Money.min(pension, credit.maxCreditedDeposit()));

@@ -84,6 +84,9 @@ public final class ComparisonEngine {
         BigDecimal cost = track.costFromCatalog() && vehicle.monthlyCost() != null
                 ? vehicle.monthlyCost()
                 : track.carPrice();
+        if (cost == null) {
+            throw new IllegalStateException("No cost for family-track car " + vehicle.id());
+        }
         BigDecimal gap = Money.max(Money.ZERO, cost.subtract(rules.budgetOf(employee.group())));
         return gap.multiply(track.employeeShareOfGap());
     }

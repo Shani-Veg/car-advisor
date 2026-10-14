@@ -22,9 +22,14 @@ public record Rules(
         }
     }
 
+    /**
+     * cars: catalog ids of the family-track cars, as declared by the rules file (may be empty in older files).
+     * carPrice: one fixed price for the whole track, only in older files; newer files take each car's cost from the catalog.
+     */
     public record FamilyTrack(
             int minChildren,
             int childMaxAge,
+            List<String> cars,
             BigDecimal carPrice,
             BigDecimal employeeShareOfGap,
             boolean costFromCatalog) {
@@ -39,7 +44,8 @@ public record Rules(
             List<Bracket> brackets,
             SocialRate nationalInsurance,
             SocialRate health,
-            PensionCredit pensionCredit) {
+            PensionCredit pensionCredit,
+            boolean contributionsOnGross) {
     }
 
     /** upTo == null marks the top bracket. */
@@ -49,9 +55,10 @@ public record Rules(
     public record SocialRate(BigDecimal threshold, BigDecimal ceiling, BigDecimal lowRate, BigDecimal highRate) {
     }
 
-    public record PensionCredit(BigDecimal rate, BigDecimal incomeCeiling, BigDecimal maxDepositRate) {
+    public record PensionCredit(BigDecimal rate, BigDecimal incomeCeiling, BigDecimal maxContributionRate) {
+        /** The deposit that earns the credit is capped at this share of the income ceiling (7% of 9,500 = 665). */
         public BigDecimal maxCreditedDeposit() {
-            return incomeCeiling.multiply(maxDepositRate);
+            return incomeCeiling.multiply(maxContributionRate);
         }
     }
 
