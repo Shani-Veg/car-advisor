@@ -36,6 +36,19 @@ public final class ChatSummaries {
     private ChatSummaries() {
     }
 
+    /** Everything needed is known; says plainly which secondary details are still estimates. */
+    public static String profileComplete(CaseView view) {
+        List<String> assumed = view.profile().stream()
+                .filter(f -> "DEFAULT".equals(f.status()) && !"group".equals(f.key()) && !"alternativeParticipation".equals(f.key()))
+                .map(ProfileField::label)
+                .toList();
+        if (assumed.isEmpty()) {
+            return PROFILE_COMPLETE;
+        }
+        return PROFILE_COMPLETE + " פרטים משניים הנחתי בינתיים (" + String.join(", ", assumed)
+                + "), והם מסומנים כהערכה. אפשר לעדכן אותם ב\"המידע שלך\".";
+    }
+
     public static String nextQuestion(FactKey key) {
         return QUESTIONS.get(key);
     }

@@ -22,7 +22,9 @@ public class ChoiceOptions {
     public record Offer(String id, String label) {
     }
 
-    private static final int MAX_CHILDREN_BUTTON = 5;
+    static final String CONTINUE = "continue";
+
+    private static final int MAX_CHILDREN_BUTTON = 3;
     private static final int MAX_NEXT_STEPS = 4;
 
     private final ReferenceData data;

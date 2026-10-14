@@ -32,6 +32,9 @@ public class MessageEntity {
 
     private Instant createdAt;
 
+    /** True for a reply that did not move the case forward: the only button offered is "continue the questions". */
+    private Boolean continueOnly;
+
     protected MessageEntity() {
     }
 
@@ -57,5 +60,13 @@ public class MessageEntity {
 
     public Instant createdAt() {
         return createdAt;
+    }
+
+    public boolean continueOnly() {
+        return Boolean.TRUE.equals(continueOnly);
+    }
+
+    void markContinueOnly() {
+        this.continueOnly = true;
     }
 }

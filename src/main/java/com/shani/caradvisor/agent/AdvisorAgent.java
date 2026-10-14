@@ -71,7 +71,9 @@ public class AdvisorAgent {
         if (!turnLog.recorded.isEmpty()) {
             workflow.addBotMessage(caseId, ChatSummaries.confirmation(after, turnLog.recorded));
         }
-        workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply));
+        // A reply that only answered a side question must not re-offer the same buttons: it offers to carry on.
+        boolean moved = !turnLog.recorded.isEmpty() || turnLog.alternativeChosen || turnLog.optionsListed;
+        workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved);
         if (after.comparison() != null && (turnLog.alternativeChosen || !turnLog.recorded.isEmpty())) {
             workflow.addBotMessage(caseId, ChatSummaries.comparisonSummary(after));
         }

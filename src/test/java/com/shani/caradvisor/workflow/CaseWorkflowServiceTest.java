@@ -30,7 +30,12 @@ class CaseWorkflowServiceTest {
         CaseView view = workflow.create();
 
         assertThat(view.status()).isEqualTo("COLLECTING");
-        assertThat(view.profile()).allSatisfy(f -> assertThat(f.status()).isEqualTo("MISSING"));
+        // the four things the chat asks about are missing; the secondary details are flagged estimates
+        assertThat(view.profile()).filteredOn(f -> f.status().equals("MISSING")).extracting(ProfileField::key)
+                .containsExactlyInAnyOrder("occupation", "group", "baseSalary", "childrenUpTo23", "currentCar",
+                        "currentParticipation", "alternativeParticipation");
+        assertThat(view.profile()).filteredOn(f -> f.status().equals("DEFAULT")).extracting(ProfileField::key)
+                .containsExactlyInAnyOrder("commissions", "bonus", "pensionPercent", "studyFundPercent", "creditPoints");
         assertThat(view.messages()).hasSize(1);
         assertThat(view.comparison()).isNull();
         assertThat(view.ranking()).isNull();

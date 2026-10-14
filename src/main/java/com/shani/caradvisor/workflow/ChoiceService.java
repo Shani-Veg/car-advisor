@@ -63,6 +63,8 @@ public class ChoiceService {
             workflow.addBotMessage(caseId, view.comparison() != null
                     ? ChatSummaries.comparisonSummary(view)
                     : "בחרתי את החלופה. ההשוואה תופיע כשיהיו מספיק נתונים.");
+        } else if (ChoiceOptions.CONTINUE.equals(offer.id())) {
+            workflow.addBotMessage(caseId, nextQuestionOrDone(caseEntity));
         } else if ("best".equals(offer.id())) {
             workflow.addBotMessage(caseId, ChatSummaries.rankingSummary(workflow.view(caseId)));
         }
@@ -101,6 +103,7 @@ public class ChoiceService {
 
     private String nextQuestionOrDone(CaseEntity caseEntity) {
         List<FactKey> missing = views.state(caseEntity).missingForToday();
-        return missing.isEmpty() ? ChatSummaries.PROFILE_COMPLETE : ChatSummaries.nextQuestion(missing.get(0));
+        return missing.isEmpty() ? ChatSummaries.profileComplete(workflow.view(caseEntity.id()))
+                : ChatSummaries.nextQuestion(missing.get(0));
     }
 }

@@ -1,5 +1,5 @@
-# קוד ה-UI הנוכחי (אחרי שילוב גרסה 3)
-נוצר אוטומטית מ-`src/main/resources/static/`. כל קובץ בשלמותו. `proof.html`, `css/proof.css` ו-`js/proof.js` שייכים לדף ההוכחה ולא משתנים. נכסי `assets/` (איקונים, רקעים) כבר בתיקייה.
+# קוד ה-UI הנוכחי (אחרי סבב 4)
+נוצר אוטומטית מ-`src/main/resources/static/`. כל קובץ בשלמותו. `proof.html`, `css/proof.css` ו-`js/proof.js` שייכים לדף ההוכחה. נכסים: `assets/` (איקונים, רקעים, `makers/` לוגואים, `fonts/`). שימו לב: `js/mock-api.js` עדיין מדמה את מסלול העשר שאלות הישן.
 
 ## `index.html`
 
@@ -84,11 +84,11 @@
 <body class="employee-page">
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header">
-    <a class="wordmark" id="home-link" href="index.html">יועץ הרכב<span>סביבת ההחלטה שלך</span></a>
+    <a class="wordmark" id="home-link" href="index.html">יועץ הרכב</a>
     <nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">ההשוואה שלי</span><a id="rep-link" href="rep.html">מסך נציג <span aria-hidden="true">↗</span></a></nav>
   </header>
   <main id="main" class="app-main">
-    <div class="case-strip"><span>השיחה והפרטים שלך, במקום אחד</span><span id="case-state" class="badge">טוען תיק…</span></div>
+    <span id="case-state" class="sr-only" role="status">טוען תיק…</span>
     <div id="mock-banner" class="notice mock-notice" hidden>הדגמה · נתוני דמה בלבד. הסכומים הם דוגמאות קבועות ואינם מחושבים לפי הפרטים שהוזנו.</div>
     <div id="replay-banner" class="notice replay-notice" role="status" hidden>הדגמה: השמעה של שיחה מוקלטת</div>
     <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.</div>
@@ -96,21 +96,20 @@
     <div id="feedback" class="notice" role="status" hidden></div>
     <div class="employee-grid">
       <section id="chat-panel" class="panel chat-panel" aria-labelledby="chat-heading">
-        <div class="chat-heading"><img class="header-avatar" src="assets/avatar-bot.webp" alt="" width="48" height="48"><div><h1 id="chat-heading">יועץ הרכב</h1><p>הכללים והחישוב מהשרת, לא מהמודל</p></div><span class="chat-label">השיחה שלי</span></div>
-        <div class="chat-progress"><div><span id="progress-label">הפרטים שלי: טוען…</span><span class="small-muted">צעד אחר צעד</span></div><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
+        <div class="chat-heading"><img class="header-avatar" src="assets/avatar-bot.webp" alt="" width="40" height="40"><h1 id="chat-heading">יועץ הרכב</h1></div>
+        <div class="chat-progress"><span id="progress-label" class="sr-only">הפרטים שלי: טוען…</span><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
         <div id="messages" class="messages" role="log" aria-label="היסטוריית השיחה" aria-live="off" aria-busy="true"><p class="empty-state">טוען את השיחה…</p></div>
         <div id="chat-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="typing" class="typing" role="status" hidden><span class="typing-dots" aria-hidden="true">•••</span>העוזר מכין תשובה…</div>
         <form id="message-form" class="composer">
-          <label for="message-input">מה תרצו לבדוק?</label>
-          <div class="composer-input"><textarea id="message-input" name="message" placeholder="אפשר גם לענות במילים שלך…" rows="2" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
-          <p class="composer-hint">Enter לשליחה · Shift + Enter לשורה חדשה</p>
+          <label for="message-input" class="sr-only">הודעה ליועץ הרכב. Enter לשליחה, Shift ו-Enter לשורה חדשה</label>
+          <div class="composer-input"><textarea id="message-input" name="message" placeholder="מה תרצו לבדוק?" rows="1" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
         </form>
       </section>
       <div class="decision-workspace">
-        <section id="profile-panel" class="panel profile-panel" aria-labelledby="profile-heading">
-          <div class="panel-heading"><div><span class="section-kicker">הבסיס להחלטה</span><h2 id="profile-heading">מה אני יודע עליך</h2></div><button id="profile-toggle" class="text-button" type="button" aria-expanded="true" aria-controls="profile-content" hidden>הצג הכול</button><span id="profile-count" class="badge neutral">טוען…</span></div>
-          <div id="profile-content"><p class="profile-hint">לחיצה על פרט פותחת את אפשרויות העריכה שלו.</p><div id="profile" class="profile-grid" aria-busy="true"><p class="empty-state">טוען את הפרטים…</p></div><details id="profile-extra" class="profile-extra"><summary>שאר הפרטים להשוואה</summary><div id="profile-other" class="profile-grid"></div></details><p id="profile-placeholder" class="profile-placeholder">כשאדע מספיק, ההשוואה תופיע כאן.</p></div>
+        <section id="profile-panel" class="panel profile-panel" aria-label="המידע שלך">
+          <button id="profile-toggle" class="profile-toggle" type="button" aria-expanded="false" aria-controls="profile-content"><span class="profile-title">המידע שלך</span><span id="profile-count" class="badge neutral">טוען…</span><span class="chevron" aria-hidden="true">▾</span></button>
+          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן או להשלים כל פרט בלחיצה עליו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
         </section>
         <div id="pending-banner" class="notice pending-notice" role="status" hidden><strong>שאלה נשלחה לנציג התחבורה, ההשוואה תתעדכן כשתגיע תשובה</strong><ul id="pending-list"></ul></div>
         <section id="comparison-panel" class="panel comparison-panel" aria-labelledby="comparison-heading" hidden>
@@ -188,6 +187,56 @@
 /* Desktop: the chat is a fixed pane that always fits the window (composer never below the fold); only the right side scrolls. */
 @media(min-width:1001px) and (min-height:640px){body.employee-page{height:100dvh;overflow:hidden;display:flex;flex-direction:column}body.employee-page .site-header{flex:none}body.employee-page .app-main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;padding-bottom:14px}body.employee-page .app-main>*{flex:none}body.employee-page .employee-grid{flex:1;min-height:0;align-items:stretch}body.employee-page .chat-panel{position:static;height:auto;min-height:0}body.employee-page .decision-workspace{min-height:0;overflow-y:auto;padding-inline-end:6px;scrollbar-width:thin}body.employee-page .decision-workspace>*{flex:none}}
 .mobile-comparison.bar-off:not([hidden]){display:none}@media(max-width:1000px){body.employee-page{padding-bottom:88px}}
+
+/* ===== Round 4: fonts, light header, rounder chat, logos ===== */
+@font-face{font-family:"Rubik";src:url(../assets/fonts/rubik-hebrew.woff2) format("woff2");font-weight:400 700;font-display:swap;unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F}
+@font-face{font-family:"Rubik";src:url(../assets/fonts/rubik-latin.woff2) format("woff2");font-weight:400 700;font-display:swap;unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"Playpen Sans Hebrew";src:url(../assets/fonts/playpen-hebrew.woff2) format("woff2");font-weight:400 700;font-display:swap;unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F}
+:root{--hand:"Playpen Sans Hebrew","Rubik","Segoe UI",sans-serif;--rose:#c4566a;--mint:#3aa596;font-family:"Rubik","Segoe UI",Arial,sans-serif}
+body,button,input,select,textarea{font-family:inherit}
+/* header: light, thin, translucent, with a wash of the two brand colours behind the words */
+.site-header{min-height:46px;padding-block:6px;background:linear-gradient(90deg,#c4566a1f,#ffffff66 45%,#3aa5961f);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--ink);box-shadow:none;border-bottom:1px solid #253d4c14}
+.wordmark{color:var(--ink);font-size:19px;font-weight:600}.wordmark span{display:none}
+.header-nav{font-size:13px;gap:20px}.header-nav a{color:var(--ink)}.nav-current{color:#0f6f64;font-weight:600}
+.replay-notice{top:50px}
+/* chat: one fixed pane, fully rounded, thin gradient frame */
+.chat-panel{border:2px solid transparent;border-radius:30px;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,var(--rose),var(--mint)) border-box;box-shadow:0 12px 32px #263d4c14}
+.chat-heading{padding:12px 18px 8px;border:0;gap:10px}.chat-heading h1{font-size:19px;font-weight:600}
+.header-avatar{width:40px;height:40px;border-radius:50%}
+.chat-progress{padding:0 18px 8px;border:0}.chat-progress progress{width:100%;height:4px;border:0;border-radius:99px;appearance:none;background:#e9eef2;display:block}
+.chat-progress progress::-webkit-progress-bar{background:#e9eef2;border-radius:99px}.chat-progress progress::-webkit-progress-value{background:linear-gradient(90deg,var(--rose),var(--mint));border-radius:99px}.chat-progress progress::-moz-progress-bar{background:linear-gradient(90deg,var(--rose),var(--mint));border-radius:99px}
+.messages{padding:10px 16px 14px}
+.message{margin-bottom:16px}.message-avatar{border-radius:50%;border:0;background:#f1f6f8}
+.message-meta{display:none}
+.message-text{border-radius:22px;padding:10px 16px;line-height:1.7;border-color:#e6edf2;background:#f7fafb}
+.message.employee{flex-direction:row-reverse}.employee .message-content{flex:0 1 auto;max-width:82%}
+.employee .message-text{border-radius:22px;background:#e9f6f3;border-color:#cfe8e1}
+.message-choices{gap:8px;margin-top:10px}
+.choice-button{border-radius:999px;border-color:#b8d3cc;padding:8px 16px;font-weight:500}
+.choices-list{gap:8px}.choices-list .choice-button{border-radius:20px}
+.choices-search input{border-radius:999px;padding-inline:16px}
+.choice-button:has(.vehicle-identity){border-radius:20px}
+.typing{padding:4px 20px}
+/* composer: one row, grows to three lines */
+.composer{padding:6px 14px 14px;border:0}
+.composer-input{align-items:center;gap:8px;padding:6px 6px 6px 8px;border-radius:999px;border:1.5px solid #d4e0e6;box-shadow:none;background:#f9fbfc}
+.composer-input:focus-within{border-color:var(--mint);background:#fff}
+.composer textarea{min-height:26px;max-height:84px;padding:5px 12px;font-size:15px;line-height:1.5;overflow-y:hidden}
+.composer textarea::placeholder{font-family:var(--hand);font-size:16px;color:#7b8d98;opacity:1}
+.send-button{border-radius:50%;width:38px;height:38px;font-size:22px;background:linear-gradient(135deg,var(--rose),#b23a52)}
+.composer-input.multiline{border-radius:24px}
+/* the information panel is a small collapsed bar until opened */
+.profile-panel{border-radius:18px}
+.profile-toggle{display:flex;align-items:center;gap:10px;width:100%;padding:12px 18px;border:0;background:transparent;text-align:start;font-size:15px;font-weight:600;border-radius:18px}
+.profile-toggle:hover{background:#f4f9f8}.profile-title{flex:0 1 auto}.profile-toggle .badge{font-weight:500}
+.profile-toggle .chevron{margin-inline-start:auto;font-size:18px;color:var(--muted);transition:transform .2s}.profile-toggle[aria-expanded="true"] .chevron{transform:rotate(180deg)}
+#profile-content{padding-bottom:6px}.profile-hint{padding:0 18px 8px}.profile-grid{padding:0 18px 6px}.profile-field{padding:11px 3px}
+/* maker logos */
+.vehicle-logo{width:44px;height:44px;flex:none;object-fit:contain;padding:5px;background:#fff;border:1px solid #e3eaef;border-radius:14px}
+.compact .vehicle-logo{width:36px;height:36px;padding:4px;border-radius:12px}
+.net-card .vehicle-logo{width:56px;height:56px;padding:6px}
+.choice-button .vehicle-logo{width:36px;height:36px}
+@media(prefers-reduced-motion:reduce){.profile-toggle .chevron{transition:none}}
 ```
 
 ## `js/api.js`
@@ -260,13 +309,15 @@ export function formatDate(value, short = false) {
 }
 export function sourceText(source) {
   if (!source) return 'המקור עדיין לא ידוע';
+  if (source.type === 'CATALOG_DEFAULT' && source.ref === 'assumption') return 'הנחה של המערכת, עד שתעדכנו';
   if (source.type === 'CATALOG_DEFAULT' && source.ref === 'occupation') return ['לפי טבלת העיסוקים', formatDate(source.at)].filter(Boolean).join(' · ');
   return [sourceLabels[source.type] || source.type, source.ref, formatDate(source.at)].filter(Boolean).join(' · ');
 }
-/** Append untrusted text safely, isolating every number for Hebrew layout. */
+/** Append untrusted text safely, isolating every number and Latin name for Hebrew layout. */
 export function appendText(parent, value) {
   const text = String(value ?? '');
-  const expression = /[+\-−]?\d+(?:[.,:\/\-]\d+)*(?:[\u00a0 ]?(?:₪|%))?/gu;
+  // A Latin name with its digits and year ("MG4 (2025)") is one left-to-right unit; otherwise "MG" and "4" would be isolated apart.
+  const expression = /[A-Za-z][A-Za-z0-9]*(?:[ \-][A-Za-z0-9]+)*(?: \(\d{4}\))?|(?:(?<![\u0590-\u05FF])[+\-−])?\d+(?:[.,:\/\-]\d+)*(?:[\u00a0 ]?(?:₪|%))?/gu;
   let start = 0;
   for (const match of text.matchAll(expression)) {
     if (match.index > start) parent.append(document.createTextNode(text.slice(start, match.index)));
@@ -348,11 +399,22 @@ export function carIcon(withoutCar = false) {
   }
   return svg;
 }
+/** Maker names in the catalog start with the brand ("קיה קוריאה"); the logo files are named after the brand. */
+const BRAND_LOGOS = [['קיה', 'kia'], ['טויוטה', 'toyota'], ['בי ווי די', 'byd'], ['סיאט', 'seat'], ['מ.ג', 'mg'], ['יונדאי', 'hyundai'], ['מזדה', 'mazda'], ['טסלה', 'tesla'], ['סקודה', 'skoda']];
+export function makerLogo(maker) {
+  const brand = BRAND_LOGOS.find(([name]) => typeof maker === 'string' && maker.startsWith(name));
+  if (!brand) return null;
+  const image = el('img', 'vehicle-logo');
+  image.src = 'assets/makers/' + brand[1] + '.webp';
+  image.alt = ''; image.width = 44; image.height = 44; image.loading = 'lazy';
+  image.addEventListener('error', () => image.replaceWith(carIcon()), { once: true });
+  return image;
+}
 export function vehicleIdentity(data, catalog, compact = false) {
   const car = catalog.find(item => item.id === data.vehicleId);
   const waiver = data.type === 'waiver';
   const node = el('div', 'vehicle-identity' + (compact ? ' compact' : ''));
-  node.append(carIcon(waiver));
+  node.append((car && makerLogo(car.maker)) || carIcon(waiver));
   const copy = el('div', 'vehicle-copy');
   const maker = el('bdi', 'vehicle-maker', waiver ? (data.label === 'אין לי רכב חברה' ? data.label : 'ויתור על רכב') : car?.maker || data.maker || 'רכב חברה');
   maker.dir = 'auto';
@@ -531,7 +593,6 @@ function renderMessages(messages) {
         filter.addEventListener('input', () => { empty.hidden = [...choices.children].some(button => !button.hidden); });
         content.append(empty);
       }
-      content.append(el('p', 'choices-hint', 'אפשר גם לכתוב במילים שלך'));
     }
     node.append(content);
     if (existing) existing.node.replaceWith(node); else container.append(node);
@@ -546,9 +607,8 @@ function renderMessages(messages) {
 }
 
 function renderProfile(profile, previous) {
-  const container = byId('profile'); const other = byId('profile-other');
-  const keyFields = ['occupation', 'group', 'baseSalary', 'childrenUpTo23', 'currentCar'];
-  if (!profileNodes.size) { container.replaceChildren(); other.replaceChildren(); }
+  const container = byId('profile');
+  if (!profileNodes.size) container.replaceChildren();
   const incoming = new Set(profile.map(field => field.key));
   for (const [key, entry] of profileNodes) if (!incoming.has(key)) { entry.node.remove(); profileNodes.delete(key); }
   for (const field of profile) {
@@ -564,18 +624,17 @@ function renderProfile(profile, previous) {
     if (field.key === 'currentCar') value.dir = 'auto';
     button.append(heading, value);
     button.addEventListener('click', () => openEditor(field));
-    if (existing) existing.node.replaceWith(button); else (keyFields.includes(field.key) ? container : other).append(button);
+    if (existing) existing.node.replaceWith(button); else container.append(button);
     profileNodes.set(field.key, { node: button, data: structuredClone(field) });
     const old = previous?.profile?.find(item => item.key === field.key);
     if (old && !same(old, field)) highlight(button);
   }
-  for (const key of keyFields) { const entry = profileNodes.get(key); if (entry) container.append(entry.node); }
-  byId('profile-extra').hidden = !profile.some(field => !keyFields.includes(field.key));
-  const counted = profile.filter(field => field.key !== 'alternativeParticipation');
-  const complete = counted.filter(field => field.status !== 'MISSING').length;
-  showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + counted.length);
-  byId('profile-progress').max = Math.max(1, counted.length); byId('profile-progress').value = complete;
-  showNotice(byId('profile-count'), complete + ' מתוך ' + counted.length + ' פרטים');
+  const asked = profile.filter(field => ['occupation', 'baseSalary', 'childrenUpTo23', 'currentCar'].includes(field.key));
+  const complete = asked.filter(field => field.status !== 'MISSING').length;
+  const estimated = profile.filter(field => field.status === 'DEFAULT' && !['group', 'alternativeParticipation'].includes(field.key)).length;
+  showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + asked.length);
+  byId('profile-progress').max = Math.max(1, asked.length); byId('profile-progress').value = complete;
+  showNotice(byId('profile-count'), complete + ' מתוך ' + asked.length + (estimated ? ' · ' + estimated + ' הערכות' : ''));
   container.setAttribute('aria-busy', 'false');
 }
 
@@ -646,10 +705,10 @@ function renderComparison(comparison, previous) {
     tbody.append(row);
   }
   table.append(tbody); wrapper.append(table); content.append(wrapper, el('p', 'explanation', comparison.explanation));
-  for (const key of estimates) {
-    const field = current.profile.find(item => item.key === key);
+  const estimatedLabels = estimates.map(key => current.profile.find(item => item.key === key)?.label).filter(Boolean);
+  if (estimatedLabels.length) {
     const note = el('p', 'estimate-note');
-    note.append(statusBadge('DEFAULT'), el('span', '', field ? field.label + ': ' + (field.display || 'טרם הושלם') : key));
+    note.append(statusBadge('DEFAULT'), el('span', '', 'בחישוב יש הערכות: ' + estimatedLabels.join(', ') + '. אפשר לעדכן אותן ב"המידע שלך".'));
     content.append(note);
   }
   if (comparison.breakdown) {
@@ -717,13 +776,9 @@ function applyCase(next) {
   showNotice(byId('case-state'), caseLabels[next.status] || next.status);
   byId('replay-banner').hidden = next.assistantMode !== 'REPLAY';
   renderMessages(next.messages || []);
+  byId('message-input').placeholder = (next.messages || []).some(message => message.role === 'employee') ? 'הקלידו כאן…' : 'מה תרצו לבדוק?';
   renderProfile(next.profile || [], previous);
-  const hasComparison = next.comparison != null;
-  byId('profile-toggle').hidden = !hasComparison;
-  byId('profile-panel').classList.toggle('compact-profile', hasComparison);
-  document.body.classList.toggle('has-comparison', hasComparison && next.comparison.eligible !== false);
-  byId('profile-placeholder').hidden = hasComparison;
-  if (!hasComparison || !previous?.comparison) setProfileExpanded(!hasComparison);
+  document.body.classList.toggle('has-comparison', next.comparison != null && next.comparison.eligible !== false);
   const estimateChanged = next.comparison?.estimates?.some(key => !same(previous?.profile?.find(field => field.key === key), next.profile.find(field => field.key === key)));
   if (!previous || !same(previous.comparison, next.comparison) || estimateChanged) renderComparison(next.comparison, previous?.comparison);
   if (!previous || !same(previous.ranking, next.ranking)) renderRanking(next.ranking, previous?.ranking);
@@ -788,9 +843,18 @@ byId('message-form').addEventListener('submit', async event => {
   event.preventDefault();
   const text = byId('message-input').value.trim();
   if (!text || busy || unavailable() || Date.now() < rateLimitedUntil) return;
-  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { if (byId('message-input').value.trim() === text) byId('message-input').value = ''; });
+  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { if (byId('message-input').value.trim() === text) { byId('message-input').value = ''; fitInput(); } });
   if (ok) byId('message-input').focus();
 });
+const MAX_INPUT_HEIGHT = 84;
+function fitInput() {
+  const input = byId('message-input');
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, MAX_INPUT_HEIGHT) + 'px';
+  input.style.overflowY = input.scrollHeight > MAX_INPUT_HEIGHT ? 'auto' : 'hidden';
+  input.parentElement.classList.toggle('multiline', input.scrollHeight > 44);
+}
+byId('message-input').addEventListener('input', fitInput);
 byId('message-input').addEventListener('keydown', event => {
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); byId('message-form').requestSubmit(); }
 });
@@ -819,7 +883,6 @@ async function initialize() {
 function setProfileExpanded(expanded) {
   byId('profile-content').hidden = !expanded;
   byId('profile-toggle').setAttribute('aria-expanded', String(expanded));
-  byId('profile-toggle').textContent = expanded ? 'כווץ' : 'הצג הכול';
 }
 function scrollToComparison() { byId('comparison-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }
 byId('profile-toggle').addEventListener('click', () => setProfileExpanded(byId('profile-content').hidden));

@@ -122,6 +122,9 @@ class CaseViewAssembler {
         if (last.role() != MessageEntity.Role.BOT) {
             return List.of();
         }
+        if (last.continueOnly() && !state.missingForToday().isEmpty()) {
+            return List.of(new ChoiceOptions.Offer(ChoiceOptions.CONTINUE, "נמשיך בשאלות"));
+        }
         return choiceOptions.offeredFor(state);
     }
 

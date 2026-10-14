@@ -20,11 +20,22 @@ export function carIcon(withoutCar = false) {
   }
   return svg;
 }
+/** Maker names in the catalog start with the brand ("קיה קוריאה"); the logo files are named after the brand. */
+const BRAND_LOGOS = [['קיה', 'kia'], ['טויוטה', 'toyota'], ['בי ווי די', 'byd'], ['סיאט', 'seat'], ['מ.ג', 'mg'], ['יונדאי', 'hyundai'], ['מזדה', 'mazda'], ['טסלה', 'tesla'], ['סקודה', 'skoda']];
+export function makerLogo(maker) {
+  const brand = BRAND_LOGOS.find(([name]) => typeof maker === 'string' && maker.startsWith(name));
+  if (!brand) return null;
+  const image = el('img', 'vehicle-logo');
+  image.src = 'assets/makers/' + brand[1] + '.webp';
+  image.alt = ''; image.width = 44; image.height = 44; image.loading = 'lazy';
+  image.addEventListener('error', () => image.replaceWith(carIcon()), { once: true });
+  return image;
+}
 export function vehicleIdentity(data, catalog, compact = false) {
   const car = catalog.find(item => item.id === data.vehicleId);
   const waiver = data.type === 'waiver';
   const node = el('div', 'vehicle-identity' + (compact ? ' compact' : ''));
-  node.append(carIcon(waiver));
+  node.append((car && makerLogo(car.maker)) || carIcon(waiver));
   const copy = el('div', 'vehicle-copy');
   const maker = el('bdi', 'vehicle-maker', waiver ? (data.label === 'אין לי רכב חברה' ? data.label : 'ויתור על רכב') : car?.maker || data.maker || 'רכב חברה');
   maker.dir = 'auto';

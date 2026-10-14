@@ -20,13 +20,15 @@ export function formatDate(value, short = false) {
 }
 export function sourceText(source) {
   if (!source) return 'המקור עדיין לא ידוע';
+  if (source.type === 'CATALOG_DEFAULT' && source.ref === 'assumption') return 'הנחה של המערכת, עד שתעדכנו';
   if (source.type === 'CATALOG_DEFAULT' && source.ref === 'occupation') return ['לפי טבלת העיסוקים', formatDate(source.at)].filter(Boolean).join(' · ');
   return [sourceLabels[source.type] || source.type, source.ref, formatDate(source.at)].filter(Boolean).join(' · ');
 }
-/** Append untrusted text safely, isolating every number for Hebrew layout. */
+/** Append untrusted text safely, isolating every number and Latin name for Hebrew layout. */
 export function appendText(parent, value) {
   const text = String(value ?? '');
-  const expression = /[+\-−]?\d+(?:[.,:\/\-]\d+)*(?:[\u00a0 ]?(?:₪|%))?/gu;
+  // A Latin name with its digits and year ("MG4 (2025)") is one left-to-right unit; otherwise "MG" and "4" would be isolated apart.
+  const expression = /[A-Za-z][A-Za-z0-9]*(?:[ \-][A-Za-z0-9]+)*(?: \(\d{4}\))?|(?:(?<![\u0590-\u05FF])[+\-−])?\d+(?:[.,:\/\-]\d+)*(?:[\u00a0 ]?(?:₪|%))?/gu;
   let start = 0;
   for (const match of text.matchAll(expression)) {
     if (match.index > start) parent.append(document.createTextNode(text.slice(start, match.index)));

@@ -152,7 +152,6 @@ function renderMessages(messages) {
         filter.addEventListener('input', () => { empty.hidden = [...choices.children].some(button => !button.hidden); });
         content.append(empty);
       }
-      content.append(el('p', 'choices-hint', 'אפשר גם לכתוב במילים שלך'));
     }
     node.append(content);
     if (existing) existing.node.replaceWith(node); else container.append(node);
@@ -167,9 +166,8 @@ function renderMessages(messages) {
 }
 
 function renderProfile(profile, previous) {
-  const container = byId('profile'); const other = byId('profile-other');
-  const keyFields = ['occupation', 'group', 'baseSalary', 'childrenUpTo23', 'currentCar'];
-  if (!profileNodes.size) { container.replaceChildren(); other.replaceChildren(); }
+  const container = byId('profile');
+  if (!profileNodes.size) container.replaceChildren();
   const incoming = new Set(profile.map(field => field.key));
   for (const [key, entry] of profileNodes) if (!incoming.has(key)) { entry.node.remove(); profileNodes.delete(key); }
   for (const field of profile) {
@@ -185,18 +183,17 @@ function renderProfile(profile, previous) {
     if (field.key === 'currentCar') value.dir = 'auto';
     button.append(heading, value);
     button.addEventListener('click', () => openEditor(field));
-    if (existing) existing.node.replaceWith(button); else (keyFields.includes(field.key) ? container : other).append(button);
+    if (existing) existing.node.replaceWith(button); else container.append(button);
     profileNodes.set(field.key, { node: button, data: structuredClone(field) });
     const old = previous?.profile?.find(item => item.key === field.key);
     if (old && !same(old, field)) highlight(button);
   }
-  for (const key of keyFields) { const entry = profileNodes.get(key); if (entry) container.append(entry.node); }
-  byId('profile-extra').hidden = !profile.some(field => !keyFields.includes(field.key));
-  const counted = profile.filter(field => field.key !== 'alternativeParticipation');
-  const complete = counted.filter(field => field.status !== 'MISSING').length;
-  showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + counted.length);
-  byId('profile-progress').max = Math.max(1, counted.length); byId('profile-progress').value = complete;
-  showNotice(byId('profile-count'), complete + ' מתוך ' + counted.length + ' פרטים');
+  const asked = profile.filter(field => ['occupation', 'baseSalary', 'childrenUpTo23', 'currentCar'].includes(field.key));
+  const complete = asked.filter(field => field.status !== 'MISSING').length;
+  const estimated = profile.filter(field => field.status === 'DEFAULT' && !['group', 'alternativeParticipation'].includes(field.key)).length;
+  showNotice(byId('progress-label'), 'הפרטים שלי: ' + complete + ' מתוך ' + asked.length);
+  byId('profile-progress').max = Math.max(1, asked.length); byId('profile-progress').value = complete;
+  showNotice(byId('profile-count'), complete + ' מתוך ' + asked.length + (estimated ? ' · ' + estimated + ' הערכות' : ''));
   container.setAttribute('aria-busy', 'false');
 }
 
@@ -267,10 +264,10 @@ function renderComparison(comparison, previous) {
     tbody.append(row);
   }
   table.append(tbody); wrapper.append(table); content.append(wrapper, el('p', 'explanation', comparison.explanation));
-  for (const key of estimates) {
-    const field = current.profile.find(item => item.key === key);
+  const estimatedLabels = estimates.map(key => current.profile.find(item => item.key === key)?.label).filter(Boolean);
+  if (estimatedLabels.length) {
     const note = el('p', 'estimate-note');
-    note.append(statusBadge('DEFAULT'), el('span', '', field ? field.label + ': ' + (field.display || 'טרם הושלם') : key));
+    note.append(statusBadge('DEFAULT'), el('span', '', 'בחישוב יש הערכות: ' + estimatedLabels.join(', ') + '. אפשר לעדכן אותן ב"המידע שלך".'));
     content.append(note);
   }
   if (comparison.breakdown) {
@@ -338,13 +335,9 @@ function applyCase(next) {
   showNotice(byId('case-state'), caseLabels[next.status] || next.status);
   byId('replay-banner').hidden = next.assistantMode !== 'REPLAY';
   renderMessages(next.messages || []);
+  byId('message-input').placeholder = (next.messages || []).some(message => message.role === 'employee') ? 'הקלידו כאן…' : 'מה תרצו לבדוק?';
   renderProfile(next.profile || [], previous);
-  const hasComparison = next.comparison != null;
-  byId('profile-toggle').hidden = !hasComparison;
-  byId('profile-panel').classList.toggle('compact-profile', hasComparison);
-  document.body.classList.toggle('has-comparison', hasComparison && next.comparison.eligible !== false);
-  byId('profile-placeholder').hidden = hasComparison;
-  if (!hasComparison || !previous?.comparison) setProfileExpanded(!hasComparison);
+  document.body.classList.toggle('has-comparison', next.comparison != null && next.comparison.eligible !== false);
   const estimateChanged = next.comparison?.estimates?.some(key => !same(previous?.profile?.find(field => field.key === key), next.profile.find(field => field.key === key)));
   if (!previous || !same(previous.comparison, next.comparison) || estimateChanged) renderComparison(next.comparison, previous?.comparison);
   if (!previous || !same(previous.ranking, next.ranking)) renderRanking(next.ranking, previous?.ranking);
@@ -409,9 +402,18 @@ byId('message-form').addEventListener('submit', async event => {
   event.preventDefault();
   const text = byId('message-input').value.trim();
   if (!text || busy || unavailable() || Date.now() < rateLimitedUntil) return;
-  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { if (byId('message-input').value.trim() === text) byId('message-input').value = ''; });
+  const ok = await mutate('message:' + text, id => api.sendMessage(caseId, text, id), () => { if (byId('message-input').value.trim() === text) { byId('message-input').value = ''; fitInput(); } });
   if (ok) byId('message-input').focus();
 });
+const MAX_INPUT_HEIGHT = 84;
+function fitInput() {
+  const input = byId('message-input');
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, MAX_INPUT_HEIGHT) + 'px';
+  input.style.overflowY = input.scrollHeight > MAX_INPUT_HEIGHT ? 'auto' : 'hidden';
+  input.parentElement.classList.toggle('multiline', input.scrollHeight > 44);
+}
+byId('message-input').addEventListener('input', fitInput);
 byId('message-input').addEventListener('keydown', event => {
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); byId('message-form').requestSubmit(); }
 });
@@ -440,7 +442,6 @@ async function initialize() {
 function setProfileExpanded(expanded) {
   byId('profile-content').hidden = !expanded;
   byId('profile-toggle').setAttribute('aria-expanded', String(expanded));
-  byId('profile-toggle').textContent = expanded ? 'כווץ' : 'הצג הכול';
 }
 function scrollToComparison() { byId('comparison-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }
 byId('profile-toggle').addEventListener('click', () => setProfileExpanded(byId('profile-content').hidden));

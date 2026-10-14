@@ -53,7 +53,7 @@ class ChoiceFlowTest {
         askForChildren(id);
 
         assertThat(offered(workflow.view(id))).containsExactly("fact:childrenUpTo23:0", "fact:childrenUpTo23:1",
-                "fact:childrenUpTo23:2", "fact:childrenUpTo23:3", "fact:childrenUpTo23:4", "fact:childrenUpTo23:5");
+                "fact:childrenUpTo23:2", "fact:childrenUpTo23:3");
 
         CaseView atCar = choices.choose(id, "fact:childrenUpTo23:2", "kids");
 
@@ -144,7 +144,7 @@ class ChoiceFlowTest {
         CaseView view = choices.editProfile(id, FactKey.OCCUPATION, "מנהל/ת מוצר", null);
 
         // salary was already known, so the next missing detail is the one after it
-        assertThat(lastText(view)).isEqualTo("יש לך עמלות חודשיות? אם אין, כתבו 0.");
+        assertThat(lastText(view)).isEqualTo("כמה ילדים עד גיל 23 יש לך?");
     }
 
     @Test
@@ -167,6 +167,52 @@ class ChoiceFlowTest {
 
         assertThat(texts(again, "employee")).hasSize(1);
         assertThat(texts(again, "bot")).hasSize(2);
+    }
+
+    @Test
+    void theChatAsksOnlyTheFourMainQuestionsAndAssumesTheRest() {
+        String id = workflow.create().caseId();
+
+        choices.choose(id, "fact:occupation:מנהל/ת מוצר", "q1");
+        CaseView view = workflow.setFact(id, FactKey.BASE_SALARY, "18500", FactEntity.Source.FORM, null, null);
+        workflow.addBotMessage(id, ChatSummaries.nextQuestion(FactKey.CHILDREN_UP_TO_23));
+        choices.choose(id, "fact:childrenUpTo23:1", "q3");
+        view = choices.choose(id, "fact:currentCar:CAR-09", "q4");
+
+        assertThat(lastText(view)).startsWith("יש לי את כל מה שצריך.")
+                .contains("עמלות").contains("הפרשת עובד לפנסיה").contains("השתתפות ברכב היום").contains("מסומנים כהערכה");
+        assertThat(field(view, "currentParticipation").status()).isEqualTo("DEFAULT");
+        assertThat(field(view, "currentParticipation").source().type()).isEqualTo("CATALOG_DEFAULT");
+        assertThat(field(view, "pensionPercent").source().type()).isEqualTo("CATALOG_DEFAULT");
+        assertThat(field(view, "pensionPercent").source().ref()).isEqualTo("assumption");
+        assertThat(offered(view)).contains("best");
+    }
+
+    @Test
+    void aNumberTheEmployeeGivesReplacesTheAssumption() {
+        String id = workflow.create().caseId();
+
+        CaseView view = choices.editProfile(id, FactKey.PENSION_PERCENT, "7", null);
+
+        assertThat(field(view, "pensionPercent").status()).isEqualTo("PROVIDED");
+        assertThat(field(view, "pensionPercent").source().type()).isEqualTo("FORM");
+    }
+
+    @Test
+    void aSideQuestionOffersToContinueInsteadOfTheSameButtons() {
+        String id = workflow.create().caseId();
+        workflow.recordEmployeeMessage(id, "מה זה שווי שימוש?", "side-1");
+        workflow.addBotMessage(id, "שווי שימוש הוא סכום שמתווסף להכנסה החייבת בגלל השימוש ברכב.", true);
+
+        CaseView view = workflow.view(id);
+
+        assertThat(offered(view)).containsExactly("continue");
+        assertThat(lastChoices(view)).extracting(ChoiceView::label).containsExactly("נמשיך בשאלות");
+
+        CaseView next = choices.choose(id, "continue", "go-on");
+
+        assertThat(lastText(next)).isEqualTo("באיזה תפקיד את/ה עובד/ת?");
+        assertThat(offered(next)).hasSize(14);
     }
 
     // --- helpers ---

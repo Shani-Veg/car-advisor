@@ -10,11 +10,11 @@
 <body class="employee-page">
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header">
-    <a class="wordmark" id="home-link" href="index.html">יועץ הרכב<span>סביבת ההחלטה שלך</span></a>
+    <a class="wordmark" id="home-link" href="index.html">יועץ הרכב</a>
     <nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">ההשוואה שלי</span><a id="rep-link" href="rep.html">מסך נציג <span aria-hidden="true">↗</span></a></nav>
   </header>
   <main id="main" class="app-main">
-    <div class="case-strip"><span>השיחה והפרטים שלך, במקום אחד</span><span id="case-state" class="badge">טוען תיק…</span></div>
+    <span id="case-state" class="sr-only" role="status">טוען תיק…</span>
     <div id="mock-banner" class="notice mock-notice" hidden>הדגמה · נתוני דמה בלבד. הסכומים הם דוגמאות קבועות ואינם מחושבים לפי הפרטים שהוזנו.</div>
     <div id="replay-banner" class="notice replay-notice" role="status" hidden>הדגמה: השמעה של שיחה מוקלטת</div>
     <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר להמשיך במילוי הטופס.</div>
@@ -22,21 +22,20 @@
     <div id="feedback" class="notice" role="status" hidden></div>
     <div class="employee-grid">
       <section id="chat-panel" class="panel chat-panel" aria-labelledby="chat-heading">
-        <div class="chat-heading"><img class="header-avatar" src="assets/avatar-bot.webp" alt="" width="48" height="48"><div><h1 id="chat-heading">יועץ הרכב</h1><p>הכללים והחישוב מהשרת, לא מהמודל</p></div><span class="chat-label">השיחה שלי</span></div>
-        <div class="chat-progress"><div><span id="progress-label">הפרטים שלי: טוען…</span><span class="small-muted">צעד אחר צעד</span></div><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
+        <div class="chat-heading"><img class="header-avatar" src="assets/avatar-bot.webp" alt="" width="40" height="40"><h1 id="chat-heading">יועץ הרכב</h1></div>
+        <div class="chat-progress"><span id="progress-label" class="sr-only">הפרטים שלי: טוען…</span><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
         <div id="messages" class="messages" role="log" aria-label="היסטוריית השיחה" aria-live="off" aria-busy="true"><p class="empty-state">טוען את השיחה…</p></div>
         <div id="chat-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="typing" class="typing" role="status" hidden><span class="typing-dots" aria-hidden="true">•••</span>העוזר מכין תשובה…</div>
         <form id="message-form" class="composer">
-          <label for="message-input">מה תרצו לבדוק?</label>
-          <div class="composer-input"><textarea id="message-input" name="message" placeholder="אפשר גם לענות במילים שלך…" rows="2" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
-          <p class="composer-hint">Enter לשליחה · Shift + Enter לשורה חדשה</p>
+          <label for="message-input" class="sr-only">הודעה ליועץ הרכב. Enter לשליחה, Shift ו-Enter לשורה חדשה</label>
+          <div class="composer-input"><textarea id="message-input" name="message" placeholder="מה תרצו לבדוק?" rows="1" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
         </form>
       </section>
       <div class="decision-workspace">
-        <section id="profile-panel" class="panel profile-panel" aria-labelledby="profile-heading">
-          <div class="panel-heading"><div><span class="section-kicker">הבסיס להחלטה</span><h2 id="profile-heading">מה אני יודע עליך</h2></div><button id="profile-toggle" class="text-button" type="button" aria-expanded="true" aria-controls="profile-content" hidden>הצג הכול</button><span id="profile-count" class="badge neutral">טוען…</span></div>
-          <div id="profile-content"><p class="profile-hint">לחיצה על פרט פותחת את אפשרויות העריכה שלו.</p><div id="profile" class="profile-grid" aria-busy="true"><p class="empty-state">טוען את הפרטים…</p></div><details id="profile-extra" class="profile-extra"><summary>שאר הפרטים להשוואה</summary><div id="profile-other" class="profile-grid"></div></details><p id="profile-placeholder" class="profile-placeholder">כשאדע מספיק, ההשוואה תופיע כאן.</p></div>
+        <section id="profile-panel" class="panel profile-panel" aria-label="המידע שלך">
+          <button id="profile-toggle" class="profile-toggle" type="button" aria-expanded="false" aria-controls="profile-content"><span class="profile-title">המידע שלך</span><span id="profile-count" class="badge neutral">טוען…</span><span class="chevron" aria-hidden="true">▾</span></button>
+          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן או להשלים כל פרט בלחיצה עליו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
         </section>
         <div id="pending-banner" class="notice pending-notice" role="status" hidden><strong>שאלה נשלחה לנציג התחבורה, ההשוואה תתעדכן כשתגיע תשובה</strong><ul id="pending-list"></ul></div>
         <section id="comparison-panel" class="panel comparison-panel" aria-labelledby="comparison-heading" hidden>
