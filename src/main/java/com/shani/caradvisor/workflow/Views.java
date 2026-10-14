@@ -53,7 +53,7 @@ public final class Views {
     }
 
     /** officialUrl: the model's page on the importer's site; null for waiving the car or when there is none. */
-    public record SideView(String label, BigDecimal net, String officialUrl) {
+    public record SideView(String label, BigDecimal net, String officialUrl, String type, String vehicleId) {
     }
 
     public record FactorView(String component, String label, BigDecimal from, BigDecimal to, BigDecimal netImpact) {

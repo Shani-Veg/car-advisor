@@ -1,25 +1,21 @@
 package com.shani.caradvisor.agent;
 
-import com.shani.caradvisor.engine.Money;
 import com.shani.caradvisor.workflow.ApiException;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
-import com.shani.caradvisor.workflow.FactKey;
+import com.shani.caradvisor.workflow.ChatSummaries;
 import com.shani.caradvisor.workflow.Views.CaseView;
 import com.shani.caradvisor.workflow.Views.MessageView;
-import com.shani.caradvisor.workflow.Views.ProfileField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * One employee chat turn: the model reads the case state, calls tools (which run the same workflow as the form),
@@ -73,14 +69,14 @@ public class AdvisorAgent {
 
         CaseView after = workflow.view(caseId);
         if (!turnLog.recorded.isEmpty()) {
-            workflow.addBotMessage(caseId, confirmation(after, turnLog.recorded));
+            workflow.addBotMessage(caseId, ChatSummaries.confirmation(after, turnLog.recorded));
         }
-        workflow.addBotMessage(caseId, reply.isBlank() ? fallback(after) : clean(reply));
+        workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply));
         if (after.comparison() != null && (turnLog.alternativeChosen || !turnLog.recorded.isEmpty())) {
-            workflow.addBotMessage(caseId, comparisonSummary(after));
+            workflow.addBotMessage(caseId, ChatSummaries.comparisonSummary(after));
         }
         if (turnLog.optionsListed && after.ranking() != null) {
-            workflow.addBotMessage(caseId, rankingSummary(after));
+            workflow.addBotMessage(caseId, ChatSummaries.rankingSummary(after));
         }
         return workflow.view(caseId);
     }
@@ -88,19 +84,6 @@ public class AdvisorAgent {
     /** Small models sometimes slip an Arabic waw into a Hebrew word. */
     private static String clean(String reply) {
         return reply.replace('و', 'ו').trim();
-    }
-
-    private static String rankingSummary(CaseView view) {
-        String top = view.ranking().stream().limit(3)
-                .map(item -> item.alternative().label() + " (" + signed(item.difference()) + " בחודש"
-                        + (item.participationEstimated() ? ", לפי השתתפות משוערת" : "") + ")")
-                .collect(Collectors.joining(", "));
-        return "לפי המערכת, האפשרויות המשתלמות ביותר עבורך: " + top + ". כל האפשרויות מופיעות במסך.";
-    }
-
-    private static String signed(BigDecimal amount) {
-        String sign = amount.signum() > 0 ? "+" : amount.signum() < 0 ? "-" : "";
-        return sign + Money.display(amount.abs());
     }
 
     private String converse(String caseId, long messageId, String employeeText, List<Map<String, Object>> contents,
@@ -180,36 +163,4 @@ public class AdvisorAgent {
         return Map.of("role", role, "parts", List.of(Map.of("text", text)));
     }
 
-    private static String confirmation(CaseView view, List<FactKey> recorded) {
-        String items = recorded.stream().distinct().sorted()
-                .map(key -> field(view, key.apiName()))
-                .map(f -> f.label() + ": " + f.display())
-                .collect(Collectors.joining(", "));
-        return "רשמתי: " + items + ". אם משהו לא נכון, אפשר לתקן כאן או בטופס.";
-    }
-
-    private static String comparisonSummary(CaseView view) {
-        String text = view.comparison().explanation();
-        if (!view.pendingQuestions().isEmpty()) {
-            text += " שלחתי שאלה לנציג התחבורה (" + view.pendingQuestions().get(0).question()
-                    + "), וההשוואה תתעדכן כשתגיע תשובה.";
-        }
-        return text;
-    }
-
-    private static String fallback(CaseView view) {
-        List<String> missing = view.profile().stream()
-                .filter(f -> "MISSING".equals(f.status()) && !"alternativeParticipation".equals(f.key()))
-                .limit(2)
-                .map(ProfileField::label)
-                .toList();
-        if (!missing.isEmpty()) {
-            return "כדי להמשיך אצטרך עוד כמה פרטים: " + String.join(" ו", missing) + ".";
-        }
-        return view.comparison() != null ? "ההשוואה מעודכנת במסך." : "איזו חלופה תרצה/י לבדוק?";
-    }
-
-    private static ProfileField field(CaseView view, String key) {
-        return view.profile().stream().filter(f -> f.key().equals(key)).findFirst().orElseThrow();
-    }
 }

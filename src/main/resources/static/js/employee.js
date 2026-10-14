@@ -93,8 +93,10 @@ function renderMessages(messages) {
     const existing = messageNodes.get(message.id);
     if (existing && same(existing.data, message)) continue;
     const node = el('article', 'message ' + (message.role === 'employee' ? 'employee' : 'bot'));
-    node.append(el('span', 'message-avatar', message.role === 'employee' ? 'אני' : '✳'));
-    node.firstChild.setAttribute('aria-hidden', 'true');
+    const avatar = el('img', 'message-avatar');
+    avatar.src = message.role === 'employee' ? 'assets/avatar-client.webp' : 'assets/avatar-bot.webp';
+    avatar.alt = ''; avatar.width = 40; avatar.height = 40;
+    node.append(avatar);
     const content = el('div', 'message-content');
     const meta = el('div', 'message-meta');
     meta.append(el('strong', '', message.role === 'employee' ? 'אני' : 'יועץ הרכב'), el('span', '', formatDate(message.at, true)));

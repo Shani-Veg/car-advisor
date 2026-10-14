@@ -8,6 +8,7 @@ import com.shani.caradvisor.engine.ComparisonEngine;
 import com.shani.caradvisor.engine.Factor;
 import com.shani.caradvisor.engine.Vehicle;
 import com.shani.caradvisor.workflow.Views.BreakdownView;
+import com.shani.caradvisor.workflow.Views.ChoiceView;
 import com.shani.caradvisor.workflow.Views.CaseView;
 import com.shani.caradvisor.workflow.Views.ComparisonView;
 import com.shani.caradvisor.workflow.Views.FactorView;
@@ -46,11 +47,12 @@ class CaseViewAssembler {
     private final FactRepository facts;
     private final MessageRepository messages;
     private final QuestionRepository questions;
+    private final ChoiceOptions choiceOptions;
     private final boolean assistantEnabled;
     private final String assistantMode;
 
     CaseViewAssembler(ReferenceData data, ComparisonEngine engine, FactValues values, FactRepository facts,
-                      MessageRepository messages, QuestionRepository questions, LlmClient llm,
+                      MessageRepository messages, QuestionRepository questions, ChoiceOptions choiceOptions, LlmClient llm,
                       @Value("${advisor.assistant.enabled:true}") boolean assistantEnabled) {
         this.data = data;
         this.engine = engine;
@@ -58,6 +60,7 @@ class CaseViewAssembler {
         this.facts = facts;
         this.messages = messages;
         this.questions = questions;
+        this.choiceOptions = choiceOptions;
         this.assistantEnabled = assistantEnabled && llm.isConfigured();
         this.assistantMode = llm.mode();
     }
@@ -81,16 +84,45 @@ class CaseViewAssembler {
                 assistantEnabled,
                 assistantMode,
                 Arrays.stream(FactKey.values()).map(key -> profileField(state, key)).toList(),
-                messages.findByCaseIdOrderByIdAsc(caseEntity.id()).stream()
-                        .map(m -> new MessageView("m-" + m.id(), m.role().name().toLowerCase(), m.text(),
-                                m.createdAt(), List.of()))
-                        .toList(),
+                messageViews(caseEntity, state),
                 state.canCompare() ? comparison(state) : null,
                 state.missingForToday().isEmpty() ? ranking(state) : null,
                 state.questions().stream()
                         .filter(RepQuestionEntity::isPending)
                         .map(q -> new PendingQuestion(q.id(), q.factKey().apiName(), q.question(), "OPEN", q.createdAt()))
                         .toList());
+    }
+
+    private List<MessageView> messageViews(CaseEntity caseEntity, CaseState state) {
+        List<MessageEntity> all = messages.findByCaseIdOrderByIdAsc(caseEntity.id());
+        List<ChoiceView> choices = offersFor(state, all).stream().map(o -> new ChoiceView(o.id(), o.label())).toList();
+        List<MessageView> result = new ArrayList<>();
+        for (int i = 0; i < all.size(); i++) {
+            MessageEntity m = all.get(i);
+            result.add(new MessageView("m-" + m.id(), m.role().name().toLowerCase(), m.text(), m.createdAt(),
+                    i == all.size() - 1 ? choices : List.of()));
+        }
+        return result;
+    }
+
+    List<ChoiceOptions.Offer> offersFor(CaseState state, CaseEntity caseEntity) {
+        return offersFor(state, messages.findByCaseIdOrderByIdAsc(caseEntity.id()));
+    }
+
+    /**
+     * Answer buttons belong to the bot's latest message only, and are always computed from the case as it is now.
+     * They stay consistent with the question because the server writes a follow-up question whenever a form edit
+     * moves the first missing detail (see ChoiceService.editProfile).
+     */
+    private List<ChoiceOptions.Offer> offersFor(CaseState state, List<MessageEntity> all) {
+        if (all.isEmpty()) {
+            return List.of();
+        }
+        MessageEntity last = all.get(all.size() - 1);
+        if (last.role() != MessageEntity.Role.BOT) {
+            return List.of();
+        }
+        return choiceOptions.offeredFor(state);
     }
 
     RepQuestionView repView(RepQuestionEntity question, CaseEntity caseEntity) {
@@ -128,10 +160,10 @@ class CaseViewAssembler {
 
     private ComparisonView comparison(CaseState state) {
         Comparison c = engine.compare(state.employee(), state.occupation(), state.todayChoice(), state.alternativeChoice());
-        SideView today = new SideView(c.today().choice().label(), c.netToday(), officialUrl(c.today().choice()));
+        SideView today = side(c.today().choice(), c.netToday());
         if (!c.eligible()) {
             return new ComparisonView(c.rulesVersion(), false, c.eligibility().reason(), today,
-                    new SideView(state.alternativeChoice().label(), null, officialUrl(state.alternativeChoice())),
+                    side(state.alternativeChoice(), null),
                     null, "NONE", List.of(), null, state.estimates(), ExplanationWriter.explain(c));
         }
         int sign = c.difference().signum();
@@ -140,13 +172,20 @@ class CaseViewAssembler {
                 true,
                 c.eligibility().reason(),
                 today,
-                new SideView(c.alternative().choice().label(), c.netAlternative(), officialUrl(c.alternative().choice())),
+                side(c.alternative().choice(), c.netAlternative()),
                 c.difference(),
                 sign > 0 ? "GAIN" : sign < 0 ? "LOSS" : "NONE",
                 c.factors().stream().map(CaseViewAssembler::factorView).toList(),
                 new BreakdownView(c.today().result(), c.alternative().result()),
                 state.estimates(),
                 ExplanationWriter.explain(c));
+    }
+
+    /** type and vehicleId let the screen recognise which card is being compared, without guessing from names. */
+    private static SideView side(CarChoice choice, java.math.BigDecimal net) {
+        return choice instanceof CarChoice.CompanyCar car
+                ? new SideView(choice.label(), net, car.vehicle().officialUrl(), "car", car.vehicle().id())
+                : new SideView(choice.label(), net, null, "waiver", null);
     }
 
     private static String officialUrl(CarChoice choice) {

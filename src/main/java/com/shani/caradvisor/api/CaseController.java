@@ -1,9 +1,8 @@
 package com.shani.caradvisor.api;
 
 import com.shani.caradvisor.agent.AdvisorAgent;
-import com.shani.caradvisor.workflow.ApiException;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
-import com.shani.caradvisor.workflow.FactEntity;
+import com.shani.caradvisor.workflow.ChoiceService;
 import com.shani.caradvisor.workflow.FactKey;
 import com.shani.caradvisor.workflow.Views.CaseView;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,10 +20,12 @@ public class CaseController {
 
     private final CaseWorkflowService workflow;
     private final AdvisorAgent agent;
+    private final ChoiceService choices;
 
-    public CaseController(CaseWorkflowService workflow, AdvisorAgent agent) {
+    public CaseController(CaseWorkflowService workflow, AdvisorAgent agent, ChoiceService choices) {
         this.workflow = workflow;
         this.agent = agent;
+        this.choices = choices;
     }
 
     public record MessageRequest(String text, String clientRequestId) {
@@ -57,14 +58,13 @@ public class CaseController {
 
     @PostMapping("/{caseId}/choices")
     public CaseView choice(@PathVariable("caseId") String caseId, @RequestBody ChoiceRequest body) {
-        throw ApiException.notFound("UNKNOWN_CHOICE", "הבחירה לא נמצאה");
+        return choices.choose(caseId, body.choiceId(), body.clientRequestId());
     }
 
     @PutMapping("/{caseId}/profile/{key}")
     public CaseView updateProfile(@PathVariable("caseId") String caseId, @PathVariable("key") String key,
                                   @RequestBody ProfileUpdate body) {
-        return workflow.setFact(caseId, FactKey.fromApiName(key), body.value(), FactEntity.Source.FORM, null,
-                body.expectedVersion());
+        return choices.editProfile(caseId, FactKey.fromApiName(key), body.value(), body.expectedVersion());
     }
 
     @PostMapping("/{caseId}/alternative")
