@@ -181,3 +181,79 @@
 - [Infogram: data visualization trends 2026](https://infogram.com/blog/10-trends-in-data-visualization-to-watch-in-2026/)
 - [Luzmo: data visualization trends](https://luzmo.com/blog/data-visualization-trends)
 - [Nothing DESIGN.md (unofficial)](https://www.shadcn.io/design/nothing)
+
+---
+
+# חלק ד: פונטים וצבעים למוצר טכנולוגי (15.10.2026)
+
+## פונטים
+**המגבלה הראשונה היא עברית.** הפונטים הכי נפוצים במוצרי AI ותוכנה (Inter, Geist, Söhne, ו-OpenAI Sans שהחליף את Söhne ב-ChatGPT) **לא כוללים עברית**. לכן הבחירה היא בין משפחות שיש בהן גם עברית וגם לטינית שעוצבו יחד.
+
+| פונט | אופי | מתאים ל |
+|---|---|---|
+| **IBM Plex Sans Hebrew** | טכני, מדויק, "הנדסי". נבנה לממשקים שבהם דיוק נתונים חשוב, ויש לו אחים: Plex Sans ו-Plex Mono | **ממשק ומספרים. ההמלצה** |
+| Heebo | בן הזוג העברי של Roboto, נקי וגיאומטרי | ממשק ניטרלי, אבל נפוץ מאוד בישראל ולכן פחות ייחודי |
+| Noto Sans Hebrew | הכי ניטרלי, עם ציר רוחב לטבלות צפופות | בטוח, בלי אישיות |
+| Assistant | הומניסטי ורגוע, x-height גבוה | קריאות בגדלים קטנים, פחות "טכנולוגי" |
+| Open Sans (עברית) | ידידותי ומוכר, העברית עוצבה בישראל | אתר תדמית |
+| Rubik | עגלגל | צרכני וידידותי, לא לנתונים |
+| Almoni, Ploni (AlefAlefAlef) | מקצועיים, מהפופולריים בישראל | בתשלום. רק אם יש תקציב לרישיון |
+
+**למספרים:** תמיד `font-variant-numeric: tabular-nums` (ספרות ברוחב שווה, עמודות מיושרות) על כל מספר: כרטיסים, טבלות, זמנים. מונוספייס עם ספרות ברורות (JetBrains Mono, IBM Plex Mono) מתאים לתוויות ולקודים. מגמה: מוצרי AI ומפתחים משתמשים במונוספייס לתוויות ולכותרות קטנות כדי להיראות "בנויים על ידי מהנדסים".
+
+**מספר תצוגה גדול:** אותו פונט במשקל 600 (הכי שקט), מונוספייס (טכני), Doto (לוח נקודות, למספר אחד בלבד), או סריף כמו Frank Ruhl Libre (יוקרתי, פחות טכנולוגי).
+
+**מה עושים יצרני רכב:** Polestar משתמשת בגרסה מותאמת של Unica77 במשקל אחד, "טכני, נקי ובלי שיוך לתעשייה או לתקופה". Volvo מפרסמת גופן אחד לאתר. גופן אחד שמשרת הכול זה הסטנדרט.
+
+## צבעים
+1. **מבנה:** בסיס ניטרלי (רקע, משטח, כתב, קווים), **צבע ראשי אחד**, ו**צבעי אות** קבועים. לא יותר מ-4 עד 7 צבעים עם משמעות.
+2. **אמון:** כחול הוא הצבע היחיד שיש לו תמיכה מחקרית כ"אמין" באתרי פיננסים, אבל ההשפעה קטנה מול גורמים אחרים. לטורקיז אין מחקר מבוקר, רק פרקטיקה ("בין מקצועיות לחדשנות").
+3. **להימנע מ"סגול AI":** גרדיאנטים סגולים, זוהר וכדורים זוהרים הפכו לשפה משותפת של כל מוצרי ה-AI, ויש שטוענים שזה כבר פוגע באמון. מערכות העיצוב של Red Hat ו-PatternFly ממליצות לא לסמן AI בצבע או בגרדיאנט נפרד.
+4. **צבעי אות בהשראת הרכב (ISO 2575, מידע כללי):** אדום לסכנה, ענבר לזהירות, ירוק או כחול למצב פעיל ומידע. לא להסתמך על צבע בלבד, תמיד גם טקסט או סמל.
+5. **עלייה וירידה בכסף:** במקום ירוק ואדום (בעייתי לעיוורי צבעים), **ירוק-ים לעלייה וכתום לירידה**. אדום נשאר רק לשגיאות. אצלנו היום הירידה באדום, וכדאי לשנות.
+6. **טכני:** טוקנים סמנטיים (`--success`, `--warning`) ולא צבעים ישירים. OKLCH הוא הפורמט המקובל ב-2026, כי שינוי בהירות צפוי. במצב כהה מגדירים ערכים נפרדים, לא היפוך.
+
+## ניגודיות שבדקתי (WCAG, טקסט רגיל דורש 4.5:1)
+| שילוב | יחס |
+|---|---|
+| לבן על כחול `#1E4FA8` | 7.67 |
+| לבן על טורקיז `#0B6E66` | 6.11 |
+| לבן על כתום ירידה `#C2410C` | 5.18 |
+| לבן על ירוק-ים `#0F7F72` | 4.88 |
+| ענבר `#E09B1B` על גרפיט `#1D2125` | 6.84 |
+| מנטה `#5FE3C2` על כחול `#1E4FA8` | 4.84 |
+| ירוק `#1E9E78` על לבן | 3.38 (**רק לנקודות, לא לטקסט**) |
+
+## ההמלצה
+- **פונט:** IBM Plex Sans Hebrew לכל הממשק, IBM Plex Mono לתוויות ולקודים, ומספרים טבלאיים בכל מקום. אופציה: Doto רק למספר הגדול במחוון.
+- **צבע:** טורקיז `#0B6E66` או כחול `#1E4FA8` כראשי (תלוי בטעם), גרפיט לכתב, ענבר להערכות, ירוק-ים לעלייה, כתום לירידה, אדום רק לבוט ולשגיאות.
+
+## מקורות נוספים
+- [Orbix: SaaS typography examples 2026](https://www.orbix.studio/blogs/saas-typography-examples)
+- [Gleam Studio: font trends 2026](https://www.gleamstudio.design/blog-post/font-trends-2026)
+- [Lipi: what font does OpenAI use](https://www.lipi.ai/blog/what-font-does-openai-use)
+- [Lineto: Polestar bespoke typeface](https://lineto.com/bespoke/polestar)
+- [Fonts In Use: Polestar](https://fontsinuse.com/uses/50386/polestar)
+- [Monotype: Mercedes-Benz type](https://www.monotype.com/ja/node/6357)
+- [Fontsource: Hebrew fonts](https://fontsource.org/languages/hebrew)
+- [Google Fonts: Noto Sans Hebrew](https://fonts.google.com/noto/specimen/Noto+Sans+Hebrew)
+- [Daniel Rosehill: Hebrew fonts worth knowing](https://blog.danielrosehill.com/posts/hebrew-fonts-worth-knowing)
+- [baba: Hebrew fonts compared](https://www.itsbaba.com/hebrew-fonts)
+- [AlefAlefAlef: Ploni and Ploni Yad](https://alefalefalef.co.il/en/?p=20997)
+- [FontShop: Almoni](https://www.fontshop.com/families/almoni)
+- [Font Alternatives: fonts for dense dashboards](https://fontalternatives.com/blog/best-fonts-dense-dashboards/)
+- [Font Alternatives: legible numerals in UI](https://fontalternatives.com/blog/best-fonts-legible-numerals-ui/)
+- [Dash: tabular numerics](https://brand.dash.fi/foundations/data-viz)
+- [Font Alternatives: free monospace fonts 2026](https://fontalternatives.com/blog/best-free-monospace-fonts-2026/)
+- [Font Alternatives: Geist Mono vs JetBrains Mono](https://fontalternatives.com/compare/geist-mono-vs-jetbrains-mono/)
+- [AdminLTE: dashboard color schemes](https://adminlte.io/blog/best-admin-dashboard-color-schemes/)
+- [Zeplin: dark mode color palette](https://blog.zeplin.io/dark-mode-color-palette)
+- [Frontend Checklist: OKLCH](https://frontendchecklist.io/rules/css/color-oklch)
+- [Indie Hackers: the AI purple problem](https://www.indiehackers.com/post/the-ai-purple-problem-why-every-ai-brand-looks-the-same-6cb0aa2a02)
+- [Red Hat: AI color guidelines](https://ux.redhat.com/ai-guidelines/color/)
+- [PatternFly: AI color guidelines](https://www.patternfly.org/ai/guidelines/color)
+- [The Branx: best AI brands of 2026](https://thebranx.com/blog/the-best-ai-brands-of-2026-trends-lessons-and-our-top-picks)
+- [Color as trustworthiness cue in web sites (Technical Communication, 2011)](https://www.ingentaconnect.com/contentone/stc/tc/2011/00000058/00000002/art00004)
+- [We and the Color: color psychology in fintech](https://weandthecolor.com/color-psychology-in-fintech-branding-how-the-right-palette-builds-user-trust/209146)
+- [ISD 2025: color design for vehicle HMI alerts](https://isd2025.fon.bg.ac.rs/wp-content/uploads/ISD_2025_camera_ready_127.pdf)
+- [TRID: color universal HMI for driving support](https://trid.trb.org/view.aspx?id=1279702)
