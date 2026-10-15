@@ -32,6 +32,7 @@ public class AgentTools {
     static final String RECORD_FACTS = "record_facts";
     static final String CHOOSE_ALTERNATIVE = "choose_alternative";
     static final String LIST_OPTIONS = "list_options";
+    static final String REQUEST_REP_CONFIRMATION = "request_rep_confirmation";
 
     private static final Pattern NUMBER = Pattern.compile("(\\d[\\d,]*(?:\\.\\d+)?)\\s*(אלף)?");
 
@@ -48,6 +49,7 @@ public class AgentTools {
         final List<FactKey> recorded = new ArrayList<>();
         boolean alternativeChosen;
         boolean optionsListed;
+        boolean repRequested;
     }
 
     List<Map<String, Object>> declarations() {
@@ -80,7 +82,11 @@ public class AgentTools {
                                                 "description", "Required when type is car. " + catalogLegend())),
                                 "required", List.of("type"))),
                 Map.of("name", LIST_OPTIONS,
-                        "description", "All options the employee may take, best for their net first. Use when they ask what is worthwhile."));
+                        "description", "All options the employee may take, best for their net first, with each car's drive type "
+                                + "(electric, hybrid...). Use when they ask what is worthwhile or which cars of a kind they can take."),
+                Map.of("name", REQUEST_REP_CONFIRMATION,
+                        "description", "Ask the transport rep to confirm the participation for the car being compared. "
+                                + "Only when the employee asks for it (for example: they want this car, or want the number confirmed)."));
     }
 
     Map<String, Object> execute(String caseId, long messageId, String employeeText, LlmClient.FunctionCall call,
@@ -92,6 +98,7 @@ public class AgentTools {
                 log.optionsListed = true;
                 yield listOptions(caseId);
             }
+            case REQUEST_REP_CONFIRMATION -> requestRep(caseId, log);
             default -> Map.of("error", "Unknown tool " + call.name());
         };
     }
@@ -144,6 +151,16 @@ public class AgentTools {
         }
     }
 
+    private Map<String, Object> requestRep(String caseId, TurnLog log) {
+        try {
+            workflow.requestRepConfirmation(caseId);
+            log.repRequested = true;
+            return Map.of("ok", true, "caseState", Prompts.caseState(workflow.view(caseId)));
+        } catch (ApiException e) {
+            return Map.of("ok", false, "error", e.getMessage());
+        }
+    }
+
     private Map<String, Object> listOptions(String caseId) {
         CaseView view = workflow.view(caseId);
         if (view.ranking() == null) {
@@ -155,6 +172,7 @@ public class AgentTools {
             options.add(Map.of(
                     "rank", rank++,
                     "option", item.alternative().label(),
+                    "drive", item.alternative().drive() == null ? "no car" : item.alternative().drive(),
                     "effectOnNet", item.difference().signum() > 0 ? "higher than today"
                             : item.difference().signum() < 0 ? "lower than today" : "same as today",
                     "participationIsEstimate", item.participationEstimated()));

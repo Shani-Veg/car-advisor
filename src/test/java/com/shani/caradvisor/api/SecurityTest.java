@@ -74,6 +74,7 @@ class SecurityTest {
                         FactKey.CURRENT_PARTICIPATION, "300")
                 .forEach((key, value) -> workflow.setFact(id, key, value, FactEntity.Source.FORM, null, null));
         workflow.chooseAlternative(id, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(id);
         String questionId = workflow.repQuestions(RepQuestionEntity.Status.OPEN).stream()
                 .filter(q -> q.caseId().equals(id)).findFirst().orElseThrow().id();
 

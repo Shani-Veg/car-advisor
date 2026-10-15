@@ -6,6 +6,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.Map;
 
@@ -27,6 +29,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<Map<String, Object>> unreadable(HttpMessageNotReadableException e) {
         return error(400, "INVALID_JSON", "גוף הבקשה אינו JSON תקין");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<Map<String, Object>> tooLarge(MaxUploadSizeExceededException e) {
+        return error(400, "FILE_TOO_LARGE", "הקובץ גדול מדי. אפשר להעלות עד 5 מגה.");
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    ResponseEntity<Map<String, Object>> noFile(MissingServletRequestPartException e) {
+        return error(400, "EMPTY_FILE", "לא התקבל קובץ");
     }
 
     private static ResponseEntity<Map<String, Object>> error(int status, String code, String message) {

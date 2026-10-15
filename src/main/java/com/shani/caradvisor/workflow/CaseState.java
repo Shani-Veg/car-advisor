@@ -18,6 +18,11 @@ import java.util.Optional;
  */
 final class CaseState {
 
+    /** Details the system may assume and then asks the employee to confirm (or reads from a payslip). */
+    static final List<FactKey> REVIEWABLE = List.of(
+            FactKey.COMMISSIONS, FactKey.BONUS, FactKey.PENSION_PERCENT, FactKey.STUDY_FUND_PERCENT,
+            FactKey.CREDIT_POINTS, FactKey.CURRENT_PARTICIPATION);
+
     private static final List<FactKey> ALWAYS_REQUIRED = List.of(
             FactKey.OCCUPATION, FactKey.GROUP, FactKey.BASE_SALARY, FactKey.COMMISSIONS, FactKey.BONUS,
             FactKey.PENSION_PERCENT, FactKey.STUDY_FUND_PERCENT, FactKey.CREDIT_POINTS,
@@ -64,6 +69,41 @@ final class CaseState {
             missing.add(FactKey.ALTERNATIVE_PARTICIPATION);
         }
         return missing;
+    }
+
+    /** Reviewable details that are still the system's assumption, not the employee's word. */
+    List<FactKey> assumedForReview() {
+        return REVIEWABLE.stream()
+                .filter(k -> facts.containsKey(k) && facts.get(k).status() == FactEntity.Status.DEFAULT)
+                .toList();
+    }
+
+    /** The four questions are answered and the assumed details still wait for the employee's yes, payslip or "later". */
+    boolean reviewPending() {
+        return missingForToday().isEmpty() && !caseEntity.assumptionsReviewed() && !assumedForReview().isEmpty();
+    }
+
+    /** No rep question, and no offer to ask one, for a car the employee is known not to be allowed. */
+    boolean mayTake(Vehicle vehicle) {
+        if (vehicle.isFamilyTrack()) {
+            return fact(FactKey.CHILDREN_UP_TO_23)
+                    .map(f -> Integer.parseInt(f.value()) >= data.rules().familyTrack().minChildren())
+                    .orElse(true);
+        }
+        return fact(FactKey.GROUP)
+                .map(f -> data.rules().rankOf(vehicle.group()) <= data.rules().rankOf(f.value()))
+                .orElse(true);
+    }
+
+    /** The compared car's participation is still the catalog's estimate and nobody has asked the rep about it yet. */
+    boolean canAskRep() {
+        if (caseEntity.alternative() != CaseEntity.Alternative.CAR || hasPendingQuestions()) {
+            return false;
+        }
+        boolean estimate = fact(FactKey.ALTERNATIVE_PARTICIPATION)
+                .map(f -> f.status() == FactEntity.Status.DEFAULT)
+                .orElse(false);
+        return estimate && mayTake(vehicle(caseEntity.alternativeVehicleId()));
     }
 
     boolean hasPendingQuestions() {

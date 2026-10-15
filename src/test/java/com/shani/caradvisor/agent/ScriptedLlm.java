@@ -27,6 +27,17 @@ class ScriptedLlm implements LlmClient {
         return new Turn(Map.of("role", "model", "parts", List.of(Map.of("text", text))), text, List.of(), "scripted");
     }
 
+    /** What extract() returns; null = the model cannot read documents. */
+    Map<String, Object> document;
+
+    @Override
+    public Map<String, Object> extract(String instruction, byte[] file, String mimeType, Map<String, Object> schema) {
+        if (document == null) {
+            throw new UnavailableException("no document scripted");
+        }
+        return document;
+    }
+
     @Override
     public boolean isConfigured() {
         return true;

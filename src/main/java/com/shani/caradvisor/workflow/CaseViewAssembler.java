@@ -90,7 +90,8 @@ class CaseViewAssembler {
                 state.questions().stream()
                         .filter(RepQuestionEntity::isPending)
                         .map(q -> new PendingQuestion(q.id(), q.factKey().apiName(), q.question(), "OPEN", q.createdAt()))
-                        .toList());
+                        .toList(),
+                state.reviewPending() ? state.assumedForReview().stream().map(FactKey::apiName).toList() : List.of());
     }
 
     private List<MessageView> messageViews(CaseEntity caseEntity, CaseState state) {
@@ -122,7 +123,7 @@ class CaseViewAssembler {
         if (last.role() != MessageEntity.Role.BOT) {
             return List.of();
         }
-        if (last.continueOnly() && !state.missingForToday().isEmpty()) {
+        if (last.continueOnly() && (!state.missingForToday().isEmpty() || state.reviewPending())) {
             return List.of(new ChoiceOptions.Offer(ChoiceOptions.CONTINUE, "נמשיך בשאלות"));
         }
         return choiceOptions.offeredFor(state);

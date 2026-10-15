@@ -5,7 +5,9 @@ import com.shani.caradvisor.workflow.Views.CaseView;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -67,6 +69,9 @@ public class ChoiceService {
                 .filter(o -> o.id().equals(choiceId))
                 .findFirst()
                 .orElseThrow(() -> ApiException.badRequest("INVALID_CHOICE", "הבחירה כבר אינה זמינה."));
+        if (offer.id().startsWith(ChoiceOptions.CLIENT_ACTION)) {
+            throw ApiException.badRequest("CLIENT_ACTION", "את הפעולה הזו מבצע המסך עצמו");
+        }
 
         Optional<Long> messageId = workflow.recordEmployeeMessage(caseId, offer.label(), clientRequestId);
         long sourceMessage = messageId.orElseThrow();
@@ -89,8 +94,50 @@ public class ChoiceService {
         } else if (ChoiceOptions.CONTINUE.equals(offer.id())) {
             workflow.addBotMessage(caseId, nextQuestionOrDone(caseEntity));
         } else if ("best".equals(offer.id())) {
+            workflow.deferAssumptions(caseId);
             workflow.addBotMessage(caseId, ChatSummaries.rankingSummary(workflow.view(caseId)));
+        } else if (ChoiceOptions.REVIEW_OK.equals(offer.id())) {
+            workflow.confirmAssumptions(caseId, "m-" + sourceMessage);
+            workflow.addBotMessage(caseId, ChatSummaries.assumptionsConfirmed());
+        } else if (ChoiceOptions.REVIEW_LATER.equals(offer.id())) {
+            workflow.deferAssumptions(caseId);
+            workflow.addBotMessage(caseId, ChatSummaries.assumptionsDeferred());
+        } else if (ChoiceOptions.REP_ASK.equals(offer.id())) {
+            workflow.requestRepConfirmation(caseId);
+            workflow.addBotMessage(caseId, ChatSummaries.repRequested(workflow.view(caseId)));
         }
+        return workflow.view(caseId);
+    }
+
+    /** The "confirm with the rep" button next to the comparison: the same step as the chat button, said in the chat. */
+    public CaseView requestRep(String caseId, String clientRequestId) {
+        CaseEntity caseEntity = cases.findById(caseId)
+                .orElseThrow(() -> ApiException.notFound("UNKNOWN_CASE", "התיק לא נמצא"));
+        if (clientRequestId != null && messages.findByCaseIdAndClientRequestId(caseId, clientRequestId).isPresent()) {
+            return views.caseView(caseEntity);
+        }
+        workflow.requestRepConfirmation(caseId);
+        workflow.recordEmployeeMessage(caseId, "אבקש מנציג התחבורה לאשר את ההשתתפות", clientRequestId);
+        workflow.addBotMessage(caseId, ChatSummaries.repRequested(workflow.view(caseId)));
+        return workflow.view(caseId);
+    }
+
+    /**
+     * The employee approved details read from their payslip. The chat says what changed, which details are still
+     * assumed, and continues with the next question (if the payslip came before the conversation ended).
+     */
+    public CaseView applyPayslip(String caseId, Map<FactKey, Object> values, String clientRequestId) {
+        CaseEntity caseEntity = cases.findById(caseId)
+                .orElseThrow(() -> ApiException.notFound("UNKNOWN_CASE", "התיק לא נמצא"));
+        if (clientRequestId != null && messages.findByCaseIdAndClientRequestId(caseId, clientRequestId).isPresent()) {
+            return views.caseView(caseEntity);
+        }
+        workflow.applyPayslip(caseId, values);
+        workflow.recordEmployeeMessage(caseId, "העליתי תלוש שכר ואישרתי את הפרטים שנקראו ממנו", clientRequestId);
+        CaseView after = workflow.view(caseId);
+        List<FactKey> missing = views.state(caseEntity).missingForToday();
+        String next = missing.isEmpty() ? ChatSummaries.PROFILE_COMPLETE : ChatSummaries.nextQuestion(missing.get(0));
+        workflow.addBotMessage(caseId, ChatSummaries.payslipApplied(after, new ArrayList<>(values.keySet())) + " " + next);
         return workflow.view(caseId);
     }
 
@@ -125,8 +172,12 @@ public class ChoiceService {
     }
 
     private String nextQuestionOrDone(CaseEntity caseEntity) {
-        List<FactKey> missing = views.state(caseEntity).missingForToday();
-        return missing.isEmpty() ? ChatSummaries.profileComplete(workflow.view(caseEntity.id()))
-                : ChatSummaries.nextQuestion(missing.get(0));
+        CaseState state = views.state(caseEntity);
+        List<FactKey> missing = state.missingForToday();
+        if (!missing.isEmpty()) {
+            return ChatSummaries.nextQuestion(missing.get(0));
+        }
+        return state.reviewPending() ? ChatSummaries.assumptionsReview(workflow.view(caseEntity.id()), false)
+                : ChatSummaries.profileComplete(workflow.view(caseEntity.id()));
     }
 }

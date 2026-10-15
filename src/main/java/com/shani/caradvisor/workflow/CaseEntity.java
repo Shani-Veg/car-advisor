@@ -29,6 +29,9 @@ public class CaseEntity {
 
     private String alternativeVehicleId;
 
+    /** The employee answered (or moved past) "are these assumed details right?". Null in cases created before the question existed. */
+    private Boolean assumptionsReviewed;
+
     private Instant createdAt;
 
     private Instant updatedAt;
@@ -55,6 +58,14 @@ public class CaseEntity {
     void chooseWaiver() {
         alternative = Alternative.WAIVER;
         alternativeVehicleId = null;
+    }
+
+    void markAssumptionsReviewed() {
+        assumptionsReviewed = true;
+    }
+
+    boolean assumptionsReviewed() {
+        return Boolean.TRUE.equals(assumptionsReviewed);
     }
 
     public String id() {

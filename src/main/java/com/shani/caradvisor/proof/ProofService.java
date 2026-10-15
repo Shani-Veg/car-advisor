@@ -229,13 +229,21 @@ public class ProofService {
         List<Check> checks = new ArrayList<>();
         String id = noaCase();
 
-        checks.add(check("בחירת רכב פותחת שאלה לנציג, וההשתתפות מסומנת כהערכה", "ממתין לנציג · שאלה פתוחה · הערכה", () -> {
+        checks.add(check("השוואת רכב לא מטרידה את הנציג: ההשתתפות מסומנת כהערכה", "מוכן · אין שאלה · הערכה", () -> {
             CaseView v = workflow.chooseAlternative(id, "car", "CAR-10", null);
             boolean estimate = v.comparison().estimates().contains("alternativeParticipation");
-            String actual = ("WAITING_FOR_REP".equals(v.status()) ? "ממתין לנציג" : v.status()) + " · "
-                    + (v.pendingQuestions().size() == 1 ? "שאלה פתוחה" : v.pendingQuestions().size() + " שאלות")
+            String actual = ("READY".equals(v.status()) ? "מוכן" : v.status()) + " · "
+                    + (v.pendingQuestions().isEmpty() ? "אין שאלה" : v.pendingQuestions().size() + " שאלות")
                     + " · " + (estimate ? "הערכה" : "לא מסומן");
-            return new Outcome(actual, "WAITING_FOR_REP".equals(v.status()) && v.pendingQuestions().size() == 1 && estimate);
+            return new Outcome(actual, "READY".equals(v.status()) && v.pendingQuestions().isEmpty() && estimate);
+        }));
+        checks.add(check("בקשת העובד שולחת שאלה אחת לנציג", "ממתין לנציג · שאלה אחת · בקשה חוזרת: NOTHING_TO_CONFIRM", () -> {
+            CaseView v = workflow.requestRepConfirmation(id);
+            Outcome again = codeOutcome(() -> workflow.requestRepConfirmation(id), "NOTHING_TO_CONFIRM");
+            String actual = ("WAITING_FOR_REP".equals(v.status()) ? "ממתין לנציג" : v.status()) + " · "
+                    + (v.pendingQuestions().size() == 1 ? "שאלה אחת" : v.pendingQuestions().size() + " שאלות")
+                    + " · בקשה חוזרת: " + again.actual();
+            return new Outcome(actual, "WAITING_FOR_REP".equals(v.status()) && v.pendingQuestions().size() == 1 && again.passed());
         }));
         checks.add(check("תשובת נציג (350 ₪) מעדכנת את ההשוואה",
                 signed(new BigDecimal("661")) + " ← " + signed(new BigDecimal("611")) + " · מוכן", () -> {
@@ -250,11 +258,13 @@ public class ProofService {
         }));
         checks.add(check("שאלה על רכב שהעובד החליף מתיישנת, ואי אפשר לענות עליה", "STALE_QUESTION", () -> {
             workflow.chooseAlternative(id, "car", "CAR-06", null);
+            workflow.requestRepConfirmation(id);
             String mg4Question = openQuestion(id);
             workflow.chooseAlternative(id, "car", "CAR-03", null);
             return codeOutcome(() -> workflow.answer(mg4Question, 300, null, "", "proof-2", "proof"), "STALE_QUESTION");
         }));
         checks.add(check("תשובה כפולה עם אותו מזהה נרשמת פעם אחת", "פעם אחת · תשובה שונה: ALREADY_ANSWERED", () -> {
+            workflow.requestRepConfirmation(id);
             String questionId = openQuestion(id);
             workflow.answer(questionId, 200, null, "", "proof-3", "proof");
             workflow.answer(questionId, 200, null, "", "proof-3", "proof");

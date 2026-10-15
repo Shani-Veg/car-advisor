@@ -28,6 +28,15 @@ final class TurnRecorder {
         log.warn("Recording model turns to {} (messages typed by the employee are written there)", this.file);
     }
 
+    /** A document reading is keyed by the file's SHA-256: the file itself is never written, only what was read from it. */
+    synchronized void recordExtraction(String sha256, Map<String, Object> fields) {
+        Map<String, Object> line = new LinkedHashMap<>();
+        line.put("kind", "document");
+        line.put("sha256", sha256);
+        line.put("fields", fields);
+        append(line);
+    }
+
     synchronized void record(ConversationKey.Key key, LlmClient.Turn turn) {
         Map<String, Object> line = new LinkedHashMap<>();
         line.put("employeeText", key.employeeText());
@@ -37,12 +46,16 @@ final class TurnRecorder {
         line.put("calls", turn.calls().stream()
                 .map(call -> Map.of("name", call.name(), "args", call.args()))
                 .toList());
+        append(line);
+    }
+
+    private void append(Map<String, Object> line) {
         try {
             Files.createDirectories(file.getParent());
             Files.writeString(file, json.writeValueAsString(line) + "\n", StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
-            log.warn("Could not record the turn: {}", e.getMessage());
+            log.warn("Could not record to {}: {}", file, e.getMessage());
         }
     }
 }

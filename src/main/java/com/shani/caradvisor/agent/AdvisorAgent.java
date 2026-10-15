@@ -64,7 +64,8 @@ public class AdvisorAgent {
             return workflow.view(caseId);
         }
 
-        List<Map<String, Object>> contents = history(workflow.view(caseId));
+        CaseView before = workflow.view(caseId);
+        List<Map<String, Object>> contents = history(before);
         AgentTools.TurnLog turnLog = new AgentTools.TurnLog();
         String reply;
         try {
@@ -80,14 +81,25 @@ public class AdvisorAgent {
         if (!turnLog.recorded.isEmpty()) {
             workflow.addBotMessage(caseId, ChatSummaries.confirmation(after, turnLog.recorded));
         }
+        // Asking what pays best moves past "are the assumed details right?", like choosing an alternative does.
+        if (turnLog.optionsListed && !after.assumptionsToConfirm().isEmpty()) {
+            after = workflow.deferAssumptions(caseId);
+        }
         // A reply that only answered a side question must not re-offer the same buttons: it offers to carry on.
-        boolean moved = !turnLog.recorded.isEmpty() || turnLog.alternativeChosen || turnLog.optionsListed;
+        boolean moved = !turnLog.recorded.isEmpty() || turnLog.alternativeChosen || turnLog.optionsListed
+                || turnLog.repRequested;
         workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved);
-        if (after.comparison() != null && (turnLog.alternativeChosen || !turnLog.recorded.isEmpty())) {
+        if (turnLog.repRequested) {
+            workflow.addBotMessage(caseId, ChatSummaries.repRequested(after));
+        } else if (after.comparison() != null && (turnLog.alternativeChosen || !turnLog.recorded.isEmpty())) {
             workflow.addBotMessage(caseId, ChatSummaries.comparisonSummary(after));
         }
         if (turnLog.optionsListed && after.ranking() != null) {
             workflow.addBotMessage(caseId, ChatSummaries.rankingSummary(after));
+        }
+        // The details just became complete, or the employee corrected an assumed one: ask about the rest, in code.
+        if (!turnLog.recorded.isEmpty() && !after.assumptionsToConfirm().isEmpty()) {
+            workflow.addBotMessage(caseId, ChatSummaries.assumptionsReview(after, !before.assumptionsToConfirm().isEmpty()));
         }
         return workflow.view(caseId);
     }

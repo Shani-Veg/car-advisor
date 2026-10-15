@@ -35,6 +35,12 @@ public class CaseWorkflowService {
     private static final Map<FactKey, String> ASSUMED = new LinkedHashMap<>();
     /** Source reference of an assumed detail (the source type stays CATALOG_DEFAULT: a stored enum is not widened). */
     static final String ASSUMPTION_REF = "assumption";
+    /** Source reference of a detail read from the employee's payslip and approved by them. */
+    public static final String PAYSLIP_REF = "payslip";
+    /** What a payslip can tell us. The job, the children and the car come from the conversation. */
+    public static final List<FactKey> PAYSLIP_FIELDS = List.of(
+            FactKey.BASE_SALARY, FactKey.COMMISSIONS, FactKey.BONUS, FactKey.PENSION_PERCENT,
+            FactKey.STUDY_FUND_PERCENT, FactKey.CREDIT_POINTS, FactKey.CURRENT_PARTICIPATION);
 
     static {
         ASSUMED.put(FactKey.COMMISSIONS, "0");
@@ -130,17 +136,77 @@ public class CaseWorkflowService {
         if (!Objects.equals(before, caseEntity.alternativeSubject())) {
             staleQuestions(caseEntity.id(), FactKey.ALTERNATIVE_PARTICIPATION);
             if (caseEntity.alternative() == CaseEntity.Alternative.CAR) {
+                // Comparing is free: the catalog's participation is used and marked as an estimate. The rep is asked
+                // only when the employee asks for it (requestRepConfirmation), not for every car they look at.
                 Vehicle vehicle = data.catalog().byId(caseEntity.alternativeVehicleId()).orElseThrow();
                 applyFact(caseEntity, FactKey.ALTERNATIVE_PARTICIPATION, vehicle.defaultParticipation().toPlainString(),
                         FactEntity.Source.CATALOG_DEFAULT, vehicle.id(), null);
-                if (mayTake(caseEntity, vehicle)) {
-                    askRep(caseEntity, FactKey.ALTERNATIVE_PARTICIPATION,
-                            "מה סכום ההשתתפות של העובד/ת ב-" + vehicle.label() + "?", vehicle.id());
-                }
             } else {
                 facts.findByCaseIdAndFactKey(caseEntity.id(), FactKey.ALTERNATIVE_PARTICIPATION).ifPresent(facts::delete);
             }
         }
+        // Moving on to an alternative answers "are the assumed details right?" with "later": they stay marked.
+        if (views.state(caseEntity).missingForToday().isEmpty()) {
+            caseEntity.markAssumptionsReviewed();
+        }
+        caseEntity.touch(Instant.now());
+        return views.caseView(caseEntity);
+    }
+
+    /** The employee wants the participation for the compared car confirmed: one question to the transport rep. */
+    public CaseView requestRepConfirmation(String caseId) {
+        CaseEntity caseEntity = load(caseId);
+        CaseState state = views.state(caseEntity);
+        if (!state.canAskRep()) {
+            throw ApiException.badRequest("NOTHING_TO_CONFIRM", state.hasPendingQuestions()
+                    ? "השאלה כבר אצל נציג התחבורה"
+                    : "אין כרגע השתתפות משוערת לאשר מול הנציג");
+        }
+        Vehicle vehicle = state.vehicle(caseEntity.alternativeVehicleId());
+        askRep(caseEntity, FactKey.ALTERNATIVE_PARTICIPATION,
+                "מה סכום ההשתתפות של העובד/ת ב-" + vehicle.label() + "?", vehicle.id());
+        caseEntity.touch(Instant.now());
+        return views.caseView(caseEntity);
+    }
+
+    /** "Yes, the assumed details are right": each becomes the employee's own value. */
+    public CaseView confirmAssumptions(String caseId, String sourceRef) {
+        CaseEntity caseEntity = load(caseId);
+        for (FactKey key : views.state(caseEntity).assumedForReview()) {
+            FactEntity fact = facts.findByCaseIdAndFactKey(caseId, key).orElseThrow();
+            applyFact(caseEntity, key, fact.value(), FactEntity.Source.EMPLOYEE_MESSAGE, sourceRef, null);
+        }
+        caseEntity.markAssumptionsReviewed();
+        caseEntity.touch(Instant.now());
+        return views.caseView(caseEntity);
+    }
+
+    /** "Later": nothing changes, the assumed details stay marked as estimates on every screen. */
+    public CaseView deferAssumptions(String caseId) {
+        CaseEntity caseEntity = load(caseId);
+        caseEntity.markAssumptionsReviewed();
+        caseEntity.touch(Instant.now());
+        return views.caseView(caseEntity);
+    }
+
+    /**
+     * Details the employee approved after the payslip was read. All are validated before any is stored, so a bad
+     * value changes nothing. Stored as the employee's own (form) values, with the payslip as the reference.
+     */
+    public CaseView applyPayslip(String caseId, Map<FactKey, Object> rawValues) {
+        CaseEntity caseEntity = load(caseId);
+        if (rawValues.isEmpty()) {
+            throw ApiException.badRequest("EMPTY_PAYSLIP", "לא נבחרו פרטים לשמירה");
+        }
+        Map<FactKey, String> normalized = new LinkedHashMap<>();
+        for (Map.Entry<FactKey, Object> entry : rawValues.entrySet()) {
+            if (!PAYSLIP_FIELDS.contains(entry.getKey())) {
+                throw ApiException.badRequest("NOT_A_PAYSLIP_FIELD", entry.getKey().label() + " לא נקרא מתלוש השכר");
+            }
+            normalized.put(entry.getKey(), values.normalize(entry.getKey(), entry.getValue()));
+        }
+        normalized.forEach((key, value) -> applyFact(caseEntity, key, value, FactEntity.Source.FORM, PAYSLIP_REF, null));
+        caseEntity.markAssumptionsReviewed();
         caseEntity.touch(Instant.now());
         return views.caseView(caseEntity);
     }
@@ -270,19 +336,6 @@ public class CaseWorkflowService {
                         + " שייך/ת לקבוצה " + occupation.group() + ". שינוי קבוצת זכאות נעשה מול משאבי אנוש.");
             }
         });
-    }
-
-    /** No rep question for a car the employee is known not to be allowed. */
-    private boolean mayTake(CaseEntity caseEntity, Vehicle vehicle) {
-        CaseState state = views.state(caseEntity);
-        if (vehicle.isFamilyTrack()) {
-            return state.fact(FactKey.CHILDREN_UP_TO_23)
-                    .map(f -> Integer.parseInt(f.value()) >= data.rules().familyTrack().minChildren())
-                    .orElse(true);
-        }
-        return state.fact(FactKey.GROUP)
-                .map(f -> data.rules().rankOf(vehicle.group()) <= data.rules().rankOf(f.value()))
-                .orElse(true);
     }
 
     private void askRep(CaseEntity caseEntity, FactKey key, String text, String subject) {

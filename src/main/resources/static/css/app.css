@@ -104,7 +104,18 @@ dialog::backdrop { background: rgba(20, 33, 61, .5); }
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 #edit-source { margin: 12px 0 22px; }
 .readonly-note { margin-top: 12px; font-size: 14px; color: var(--muted); }
-.dialog-actions { display: flex; gap: 10px; margin-top: 24px; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.dialog-lead { margin-top: 14px; font-size: 16px; line-height: 1.7; }
+.privacy-list { margin: 14px 0 10px; padding: 12px 16px 12px 12px; padding-inline-start: 30px; border-radius: var(--r-md); background: var(--surface-2); color: var(--ink-2); font-size: 15px; line-height: 1.7; }
+.payslip-reading { margin: 26px 0 8px; color: var(--primary); font-size: 17px; font-weight: 700; text-align: center; animation: blink 1.2s ease-in-out infinite; }
+.payslip-fields { display: grid; gap: 8px; margin: 12px 0; }
+.payslip-field { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--line-2); border-radius: var(--r-md); cursor: pointer; }
+.payslip-field:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.payslip-field input { width: 18px; height: 18px; flex: none; accent-color: var(--primary); }
+.payslip-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.payslip-label { font-weight: 700; }
+.payslip-copy small { color: var(--muted); font-size: 13px; }
+.payslip-value { font: 600 18px var(--num); white-space: nowrap; }
 
 /* ================= 5. Employee layout ================= */
 .employee-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 22px; align-items: start; }
@@ -240,6 +251,10 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .activity-mark { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; font-size: 12px; font-weight: 700; }
 .activity-step.done .activity-mark { background: var(--gain); color: #fff; }
 .activity-step.wait .activity-mark { background: var(--wait); color: #3D2A00; }
+.step-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.step-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.step-action { min-height: 36px; padding: 4px 14px; border: 1.5px solid var(--primary); border-radius: var(--r-pill); background: var(--surface); color: var(--primary); font-size: 14px; font-weight: 700; }
+.step-action:hover { background: var(--primary); color: var(--on-primary); }
 .breakdown { padding: 14px 20px; }
 .breakdown summary { font-size: 16px; font-weight: 700; cursor: pointer; }
 .breakdown .table-wrapper { margin-top: 12px; }

@@ -14,7 +14,8 @@ import java.util.stream.IntStream;
  * The answer buttons offered under the bot's latest question, decided by the server from the state of the case:
  * a closed list while a detail is missing (job, current car, number of children), and the next steps once the
  * details are complete (what pays best, and the best alternatives). Ids are "fact:KEY:VALUE", "alt:CAR-ID",
- * "alt:waiver" and "best".
+ * "alt:waiver", "best", "review:ok" / "review:later" (the assumed details), "rep:ask" (confirm the participation
+ * with the transport rep), and "ui:..." for actions the screen performs itself (choose a payslip file, open the form).
  */
 @Component
 public class ChoiceOptions {
@@ -23,6 +24,11 @@ public class ChoiceOptions {
     }
 
     static final String CONTINUE = "continue";
+    static final String REVIEW_OK = "review:ok";
+    static final String REVIEW_LATER = "review:later";
+    static final String REP_ASK = "rep:ask";
+    /** Prefix of buttons the screen handles without calling the server. */
+    static final String CLIENT_ACTION = "ui:";
 
     private static final int MAX_CHILDREN_BUTTON = 3;
     private static final int MAX_NEXT_STEPS = 4;
@@ -39,6 +45,13 @@ public class ChoiceOptions {
         List<FactKey> missing = state.missingForToday();
         if (!missing.isEmpty()) {
             return forMissing(missing.get(0));
+        }
+        if (state.reviewPending()) {
+            return List.of(
+                    new Offer(REVIEW_OK, "כן, הפרטים נכונים"),
+                    new Offer(CLIENT_ACTION + "payslip", "העלאת תלוש שכר"),
+                    new Offer(CLIENT_ACTION + "profile", "לעדכן בעצמי"),
+                    new Offer(REVIEW_LATER, "אחר כך"));
         }
         return nextSteps(state);
     }
@@ -64,6 +77,9 @@ public class ChoiceOptions {
 
     private List<Offer> nextSteps(CaseState state) {
         List<Offer> offers = new ArrayList<>();
+        if (state.canAskRep()) {
+            offers.add(new Offer(REP_ASK, "לאשר את ההשתתפות מול נציג"));
+        }
         offers.add(new Offer("best", "מה הכי משתלם לי?"));
         String today = state.fact(FactKey.CURRENT_CAR).map(FactEntity::value).orElse("");
         String selected = state.caseEntity().alternativeSubject();

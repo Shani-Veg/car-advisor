@@ -73,7 +73,7 @@ class ChoiceFlowTest {
     }
 
     @Test
-    void tappingAnAlternativeComparesItAsksTheRepAndOffersTheOtherOptions() {
+    void tappingAnAlternativeComparesItAndOffersToConfirmWithTheRep() {
         String id = workflow.create().caseId();
         completeProfile(id);
         String offeredCar = offered(workflow.view(id)).stream()
@@ -83,12 +83,36 @@ class ChoiceFlowTest {
 
         CaseView view = choices.choose(id, offeredCar, "alt-tap");
 
-        assertThat(view.status()).isEqualTo("WAITING_FOR_REP");
+        // comparing a car asks nobody yet
+        assertThat(view.status()).isEqualTo("READY");
+        assertThat(view.pendingQuestions()).isEmpty();
         assertThat(view.comparison().alternative().vehicleId()).isEqualTo(carId);
         assertThat(view.comparison().alternative().type()).isEqualTo("car");
         assertThat(view.comparison().today().vehicleId()).isEqualTo("CAR-09");
-        assertThat(lastText(view)).contains("שלחתי שאלה לנציג");
-        assertThat(offered(view)).contains("best").doesNotContain(offeredCar);
+        assertThat(lastText(view)).contains("אפשר לבקש מנציג התחבורה לאשר");
+        assertThat(offered(view)).startsWith("rep:ask").contains("best").doesNotContain(offeredCar).hasSize(4);
+
+        CaseView asked = choices.choose(id, "rep:ask", "rep-tap");
+
+        assertThat(asked.status()).isEqualTo("WAITING_FOR_REP");
+        assertThat(asked.pendingQuestions()).hasSize(1);
+        assertThat(lastText(asked)).startsWith("שלחתי לנציג התחבורה שאלה:");
+        assertThat(offered(asked)).doesNotContain("rep:ask");
+    }
+
+    @Test
+    void theButtonNextToTheComparisonAsksTheRepAndSaysSoInTheChat() {
+        String id = workflow.create().caseId();
+        completeProfile(id);
+        workflow.chooseAlternative(id, "car", "CAR-10", null);
+
+        CaseView view = choices.requestRep(id, "rep-button");
+        CaseView again = choices.requestRep(id, "rep-button");
+
+        assertThat(view.status()).isEqualTo("WAITING_FOR_REP");
+        assertThat(texts(view, "employee")).last().isEqualTo("אבקש מנציג התחבורה לאשר את ההשתתפות");
+        assertThat(lastText(view)).startsWith("שלחתי לנציג התחבורה שאלה:");
+        assertThat(texts(again, "employee")).hasSameSizeAs(texts(view, "employee"));
     }
 
     @Test
@@ -179,13 +203,84 @@ class ChoiceFlowTest {
         choices.choose(id, "fact:childrenUpTo23:1", "q3");
         view = choices.choose(id, "fact:currentCar:CAR-09", "q4");
 
-        assertThat(lastText(view)).startsWith("יש לי את כל מה שצריך.")
-                .contains("עמלות").contains("הפרשת עובד לפנסיה").contains("השתתפות ברכב היום").contains("מסומנים כהערכה");
+        // the assumed details are listed with their values, for the employee to confirm
+        assertThat(lastText(view)).startsWith("יש לי את מה שצריך כדי להשוות.")
+                .contains("עמלות 0 ₪").contains("הפרשת עובד לפנסיה 6%").contains("השתתפות ברכב היום").contains("תלוש שכר");
+        assertThat(view.assumptionsToConfirm()).containsExactly("commissions", "bonus", "pensionPercent",
+                "studyFundPercent", "creditPoints", "currentParticipation");
         assertThat(field(view, "currentParticipation").status()).isEqualTo("DEFAULT");
         assertThat(field(view, "currentParticipation").source().type()).isEqualTo("CATALOG_DEFAULT");
         assertThat(field(view, "pensionPercent").source().type()).isEqualTo("CATALOG_DEFAULT");
         assertThat(field(view, "pensionPercent").source().ref()).isEqualTo("assumption");
+        assertThat(offered(view)).containsExactly("review:ok", "ui:payslip", "ui:profile", "review:later");
+    }
+
+    @Test
+    void confirmingTheAssumedDetailsMakesThemTheEmployeesOwn() {
+        String id = atReview();
+
+        CaseView view = choices.choose(id, "review:ok", "review-ok");
+
+        assertThat(field(view, "pensionPercent").status()).isEqualTo("PROVIDED");
+        assertThat(field(view, "currentParticipation").status()).isEqualTo("PROVIDED");
+        assertThat(view.assumptionsToConfirm()).isEmpty();
+        assertThat(lastText(view)).startsWith("מעולה, סימנתי שהפרטים נכונים.");
         assertThat(offered(view)).contains("best");
+    }
+
+    @Test
+    void laterKeepsThemMarkedAsEstimates() {
+        String id = atReview();
+
+        CaseView view = choices.choose(id, "review:later", "review-later");
+
+        assertThat(field(view, "pensionPercent").status()).isEqualTo("DEFAULT");
+        assertThat(view.assumptionsToConfirm()).isEmpty();
+        assertThat(lastText(view)).contains("מסומנים כהערכה");
+        assertThat(offered(view)).contains("best");
+    }
+
+    @Test
+    void choosingAnAlternativeMovesPastTheReview() {
+        String id = atReview();
+
+        CaseView view = workflow.chooseAlternative(id, "car", "CAR-10", null);
+
+        assertThat(view.assumptionsToConfirm()).isEmpty();
+        assertThat(view.comparison().estimates()).contains("pensionPercent");
+    }
+
+    @Test
+    void screenActionsAreNotSentToTheServer() {
+        String id = atReview();
+
+        assertThatThrownBy(() -> choices.choose(id, "ui:payslip", "ui-tap"))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("CLIENT_ACTION"));
+        assertThat(texts(workflow.view(id), "employee")).doesNotContain("העלאת תלוש שכר");
+    }
+
+    @Test
+    void anApprovedPayslipIsSummedUpInTheChat() {
+        String id = atReview();
+
+        CaseView view = choices.applyPayslip(id, java.util.Map.of(FactKey.CREDIT_POINTS, "2.75",
+                FactKey.PENSION_PERCENT, "6", FactKey.STUDY_FUND_PERCENT, "2.5", FactKey.CURRENT_PARTICIPATION, "300"), "slip-1");
+
+        assertThat(texts(view, "employee")).contains("העליתי תלוש שכר ואישרתי את הפרטים שנקראו ממנו");
+        assertThat(lastText(view)).startsWith("עדכנתי מהתלוש:").contains("נקודות זיכוי 2.75")
+                .contains("נשארו כהערכה: עמלות, בונוס").contains("יש לי את כל מה שצריך");
+        assertThat(view.assumptionsToConfirm()).isEmpty();
+        assertThat(offered(view)).contains("best");
+    }
+
+    /** The four questions answered with buttons, so the assumed details wait for the employee. */
+    private String atReview() {
+        String id = workflow.create().caseId();
+        choices.choose(id, "fact:occupation:מנהל/ת מוצר", "r1");
+        choices.editProfile(id, FactKey.BASE_SALARY, "18500", null);
+        choices.choose(id, "fact:childrenUpTo23:2", "r3");
+        choices.choose(id, "fact:currentCar:CAR-09", "r4");
+        return id;
     }
 
     @Test

@@ -23,7 +23,17 @@ public final class Views {
             List<MessageView> messages,
             ComparisonView comparison,
             List<RankingItem> ranking,
-            List<PendingQuestion> pendingQuestions) {
+            List<PendingQuestion> pendingQuestions,
+            List<String> assumptionsToConfirm) {
+    }
+
+    /** What the payslip reader found, for the employee to approve. Nothing here is stored yet. */
+    public record PayslipReading(List<PayslipField> fields, List<String> notFound) {
+    }
+
+    /** current: what the case holds now (empty when missing), so the screen can show what would change. */
+    public record PayslipField(String key, String label, Object value, String display, String current,
+                               String currentStatus) {
     }
 
     public record ProfileField(String key, String label, Object value, String display, String status, SourceView source) {

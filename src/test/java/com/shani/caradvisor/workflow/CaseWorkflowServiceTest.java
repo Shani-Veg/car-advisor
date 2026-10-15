@@ -61,16 +61,24 @@ class CaseWorkflowServiceTest {
         assertThat(beforeAlternative.status()).isEqualTo("COLLECTING");
         assertThat(beforeAlternative.ranking().get(0).alternative().type()).isEqualTo("waiver");
 
-        CaseView waiting = workflow.chooseAlternative(id, "car", "CAR-10", null);
-        assertThat(waiting.status()).isEqualTo("WAITING_FOR_REP");
-        assertThat(waiting.comparison().alternative().officialUrl()).isEqualTo("https://bydauto.co.il/model/byd-atto-3-evo/");
-        assertThat(waiting.ranking()).anySatisfy(item -> {
+        // Comparing asks nobody: the catalog's participation is used, marked as an estimate.
+        CaseView compared = workflow.chooseAlternative(id, "car", "CAR-10", null);
+        assertThat(compared.status()).isEqualTo("READY");
+        assertThat(compared.pendingQuestions()).isEmpty();
+        assertThat(compared.comparison().alternative().officialUrl()).isEqualTo("https://bydauto.co.il/model/byd-atto-3-evo/");
+        assertThat(compared.ranking()).anySatisfy(item -> {
             assertThat(item.alternative().type()).isEqualTo("waiver");
             assertThat(item.alternative().officialUrl()).isNull();
         });
-        assertThat(waiting.comparison().difference()).isCloseTo(new BigDecimal("661"), within(BigDecimal.ONE));
-        assertThat(waiting.comparison().estimates()).contains("alternativeParticipation");
+        assertThat(compared.comparison().difference()).isCloseTo(new BigDecimal("661"), within(BigDecimal.ONE));
+        assertThat(compared.comparison().estimates()).contains("alternativeParticipation");
+
+        // The employee asks to have it confirmed: one question to the rep.
+        CaseView waiting = workflow.requestRepConfirmation(id);
+        assertThat(waiting.status()).isEqualTo("WAITING_FOR_REP");
         assertThat(waiting.pendingQuestions()).hasSize(1);
+        assertThatThrownBy(() -> workflow.requestRepConfirmation(id))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("NOTHING_TO_CONFIRM"));
 
         RepQuestionView question = workflow.repQuestions(RepQuestionEntity.Status.OPEN).stream()
                 .filter(q -> q.caseId().equals(id)).findFirst().orElseThrow();
@@ -92,12 +100,13 @@ class CaseWorkflowServiceTest {
     void changingTheAlternativeMakesTheOldQuestionStale() {
         String id = noaToday();
         workflow.chooseAlternative(id, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(id);
         String atto3Question = openQuestionFor(id).id();
 
         CaseView mg4 = workflow.chooseAlternative(id, "car", "CAR-06", null);
 
-        assertThat(mg4.pendingQuestions()).hasSize(1);
-        assertThat(mg4.pendingQuestions().get(0).id()).isNotEqualTo(atto3Question);
+        assertThat(mg4.pendingQuestions()).isEmpty();
+        assertThat(mg4.status()).isEqualTo("READY");
         assertThatThrownBy(() -> workflow.answer(atto3Question, 350, null, "", "req-2", "rep"))
                 .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("STALE_QUESTION"));
     }
@@ -106,6 +115,7 @@ class CaseWorkflowServiceTest {
     void answeringTwiceIsSafe() {
         String id = noaToday();
         workflow.chooseAlternative(id, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(id);
         String questionId = openQuestionFor(id).id();
 
         workflow.answer(questionId, 350, null, "", "req-3", "rep");
@@ -138,6 +148,32 @@ class CaseWorkflowServiceTest {
         assertThat(view.comparison().difference()).isNull();
         assertThat(view.comparison().eligibilityReason()).contains("גבוהה");
         assertThat(view.pendingQuestions()).isEmpty();
+        assertThatThrownBy(() -> workflow.requestRepConfirmation(id))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("NOTHING_TO_CONFIRM"));
+    }
+
+    @Test
+    void approvedPayslipDetailsBecomeTheEmployeesOwn() {
+        String id = workflow.create().caseId();
+        form(id, FactKey.OCCUPATION, "מנהל/ת מוצר");
+
+        CaseView view = workflow.applyPayslip(id, java.util.Map.of(FactKey.CREDIT_POINTS, "2.75", FactKey.PENSION_PERCENT, 6));
+
+        assertThat(field(view, "creditPoints").status()).isEqualTo("PROVIDED");
+        assertThat(field(view, "creditPoints").source().ref()).isEqualTo("payslip");
+        assertThat(field(view, "bonus").status()).isEqualTo("DEFAULT");
+    }
+
+    @Test
+    void aPayslipCannotSetTheJobOrABadValue() {
+        String id = workflow.create().caseId();
+
+        assertThatThrownBy(() -> workflow.applyPayslip(id, java.util.Map.of(FactKey.OCCUPATION, "מנהל/ת מוצר")))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("NOT_A_PAYSLIP_FIELD"));
+        // all or nothing: the good value next to a bad one is not stored either
+        assertThatThrownBy(() -> workflow.applyPayslip(id, java.util.Map.of(FactKey.BONUS, "500", FactKey.PENSION_PERCENT, "250")))
+                .isInstanceOf(ApiException.class);
+        assertThat(field(workflow.view(id), "bonus").status()).isEqualTo("DEFAULT");
     }
 
     @Test
@@ -163,6 +199,7 @@ class CaseWorkflowServiceTest {
     void answersRecordWhichRepAnswered() {
         String id = noaToday();
         workflow.chooseAlternative(id, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(id);
 
         RepQuestionView answered = workflow.answer(openQuestionFor(id).id(), 350, null, "", "req-9", "dana");
 

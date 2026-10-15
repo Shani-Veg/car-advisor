@@ -49,6 +49,50 @@ public final class ChatSummaries {
                 + "), והם מסומנים כהערכה. אפשר לעדכן אותם ב\"המידע שלך\".";
     }
 
+    /**
+     * The assumed details, with their values, for the employee to confirm. again: the question was already asked and
+     * the employee just corrected some of them.
+     */
+    public static String assumptionsReview(CaseView view, boolean again) {
+        String items = view.assumptionsToConfirm().stream()
+                .map(key -> field(view, key))
+                .map(f -> f.label() + " " + f.display())
+                .collect(Collectors.joining(", "));
+        if (again) {
+            return "עדכנתי. שאר הפרטים שהנחתי: " + items + ". הם נכונים?";
+        }
+        return "יש לי את מה שצריך כדי להשוות. כמה פרטים הנחתי לפי מה שמקובל, וכדאי לוודא שהם נכונים אצלך: "
+                + items + ". נכון? אפשר גם להעלות תלוש שכר, ואמלא אותם ממנו.";
+    }
+
+    public static String assumptionsConfirmed() {
+        return "מעולה, סימנתי שהפרטים נכונים. " + PROFILE_COMPLETE;
+    }
+
+    public static String assumptionsDeferred() {
+        return "בסדר. הפרטים שהנחתי נשארים מסומנים כהערכה, ואפשר לעדכן אותם בכל רגע ב\"המידע שלך\". " + PROFILE_COMPLETE;
+    }
+
+    public static String repRequested(CaseView view) {
+        return "שלחתי לנציג התחבורה שאלה: " + view.pendingQuestions().get(0).question()
+                + " ההשוואה תתעדכן כשתגיע תשובה, ובינתיים אפשר להמשיך לבדוק.";
+    }
+
+    /** What the payslip changed, and which details are still the system's assumption. */
+    public static String payslipApplied(CaseView view, List<FactKey> applied) {
+        String items = applied.stream()
+                .map(key -> field(view, key.apiName()))
+                .map(f -> f.label() + " " + f.display())
+                .collect(Collectors.joining(", "));
+        List<String> stillAssumed = CaseState.REVIEWABLE.stream()
+                .map(key -> field(view, key.apiName()))
+                .filter(f -> "DEFAULT".equals(f.status()))
+                .map(ProfileField::label)
+                .toList();
+        return "עדכנתי מהתלוש: " + items + "."
+                + (stillAssumed.isEmpty() ? "" : " נשארו כהערכה: " + String.join(", ", stillAssumed) + ".");
+    }
+
     public static String nextQuestion(FactKey key) {
         return QUESTIONS.get(key);
     }
@@ -64,8 +108,10 @@ public final class ChatSummaries {
     public static String comparisonSummary(CaseView view) {
         String text = view.comparison().explanation();
         if (!view.pendingQuestions().isEmpty()) {
-            text += " שלחתי שאלה לנציג התחבורה (" + view.pendingQuestions().get(0).question()
+            text += " השאלה לנציג התחבורה עדיין פתוחה (" + view.pendingQuestions().get(0).question()
                     + "), וההשוואה תתעדכן כשתגיע תשובה.";
+        } else if (view.comparison().eligible() && view.comparison().estimates().contains("alternativeParticipation")) {
+            text += " ההשתתפות ברכב הזה היא הערכה לפי הקטלוג. אם הוא מעניין אותך, אפשר לבקש מנציג התחבורה לאשר אותה.";
         }
         return text;
     }

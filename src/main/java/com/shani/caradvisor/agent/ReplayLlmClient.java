@@ -30,6 +30,7 @@ public class ReplayLlmClient implements LlmClient {
     private static final Logger log = LoggerFactory.getLogger(ReplayLlmClient.class);
 
     private final Map<ConversationKey.Key, Turn> turns = new HashMap<>();
+    private final Map<String, Map<String, Object>> documents = new HashMap<>();
 
     public ReplayLlmClient(@Value("${advisor.llm.replay-file:demo/recorded-turns.jsonl}") String file) {
         Path path = Path.of(file);
@@ -47,12 +48,17 @@ public class ReplayLlmClient implements LlmClient {
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot read " + path, e);
         }
-        log.warn("REPLAY mode: {} recorded turns from {}. The assistant does not call Gemini.", turns.size(), path.toAbsolutePath());
+        log.warn("REPLAY mode: {} recorded turns and {} recorded document readings from {}. The assistant does not call Gemini.",
+                turns.size(), documents.size(), path.toAbsolutePath());
     }
 
     @SuppressWarnings("unchecked")
     private void load(ObjectMapper json, String line) {
         Map<String, Object> entry = json.readValue(line, Map.class);
+        if ("document".equals(entry.get("kind"))) {
+            documents.put((String) entry.get("sha256"), (Map<String, Object>) entry.get("fields"));
+            return;
+        }
         ConversationKey.Key key = new ConversationKey.Key((String) entry.get("employeeText"),
                 ((Number) entry.get("step")).intValue());
         String text = entry.get("text") == null ? "" : (String) entry.get("text");
@@ -80,6 +86,16 @@ public class ReplayLlmClient implements LlmClient {
     @Override
     public String mode() {
         return "REPLAY";
+    }
+
+    /** Only a document that was read during the recording (same bytes) can be read again. */
+    @Override
+    public Map<String, Object> extract(String instruction, byte[] document, String mimeType, Map<String, Object> schema) {
+        Map<String, Object> fields = documents.get(DocumentHash.sha256(document));
+        if (fields == null) {
+            throw new UnavailableException("No recorded reading for this document");
+        }
+        return fields;
     }
 
     @Override

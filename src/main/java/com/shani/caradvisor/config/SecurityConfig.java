@@ -23,6 +23,7 @@ import java.util.HexFormat;
  * - Transport rep screen and API: login required (role REP). Answers are recorded with the rep's name.
  * - Employee API: open, addressed by an unguessable random case id. A pilot would put company SSO in front of it.
  * - CSRF is off because the API only accepts JSON: a cross-site JSON request needs a CORS preflight, and CORS is not enabled.
+ *   The one upload (the payslip) must carry a custom header, which needs the same preflight, and it changes nothing.
  * - CSP allows scripts only from this server, so injected text can never run as code.
  */
 @Configuration

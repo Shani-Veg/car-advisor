@@ -48,7 +48,7 @@
         </section>
         <section id="profile-panel" class="panel profile-panel" aria-label="המידע שלך">
           <button id="profile-toggle" class="profile-toggle" type="button" aria-expanded="false" aria-controls="profile-content"><span class="profile-title">המידע שלך</span><span id="profile-count" class="badge neutral">טוען…</span><span class="chevron" aria-hidden="true">▾</span></button>
-          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן או להשלים כל פרט בלחיצה עליו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
+          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן כל פרט בלחיצה עליו, או <button id="profile-payslip" class="text-button" type="button" data-mutation>להעלות תלוש שכר</button> ולמלא ממנו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
         </section>
       </div>
     </div>
@@ -63,6 +63,13 @@
       <p id="edit-error" class="form-error" role="alert" hidden></p>
       <div class="dialog-actions"><button id="save-profile" class="primary-button" type="submit" data-mutation>שמירת הנתון</button><button id="cancel-edit" class="secondary-button" type="button">ביטול</button></div>
     </form>
+  </dialog>
+  <dialog id="payslip-dialog" aria-labelledby="payslip-heading">
+    <div class="dialog-heading"><h2 id="payslip-heading">העלאת תלוש שכר</h2><button id="close-payslip" class="icon-button" type="button" aria-label="סגירה">×</button></div>
+    <div id="payslip-body"></div>
+    <p id="payslip-error" class="form-error" role="alert" hidden></p>
+    <div id="payslip-actions" class="dialog-actions"></div>
+    <input id="payslip-file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" hidden>
   </dialog>
   <script type="module" src="js/employee.js"></script>
 </body>

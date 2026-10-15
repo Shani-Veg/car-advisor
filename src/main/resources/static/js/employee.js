@@ -56,7 +56,7 @@ function updateControls() {
   byId('close-dialog').disabled = busy;
   byId('cancel-edit').disabled = busy;
   byId('assistant-banner').hidden = !unavailable();
-  byId('typing').hidden = !busy || byId('profile-dialog').open || unavailable();
+  byId('typing').hidden = !busy || byId('profile-dialog').open || byId('payslip-dialog').open || unavailable();
 }
 /** Keep a request ID after network failure, so a manual retry stays idempotent. */
 async function mutate(key, action, onSuccess) {
@@ -150,6 +150,7 @@ function renderMessages(messages) {
         else { const label = el('bdi', '', choice.label); label.dir = 'auto'; button.append(label); }
         button.type = 'button'; button.dataset.mutation = ''; button.setAttribute('aria-label', choice.label);
         if (filter) filter.addEventListener('input', () => { button.hidden = !choice.label.toLocaleLowerCase('he-IL').includes(filter.value.trim().toLocaleLowerCase('he-IL')); });
+        if (choice.id.startsWith('ui:')) { button.addEventListener('click', () => screenAction(choice.id)); choices.append(button); continue; }
         button.addEventListener('click', async () => {
           const before = alternativeKey();
           const ok = await mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id));
@@ -315,20 +316,28 @@ function gauge(comparison) {
   svg.append(text);
   return svg;
 }
-/** What the assistant did, read from the case itself: every step names where its number came from. */
-function activitySteps(comparison) {
-  const steps = [];
-  const group = current.profile.find(field => field.key === 'group');
-  if (group?.value) steps.push(['done', 'קבוצה ' + group.display + ', לפי טבלת העיסוקים של החברה']);
-  if ((comparison.factors || []).some(factor => factor.component === 'USE_VALUE')) steps.push(['done', 'שווי שימוש מהמאגר של רשות המסים']);
-  steps.push(['done', 'נטו לשני המצבים, לפי כללי ' + comparison.rulesVersion]);
+/**
+ * Only what the employee still has to confirm before deciding, each with the button that does it.
+ * Where a number came from stays in "המידע שלך" and in the full breakdown.
+ */
+function checklist(comparison) {
+  const items = [];
   const estimated = (comparison.estimates || []).filter(key => key !== 'alternativeParticipation');
-  if (estimated.length) steps.push(['wait', estimated.length + ' פרטים משניים הם הערכה. אפשר לעדכן ב"המידע שלך"']);
-  const open = (current.pendingQuestions || []).filter(question => question.status === 'OPEN');
-  const participation = current.profile.find(field => field.key === 'alternativeParticipation');
-  if (open.length) steps.push(['wait', 'שאלה לנציג התחבורה על ההשתתפות: ממתין לתשובה']);
-  else if (participation?.status === 'CONFIRMED') steps.push(['done', 'נציג התחבורה אישר את ההשתתפות']);
-  return steps;
+  if (estimated.length) {
+    const labels = estimated.map(key => current.profile.find(field => field.key === key)?.label).filter(Boolean);
+    items.push(['wait', (estimated.length === 1 ? 'פרט אחד בחישוב הוא הערכה שלי: ' : estimated.length + ' פרטים בחישוב הם הערכה שלי: ') + labels.join(', '),
+      [['העלאת תלוש שכר', () => screenAction('ui:payslip')], ['בדיקת הפרטים', () => screenAction('ui:profile')]]]);
+  } else {
+    items.push(['done', 'פרטי השכר שלך מאושרים']);
+  }
+  if (comparison.alternative?.type === 'car') {
+    const open = (current.pendingQuestions || []).some(question => question.status === 'OPEN');
+    const participation = current.profile.find(field => field.key === 'alternativeParticipation');
+    if (open) items.push(['wait', 'נציג התחבורה בודק את ההשתתפות ברכב. ההשוואה תתעדכן כשיענה']);
+    else if (participation?.status === 'CONFIRMED') items.push(['done', 'נציג התחבורה אישר את ההשתתפות: ' + participation.display]);
+    else if (participation?.status === 'DEFAULT') items.push(['wait', 'ההשתתפות החודשית ברכב הזה היא הערכה', [['לאשר מול נציג', askRep]]]);
+  }
+  return items;
 }
 function renderComparison(comparison, previous) {
   const container = byId('comparison');
@@ -364,12 +373,19 @@ function renderComparison(comparison, previous) {
   why.append(el('h3', '', comparison.direction === 'LOSS' ? 'למה הנטו יורד' : comparison.direction === 'NONE' ? 'למה הנטו לא משתנה' : 'למה הנטו עולה'),
     el('p', 'explanation', comparison.explanation), impactChart(comparison.factors));
   const activity = el('section', 'panel insight-card');
-  activity.append(el('h3', '', 'מה העוזר עשה'));
+  const items = checklist(comparison);
+  activity.append(el('h3', '', items.some(([state]) => state === 'wait') ? 'מה נשאר לוודא' : 'הכל מאושר'));
   const list = el('ol', 'activity-list');
-  for (const [state, text] of activitySteps(comparison)) {
+  for (const [state, text, actions] of items) {
     const item = el('li', 'activity-step ' + state);
     const mark = el('span', 'activity-mark', state === 'done' ? '✓' : '…'); mark.setAttribute('aria-hidden', 'true');
-    item.append(mark, el('span', '', text));
+    const body = el('div', 'step-body'); body.append(el('span', '', text));
+    if (actions) {
+      const row = el('div', 'step-actions');
+      for (const [label, action] of actions) { const button = el('button', 'step-action', label); button.type = 'button'; button.dataset.mutation = ''; button.addEventListener('click', action); row.append(button); }
+      body.append(row);
+    }
+    item.append(mark, body);
     list.append(item);
   }
   activity.append(list);
@@ -440,6 +456,85 @@ function renderRanking(ranking, previous) {
   }
   container.append(list);
 }
+
+/** Buttons the screen handles itself: choosing a payslip file, or opening the details to correct them. */
+function screenAction(id) {
+  if (id === 'ui:payslip') { openPayslip(); return; }
+  if (id === 'ui:profile') {
+    setProfileExpanded(true);
+    byId('profile-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+    for (const key of current?.assumptionsToConfirm || []) { const node = profileNodes.get(key)?.node; if (node) highlight(node); }
+    byId('profile-toggle').focus({ preventScroll: true });
+  }
+}
+async function askRep() {
+  await mutate('rep-request:' + alternativeKey(), id => api.requestRep(caseId, id));
+}
+
+/** The payslip: the employee chooses a file, sees what was read, and approves what to keep. Nothing is stored before that. */
+let payslipReading = null;
+function payslipStage(stage, data) {
+  const body = byId('payslip-body'); const actions = byId('payslip-actions');
+  body.replaceChildren(); actions.replaceChildren(); showNotice(byId('payslip-error'), '');
+  const action = (label, primary, handler) => { const button = el('button', primary ? 'primary-button' : 'secondary-button', label); button.type = 'button'; button.addEventListener('click', handler); actions.append(button); return button; };
+  if (stage === 'intro') {
+    body.append(el('p', 'dialog-lead', 'אקרא מהתלוש רק את מה שההשוואה צריכה: שכר בסיס, עמלות, בונוס, ההפרשות שלך לפנסיה ולקרן השתלמות, נקודות זיכוי וההשתתפות ברכב.'));
+    const privacy = el('ul', 'privacy-list');
+    for (const line of ['התלוש נקרא על ידי מודל AI (Gemini) ולא נשמר במערכת.', 'כדאי לכסות מספר זהות ופרטי חשבון בנק לפני הצילום.', 'שום פרט לא יישמר לפני שתאשרו אותו במסך הבא.']) privacy.append(el('li', '', line));
+    body.append(privacy, el('p', 'small-muted', 'תמונה או קובץ PDF, עד 5 מגה.'));
+    action('בחירת קובץ', true, () => byId('payslip-file').click()).focus();
+    action('ביטול', false, closePayslip);
+  } else if (stage === 'reading') {
+    body.append(el('p', 'payslip-reading', 'קורא את התלוש…'));
+  } else if (stage === 'review') {
+    payslipReading = data;
+    body.append(el('p', 'dialog-lead', 'זה מה שמצאתי בתלוש. סמנו מה לשמור:'));
+    const list = el('div', 'payslip-fields');
+    for (const field of data.fields) {
+      const row = el('label', 'payslip-field');
+      const box = el('input'); box.type = 'checkbox'; box.checked = true; box.value = field.key;
+      const copy = el('span', 'payslip-copy');
+      copy.append(el('span', 'payslip-label', field.label));
+      const now = field.currentStatus === 'MISSING' ? 'חסר' : field.current + (field.currentStatus === 'DEFAULT' ? ' (הערכה)' : '');
+      copy.append(el('small', '', 'עכשיו: ' + now));
+      const value = el('bdi', 'payslip-value', field.display); value.dir = 'ltr';
+      row.append(box, copy, value); list.append(row);
+    }
+    body.append(list);
+    if (data.notFound?.length) body.append(el('p', 'small-muted', 'לא נמצאו בתלוש: ' + data.notFound.join(', ') + '. הם נשארים כמו שהם.'));
+    action('שמירת הפרטים שסומנו', true, savePayslip).dataset.mutation = '';
+    action('ביטול', false, closePayslip);
+  }
+}
+function openPayslip() {
+  if (!current || busy) return;
+  payslipReading = null; payslipStage('intro');
+  byId('payslip-dialog').showModal();
+}
+function closePayslip() { if (busy) return; byId('payslip-dialog').close(); payslipReading = null; }
+async function savePayslip() {
+  if (!payslipReading) return;
+  const chosen = [...byId('payslip-body').querySelectorAll('input[type=checkbox]:checked')].map(box => box.value);
+  if (!chosen.length) { showNotice(byId('payslip-error'), 'לא סומן אף פרט.'); return; }
+  const values = Object.fromEntries(payslipReading.fields.filter(field => chosen.includes(field.key)).map(field => [field.key, field.value]));
+  const ok = await mutate('payslip:' + JSON.stringify(values), id => api.applyPayslip(caseId, values, id));
+  if (ok) { byId('payslip-dialog').close(); payslipReading = null; feedback('הפרטים מהתלוש נשמרו.'); }
+  else showNotice(byId('payslip-error'), 'השמירה לא הצליחה. נסו שוב.');
+}
+byId('payslip-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0]; event.target.value = '';
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showNotice(byId('payslip-error'), 'הקובץ גדול מדי. אפשר להעלות עד 5 מגה.'); return; }
+  payslipStage('reading');
+  try { payslipStage('review', await api.readPayslip(caseId, file)); }
+  catch (error) {
+    payslipStage('intro');
+    showNotice(byId('payslip-error'), error.message || 'לא ניתן לקרוא את הקובץ.');
+  }
+});
+byId('close-payslip').addEventListener('click', closePayslip);
+byId('payslip-dialog').addEventListener('cancel', event => { if (busy) event.preventDefault(); else payslipReading = null; });
+byId('profile-payslip').addEventListener('click', openPayslip);
 
 function applyCase(next) {
   if (!next || (current && next.caseId === current.caseId && next.version < current.version)) return;

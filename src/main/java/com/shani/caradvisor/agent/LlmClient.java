@@ -19,6 +19,14 @@ public interface LlmClient {
 
     Turn next(String systemInstruction, List<Map<String, Object>> contents, List<Map<String, Object>> functions);
 
+    /**
+     * Reads one document (an image or a PDF) and answers in JSON shaped by schema. Used for the payslip: the model
+     * only reads, the code validates every value, and the employee approves before anything is stored.
+     */
+    default Map<String, Object> extract(String instruction, byte[] document, String mimeType, Map<String, Object> schema) {
+        throw new UnavailableException("Reading documents is not available");
+    }
+
     record FunctionCall(String id, String name, Map<String, Object> args) {
     }
 

@@ -87,7 +87,7 @@ class AdvisorAgentTest {
     }
 
     @Test
-    void choosingACarAddsTheServersSummaryAndTheRepQuestion() {
+    void choosingACarAddsTheServersSummaryAndOffersTheRep() {
         String id = noaToday();
         llm.play(
                 ScriptedLlm.call(AgentTools.CHOOSE_ALTERNATIVE, Map.of("type", "car", "vehicleId", "CAR-10")),
@@ -95,8 +95,22 @@ class AdvisorAgentTest {
 
         CaseView view = agent.reply(id, "מה אם אעבור לאטו 3?", "c-4");
 
+        assertThat(view.status()).isEqualTo("READY");
+        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).contains("661 ₪").contains("אפשר לבקש מנציג התחבורה"));
+    }
+
+    @Test
+    void theEmployeeCanAskInWordsToHaveTheParticipationConfirmed() {
+        String id = noaToday();
+        workflow.chooseAlternative(id, "car", "CAR-10", null);
+        llm.play(
+                ScriptedLlm.call(AgentTools.REQUEST_REP_CONFIRMATION, Map.of()),
+                ScriptedLlm.text("ביקשתי מהנציג לאשר."));
+
+        CaseView view = agent.reply(id, "אני רוצה את האטו 3, תבדוק מול הנציג", "c-rep");
+
         assertThat(view.status()).isEqualTo("WAITING_FOR_REP");
-        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).contains("661 ₪").contains("שלחתי שאלה לנציג"));
+        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("שלחתי לנציג התחבורה שאלה:"));
     }
 
     @Test

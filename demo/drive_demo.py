@@ -3,36 +3,43 @@ Runs the whole demo conversation against a running server (Python 3, standard li
 
   python demo/drive_demo.py --base http://localhost:8080 --rep-password <password> --out demo/transcript.json
       Runs the conversation. With the server started via `run.ps1 -Record`, this also records the real Gemini turns
-      into demo/recorded-turns.jsonl.
+      (and the reading of the sample payslip) into demo/recorded-turns.jsonl.
   python demo/drive_demo.py ... --expect demo/transcript.json
       Runs it again (for example against `run.ps1 -Replay`) and fails if what the employee sees differs.
 
-The sentences below are exactly what the demo script (docs/demo-script.md) types.
+The steps below are exactly what the demo script (docs/demo-script.md) does: typed sentences, button taps,
+the sample payslip upload (demo/sample-payslip.png), and the rep's answer.
 """
 import argparse
 import base64
 import json
+import os
 import sys
 import time
 import urllib.error
 import urllib.request
 import uuid
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+PAYSLIP = os.path.join(HERE, "sample-payslip.png")
+
 NOA = [
-    "שלום, אני מנהלת מוצר. שכר הבסיס שלי 18,500 ש\"ח ויש לי שני ילדים.",
-    "היום יש לי קורולה קרוס ואני משתתפת ב-300 ש\"ח בחודש.",
-    "יש לי 2.75 נקודות זיכוי.",
-    "מה יקרה אם אעבור ל-BYD Atto 3?",
-    "ומה הכי משתלם לי?",
+    ("say", "שלום, אני מנהלת מוצר. שכר הבסיס שלי 18,500 ש\"ח ויש לי שני ילדים."),
+    ("say", "היום יש לי קורולה קרוס ואני משתתפת ב-300 ש\"ח בחודש."),
+    ("payslip", PAYSLIP),
+    ("say", "מה יקרה אם אעבור ל-BYD Atto 3?"),
+    ("tap", "rep:ask"),
+    ("rep", {"value": 350, "effectiveFrom": "2027-01-01", "note": ""}),
+    ("say", "ומה הכי משתלם לי?"),
 ]
-NOA_REP_ANSWER = {"value": 350, "effectiveFrom": "2027-01-01", "note": ""}
 
 DAVID = [
-    "שלום, אני נציג מכירות שטח. שכר הבסיס שלי 9,800 ש\"ח, עמלות 2,400 ש\"ח ויש לי חמישה ילדים.",
-    "היום יש לי קיה נירו ואני משתתף ב-250 ש\"ח בחודש. אין לי קרן השתלמות.",
-    "מה יקרה אם אקח קרניבל במסלול ברוכת ילדים?",
-    "ומה לגבי סנטה פה?",
-    "בעצם אני בקבוצה ד', תבדוק לי את טסלה מודל 3.",
+    ("say", "שלום, אני נציג מכירות שטח. שכר הבסיס שלי 9,800 ש\"ח, עמלות 2,400 ש\"ח ויש לי חמישה ילדים."),
+    ("say", "היום יש לי קיה נירו ואני משתתף ב-250 ש\"ח בחודש. אין לי קרן השתלמות."),
+    ("tap", "review:ok"),
+    ("say", "מה יקרה אם אקח קרניבל במסלול ברוכת ילדים?"),
+    ("say", "ומה לגבי סנטה פה?"),
+    ("say", "בעצם אני בקבוצה ד', תבדוק לי את טסלה מודל 3."),
 ]
 
 
@@ -46,7 +53,19 @@ class Server:
         if rep:
             headers["Authorization"] = self.auth
         data = None if body is None else json.dumps(body, ensure_ascii=False).encode("utf-8")
-        request = urllib.request.Request(self.base + path, data=data, method=method, headers=headers)
+        return self._send(urllib.request.Request(self.base + path, data=data, method=method, headers=headers))
+
+    def upload(self, path, file_path):
+        boundary = uuid.uuid4().hex
+        with open(file_path, "rb") as f:
+            content = f.read()
+        body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"payslip.png\"\r\n"
+                f"Content-Type: image/png\r\n\r\n").encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        headers = {"Content-Type": f"multipart/form-data; boundary={boundary}", "X-Requested-With": "car-advisor"}
+        return self._send(urllib.request.Request(self.base + path, data=body, method="POST", headers=headers))
+
+    @staticmethod
+    def _send(request):
         try:
             with urllib.request.urlopen(request, timeout=180) as response:
                 return response.status, json.loads(response.read().decode("utf-8"))
@@ -54,45 +73,59 @@ class Server:
             return error.code, json.loads(error.read().decode("utf-8"))
 
 
-def say(server, case_id, text, pause, transcript, seen):
+def step(server, case_id, kind, arg, transcript, seen):
+    """One demo step; prints and records every message that appeared after it (the employee's own included)."""
     started = time.time()
-    status, _ = server.call("POST", f"/api/cases/{case_id}/messages",
-                            {"text": text, "clientRequestId": str(uuid.uuid4())})
+    if kind == "say":
+        status, _ = server.call("POST", f"/api/cases/{case_id}/messages", {"text": arg, "clientRequestId": str(uuid.uuid4())})
+        print(f"\n>>> {arg}   [HTTP {status}, {time.time() - started:.1f}s]")
+    elif kind == "tap":
+        status, _ = server.call("POST", f"/api/cases/{case_id}/choices", {"choiceId": arg, "clientRequestId": str(uuid.uuid4())})
+        print(f"\n>>> [tap {arg}]   [HTTP {status}]")
+    elif kind == "payslip":
+        status, reading = server.upload(f"/api/cases/{case_id}/payslip", arg)
+        print(f"\n>>> [payslip]   [HTTP {status}, {time.time() - started:.1f}s]")
+        if status != 200:
+            print("    could not read:", reading)
+            transcript.append({"role": "payslip", "text": "unreadable"})
+            return
+        read = {f["key"]: f["display"] for f in reading["fields"]}
+        print("    read:", json.dumps(read, ensure_ascii=False))
+        transcript.append({"role": "payslip", "text": json.dumps(read, ensure_ascii=False, sort_keys=True)})
+        values = {f["key"]: f["value"] for f in reading["fields"]}
+        server.call("POST", f"/api/cases/{case_id}/payslip/apply", {"values": values, "clientRequestId": str(uuid.uuid4())})
+    elif kind == "rep":
+        _, questions = server.call("GET", "/api/rep/questions?status=OPEN", rep=True)
+        mine = [q for q in questions if q["caseId"] == case_id and not q["stale"]]
+        if not mine:
+            print("\n[rep] no open question")
+            transcript.append({"role": "rep", "text": "no question"})
+            return
+        _, answer = server.call("POST", f"/api/rep/questions/{mine[-1]['id']}/answer",
+                                dict(arg, clientRequestId=str(uuid.uuid4())), rep=True)
+        print(f"\n[rep] answered {answer['answer']['display']} (by {answer['answer']['answeredBy']})")
+        transcript.append({"role": "rep", "text": answer["answer"]["display"]})
     _, view = server.call("GET", f"/api/cases/{case_id}")
-    print(f"\n>>> {text}   [HTTP {status}, {time.time() - started:.1f}s]")
-    transcript.append({"role": "employee", "text": text})
     for message in view["messages"][seen[0]:]:
-        if message["role"] == "employee":
-            continue
         print(f"    [{message['role']}] {message['text']}")
         transcript.append({"role": message["role"], "text": message["text"]})
     seen[0] = len(view["messages"])
-    time.sleep(pause)
-    return view
 
 
-def scene(server, title, sentences, pause, rep_answer=None):
+def scene(server, title, steps, pause):
     print(f"\n==================== {title} ====================")
     _, created = server.call("POST", "/api/cases")
     case_id = created["caseId"]
     print("assistantMode:", created.get("assistantMode"), "| available:", created["assistantAvailable"])
     transcript, seen = [], [len(created["messages"])]
-    view = None
-    for sentence in sentences:
-        view = say(server, case_id, sentence, pause, transcript, seen)
-    if rep_answer:
-        _, questions = server.call("GET", "/api/rep/questions?status=OPEN", rep=True)
-        mine = [q for q in questions if q["caseId"] == case_id and not q["stale"]]
-        if mine:
-            body = dict(rep_answer, clientRequestId=str(uuid.uuid4()))
-            _, answer = server.call("POST", f"/api/rep/questions/{mine[-1]['id']}/answer", body, rep=True)
-            print(f"\n[rep] answered {answer['answer']['display']} (by {answer['answer']['answeredBy']})")
-            _, view = server.call("GET", f"/api/cases/{case_id}")
-            transcript.append({"role": "rep", "text": f"{answer['answer']['display']}"})
-            for message in view["messages"][seen[0]:]:
-                print(f"    [{message['role']}] {message['text']}")
-                transcript.append({"role": message["role"], "text": message["text"]})
-    comparison = view.get("comparison") if view else None
+    for kind, arg in steps:
+        if kind == "rep" and not server.auth:
+            continue
+        step(server, case_id, kind, arg, transcript, seen)
+        if kind == "say":
+            time.sleep(pause)
+    _, view = server.call("GET", f"/api/cases/{case_id}")
+    comparison = view.get("comparison")
     facts = {f["key"]: (f["display"], f["status"]) for f in view["profile"] if f["status"] != "MISSING"}
     summary = {
         "status": view["status"],
@@ -117,7 +150,7 @@ def main():
 
     server = Server(args.base, args.rep_password)
     result = [
-        scene(server, "Noa: from question to confirmed answer", NOA, args.pause, NOA_REP_ANSWER if args.rep_password else None),
+        scene(server, "Noa: payslip, comparison, and a confirmed answer from the rep", NOA, args.pause),
         scene(server, "David: bad news, and an attempt to talk his way into group D", DAVID, args.pause),
     ]
     if args.out:

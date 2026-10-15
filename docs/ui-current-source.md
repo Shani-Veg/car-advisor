@@ -17,11 +17,9 @@
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header">
     <a class="wordmark" href="index.html"><svg class="wordmark-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="mark-track" d="M3 16a9 9 0 0 1 18 0"></path><path class="mark-value" d="M3 16a9 9 0 0 1 12.5-8.3"></path></svg>יועץ הרכב</a>
-    <span class="header-caption">רכב חברה. תמונה ברורה.</span>
   </header>
   <main id="main" class="welcome">
     <div class="welcome-copy">
-      <span class="eyebrow">בוחרים רכב, מבינים את הנטו</span>
       <h1>הדרך להחלטה טובה<br>מתחילה <em>בתמונה ברורה.</em></h1>
       <p class="welcome-lead">להחליף את רכב החברה? לוותר עליו?<br>מקום אחד לשיחה, להשוואה ולהבנת השינוי בנטו.</p>
       <div class="role-links">
@@ -112,7 +110,7 @@
         </section>
         <section id="profile-panel" class="panel profile-panel" aria-label="המידע שלך">
           <button id="profile-toggle" class="profile-toggle" type="button" aria-expanded="false" aria-controls="profile-content"><span class="profile-title">המידע שלך</span><span id="profile-count" class="badge neutral">טוען…</span><span class="chevron" aria-hidden="true">▾</span></button>
-          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן או להשלים כל פרט בלחיצה עליו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
+          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן כל פרט בלחיצה עליו, או <button id="profile-payslip" class="text-button" type="button" data-mutation>להעלות תלוש שכר</button> ולמלא ממנו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
         </section>
       </div>
     </div>
@@ -127,6 +125,13 @@
       <p id="edit-error" class="form-error" role="alert" hidden></p>
       <div class="dialog-actions"><button id="save-profile" class="primary-button" type="submit" data-mutation>שמירת הנתון</button><button id="cancel-edit" class="secondary-button" type="button">ביטול</button></div>
     </form>
+  </dialog>
+  <dialog id="payslip-dialog" aria-labelledby="payslip-heading">
+    <div class="dialog-heading"><h2 id="payslip-heading">העלאת תלוש שכר</h2><button id="close-payslip" class="icon-button" type="button" aria-label="סגירה">×</button></div>
+    <div id="payslip-body"></div>
+    <p id="payslip-error" class="form-error" role="alert" hidden></p>
+    <div id="payslip-actions" class="dialog-actions"></div>
+    <input id="payslip-file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" hidden>
   </dialog>
   <script type="module" src="js/employee.js"></script>
 </body>
@@ -267,7 +272,18 @@ dialog::backdrop { background: rgba(20, 33, 61, .5); }
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 #edit-source { margin: 12px 0 22px; }
 .readonly-note { margin-top: 12px; font-size: 14px; color: var(--muted); }
-.dialog-actions { display: flex; gap: 10px; margin-top: 24px; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.dialog-lead { margin-top: 14px; font-size: 16px; line-height: 1.7; }
+.privacy-list { margin: 14px 0 10px; padding: 12px 16px 12px 12px; padding-inline-start: 30px; border-radius: var(--r-md); background: var(--surface-2); color: var(--ink-2); font-size: 15px; line-height: 1.7; }
+.payslip-reading { margin: 26px 0 8px; color: var(--primary); font-size: 17px; font-weight: 700; text-align: center; animation: blink 1.2s ease-in-out infinite; }
+.payslip-fields { display: grid; gap: 8px; margin: 12px 0; }
+.payslip-field { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--line-2); border-radius: var(--r-md); cursor: pointer; }
+.payslip-field:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.payslip-field input { width: 18px; height: 18px; flex: none; accent-color: var(--primary); }
+.payslip-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.payslip-label { font-weight: 700; }
+.payslip-copy small { color: var(--muted); font-size: 13px; }
+.payslip-value { font: 600 18px var(--num); white-space: nowrap; }
 
 /* ================= 5. Employee layout ================= */
 .employee-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 22px; align-items: start; }
@@ -403,6 +419,10 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .activity-mark { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; font-size: 12px; font-weight: 700; }
 .activity-step.done .activity-mark { background: var(--gain); color: #fff; }
 .activity-step.wait .activity-mark { background: var(--wait); color: #3D2A00; }
+.step-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.step-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.step-action { min-height: 36px; padding: 4px 14px; border: 1.5px solid var(--primary); border-radius: var(--r-pill); background: var(--surface); color: var(--primary); font-size: 14px; font-weight: 700; }
+.step-action:hover { background: var(--primary); color: var(--on-primary); }
 .breakdown { padding: 14px 20px; }
 .breakdown summary { font-size: 16px; font-weight: 700; cursor: pointer; }
 .breakdown .table-wrapper { margin-top: 12px; }
@@ -634,6 +654,24 @@ async function request(path, { method = 'GET', body } = {}) {
     throw new ApiError(0, 'NETWORK_ERROR', error.name === 'AbortError' ? 'הבקשה ארכה יותר מדי זמן. נסו שוב.' : 'אין חיבור לשרת כרגע. נסו שוב.');
   } finally { clearTimeout(timeout); }
 }
+/** The payslip is the one file upload. The custom header makes a cross-site post impossible without CORS. */
+async function upload(path, file) {
+  if (isMock) throw new ApiError(0, 'MOCK', 'במצב הדגמה מקומית אין קריאת תלוש.');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+  const form = new FormData(); form.append('file', file);
+  try {
+    const response = await fetch(path, { method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json', 'X-Requested-With': 'car-advisor' }, body: form });
+    let data;
+    try { data = await response.json(); }
+    catch { throw new ApiError(response.status, 'INVALID_RESPONSE', 'השרת החזיר תשובה לא תקינה.'); }
+    if (!response.ok) throw new ApiError(response.status, data?.error?.code || 'REQUEST_FAILED', data?.error?.message || 'לא ניתן לקרוא את הקובץ.');
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(0, 'NETWORK_ERROR', error.name === 'AbortError' ? 'הקריאה ארכה יותר מדי זמן. נסו שוב.' : 'אין חיבור לשרת כרגע. נסו שוב.');
+  } finally { clearTimeout(timeout); }
+}
 const casePath = id => '/api/cases/' + encodeURIComponent(id);
 export const api = Object.freeze({
   createCase: () => request('/api/cases', { method: 'POST', body: {} }),
@@ -641,6 +679,9 @@ export const api = Object.freeze({
   sendMessage: (id, text, clientRequestId) => request(casePath(id) + '/messages', { method: 'POST', body: { text, clientRequestId } }),
   choose: (id, choiceId, clientRequestId) => request(casePath(id) + '/choices', { method: 'POST', body: { choiceId, clientRequestId } }),
   updateProfile: (id, key, value, expectedVersion) => request(casePath(id) + '/profile/' + encodeURIComponent(key), { method: 'PUT', body: { value, expectedVersion } }),
+  requestRep: (id, clientRequestId) => request(casePath(id) + '/rep-request', { method: 'POST', body: { clientRequestId } }),
+  readPayslip: (id, file) => upload(casePath(id) + '/payslip', file),
+  applyPayslip: (id, values, clientRequestId) => request(casePath(id) + '/payslip/apply', { method: 'POST', body: { values, clientRequestId } }),
   selectAlternative: (id, alternative, clientRequestId) => request(casePath(id) + '/alternative', { method: 'POST', body: { type: alternative.type, ...(alternative.type === 'car' ? { vehicleId: alternative.vehicleId } : {}), clientRequestId } }),
   getCatalog: () => request('/api/catalog'),
   getOccupations: () => request('/api/occupations'),
@@ -882,7 +923,7 @@ function updateControls() {
   byId('close-dialog').disabled = busy;
   byId('cancel-edit').disabled = busy;
   byId('assistant-banner').hidden = !unavailable();
-  byId('typing').hidden = !busy || byId('profile-dialog').open || unavailable();
+  byId('typing').hidden = !busy || byId('profile-dialog').open || byId('payslip-dialog').open || unavailable();
 }
 /** Keep a request ID after network failure, so a manual retry stays idempotent. */
 async function mutate(key, action, onSuccess) {
@@ -976,6 +1017,7 @@ function renderMessages(messages) {
         else { const label = el('bdi', '', choice.label); label.dir = 'auto'; button.append(label); }
         button.type = 'button'; button.dataset.mutation = ''; button.setAttribute('aria-label', choice.label);
         if (filter) filter.addEventListener('input', () => { button.hidden = !choice.label.toLocaleLowerCase('he-IL').includes(filter.value.trim().toLocaleLowerCase('he-IL')); });
+        if (choice.id.startsWith('ui:')) { button.addEventListener('click', () => screenAction(choice.id)); choices.append(button); continue; }
         button.addEventListener('click', async () => {
           const before = alternativeKey();
           const ok = await mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id));
@@ -1141,20 +1183,28 @@ function gauge(comparison) {
   svg.append(text);
   return svg;
 }
-/** What the assistant did, read from the case itself: every step names where its number came from. */
-function activitySteps(comparison) {
-  const steps = [];
-  const group = current.profile.find(field => field.key === 'group');
-  if (group?.value) steps.push(['done', 'קבוצה ' + group.display + ', לפי טבלת העיסוקים של החברה']);
-  if ((comparison.factors || []).some(factor => factor.component === 'USE_VALUE')) steps.push(['done', 'שווי שימוש מהמאגר של רשות המסים']);
-  steps.push(['done', 'נטו לשני המצבים, לפי כללי ' + comparison.rulesVersion]);
+/**
+ * Only what the employee still has to confirm before deciding, each with the button that does it.
+ * Where a number came from stays in "המידע שלך" and in the full breakdown.
+ */
+function checklist(comparison) {
+  const items = [];
   const estimated = (comparison.estimates || []).filter(key => key !== 'alternativeParticipation');
-  if (estimated.length) steps.push(['wait', estimated.length + ' פרטים משניים הם הערכה. אפשר לעדכן ב"המידע שלך"']);
-  const open = (current.pendingQuestions || []).filter(question => question.status === 'OPEN');
-  const participation = current.profile.find(field => field.key === 'alternativeParticipation');
-  if (open.length) steps.push(['wait', 'שאלה לנציג התחבורה על ההשתתפות: ממתין לתשובה']);
-  else if (participation?.status === 'CONFIRMED') steps.push(['done', 'נציג התחבורה אישר את ההשתתפות']);
-  return steps;
+  if (estimated.length) {
+    const labels = estimated.map(key => current.profile.find(field => field.key === key)?.label).filter(Boolean);
+    items.push(['wait', (estimated.length === 1 ? 'פרט אחד בחישוב הוא הערכה שלי: ' : estimated.length + ' פרטים בחישוב הם הערכה שלי: ') + labels.join(', '),
+      [['העלאת תלוש שכר', () => screenAction('ui:payslip')], ['בדיקת הפרטים', () => screenAction('ui:profile')]]]);
+  } else {
+    items.push(['done', 'פרטי השכר שלך מאושרים']);
+  }
+  if (comparison.alternative?.type === 'car') {
+    const open = (current.pendingQuestions || []).some(question => question.status === 'OPEN');
+    const participation = current.profile.find(field => field.key === 'alternativeParticipation');
+    if (open) items.push(['wait', 'נציג התחבורה בודק את ההשתתפות ברכב. ההשוואה תתעדכן כשיענה']);
+    else if (participation?.status === 'CONFIRMED') items.push(['done', 'נציג התחבורה אישר את ההשתתפות: ' + participation.display]);
+    else if (participation?.status === 'DEFAULT') items.push(['wait', 'ההשתתפות החודשית ברכב הזה היא הערכה', [['לאשר מול נציג', askRep]]]);
+  }
+  return items;
 }
 function renderComparison(comparison, previous) {
   const container = byId('comparison');
@@ -1190,12 +1240,19 @@ function renderComparison(comparison, previous) {
   why.append(el('h3', '', comparison.direction === 'LOSS' ? 'למה הנטו יורד' : comparison.direction === 'NONE' ? 'למה הנטו לא משתנה' : 'למה הנטו עולה'),
     el('p', 'explanation', comparison.explanation), impactChart(comparison.factors));
   const activity = el('section', 'panel insight-card');
-  activity.append(el('h3', '', 'מה העוזר עשה'));
+  const items = checklist(comparison);
+  activity.append(el('h3', '', items.some(([state]) => state === 'wait') ? 'מה נשאר לוודא' : 'הכל מאושר'));
   const list = el('ol', 'activity-list');
-  for (const [state, text] of activitySteps(comparison)) {
+  for (const [state, text, actions] of items) {
     const item = el('li', 'activity-step ' + state);
     const mark = el('span', 'activity-mark', state === 'done' ? '✓' : '…'); mark.setAttribute('aria-hidden', 'true');
-    item.append(mark, el('span', '', text));
+    const body = el('div', 'step-body'); body.append(el('span', '', text));
+    if (actions) {
+      const row = el('div', 'step-actions');
+      for (const [label, action] of actions) { const button = el('button', 'step-action', label); button.type = 'button'; button.dataset.mutation = ''; button.addEventListener('click', action); row.append(button); }
+      body.append(row);
+    }
+    item.append(mark, body);
     list.append(item);
   }
   activity.append(list);
@@ -1266,6 +1323,85 @@ function renderRanking(ranking, previous) {
   }
   container.append(list);
 }
+
+/** Buttons the screen handles itself: choosing a payslip file, or opening the details to correct them. */
+function screenAction(id) {
+  if (id === 'ui:payslip') { openPayslip(); return; }
+  if (id === 'ui:profile') {
+    setProfileExpanded(true);
+    byId('profile-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+    for (const key of current?.assumptionsToConfirm || []) { const node = profileNodes.get(key)?.node; if (node) highlight(node); }
+    byId('profile-toggle').focus({ preventScroll: true });
+  }
+}
+async function askRep() {
+  await mutate('rep-request:' + alternativeKey(), id => api.requestRep(caseId, id));
+}
+
+/** The payslip: the employee chooses a file, sees what was read, and approves what to keep. Nothing is stored before that. */
+let payslipReading = null;
+function payslipStage(stage, data) {
+  const body = byId('payslip-body'); const actions = byId('payslip-actions');
+  body.replaceChildren(); actions.replaceChildren(); showNotice(byId('payslip-error'), '');
+  const action = (label, primary, handler) => { const button = el('button', primary ? 'primary-button' : 'secondary-button', label); button.type = 'button'; button.addEventListener('click', handler); actions.append(button); return button; };
+  if (stage === 'intro') {
+    body.append(el('p', 'dialog-lead', 'אקרא מהתלוש רק את מה שההשוואה צריכה: שכר בסיס, עמלות, בונוס, ההפרשות שלך לפנסיה ולקרן השתלמות, נקודות זיכוי וההשתתפות ברכב.'));
+    const privacy = el('ul', 'privacy-list');
+    for (const line of ['התלוש נקרא על ידי מודל AI (Gemini) ולא נשמר במערכת.', 'כדאי לכסות מספר זהות ופרטי חשבון בנק לפני הצילום.', 'שום פרט לא יישמר לפני שתאשרו אותו במסך הבא.']) privacy.append(el('li', '', line));
+    body.append(privacy, el('p', 'small-muted', 'תמונה או קובץ PDF, עד 5 מגה.'));
+    action('בחירת קובץ', true, () => byId('payslip-file').click()).focus();
+    action('ביטול', false, closePayslip);
+  } else if (stage === 'reading') {
+    body.append(el('p', 'payslip-reading', 'קורא את התלוש…'));
+  } else if (stage === 'review') {
+    payslipReading = data;
+    body.append(el('p', 'dialog-lead', 'זה מה שמצאתי בתלוש. סמנו מה לשמור:'));
+    const list = el('div', 'payslip-fields');
+    for (const field of data.fields) {
+      const row = el('label', 'payslip-field');
+      const box = el('input'); box.type = 'checkbox'; box.checked = true; box.value = field.key;
+      const copy = el('span', 'payslip-copy');
+      copy.append(el('span', 'payslip-label', field.label));
+      const now = field.currentStatus === 'MISSING' ? 'חסר' : field.current + (field.currentStatus === 'DEFAULT' ? ' (הערכה)' : '');
+      copy.append(el('small', '', 'עכשיו: ' + now));
+      const value = el('bdi', 'payslip-value', field.display); value.dir = 'ltr';
+      row.append(box, copy, value); list.append(row);
+    }
+    body.append(list);
+    if (data.notFound?.length) body.append(el('p', 'small-muted', 'לא נמצאו בתלוש: ' + data.notFound.join(', ') + '. הם נשארים כמו שהם.'));
+    action('שמירת הפרטים שסומנו', true, savePayslip).dataset.mutation = '';
+    action('ביטול', false, closePayslip);
+  }
+}
+function openPayslip() {
+  if (!current || busy) return;
+  payslipReading = null; payslipStage('intro');
+  byId('payslip-dialog').showModal();
+}
+function closePayslip() { if (busy) return; byId('payslip-dialog').close(); payslipReading = null; }
+async function savePayslip() {
+  if (!payslipReading) return;
+  const chosen = [...byId('payslip-body').querySelectorAll('input[type=checkbox]:checked')].map(box => box.value);
+  if (!chosen.length) { showNotice(byId('payslip-error'), 'לא סומן אף פרט.'); return; }
+  const values = Object.fromEntries(payslipReading.fields.filter(field => chosen.includes(field.key)).map(field => [field.key, field.value]));
+  const ok = await mutate('payslip:' + JSON.stringify(values), id => api.applyPayslip(caseId, values, id));
+  if (ok) { byId('payslip-dialog').close(); payslipReading = null; feedback('הפרטים מהתלוש נשמרו.'); }
+  else showNotice(byId('payslip-error'), 'השמירה לא הצליחה. נסו שוב.');
+}
+byId('payslip-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0]; event.target.value = '';
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showNotice(byId('payslip-error'), 'הקובץ גדול מדי. אפשר להעלות עד 5 מגה.'); return; }
+  payslipStage('reading');
+  try { payslipStage('review', await api.readPayslip(caseId, file)); }
+  catch (error) {
+    payslipStage('intro');
+    showNotice(byId('payslip-error'), error.message || 'לא ניתן לקרוא את הקובץ.');
+  }
+});
+byId('close-payslip').addEventListener('click', closePayslip);
+byId('payslip-dialog').addEventListener('cancel', event => { if (busy) event.preventDefault(); else payslipReading = null; });
+byId('profile-payslip').addEventListener('click', openPayslip);
 
 function applyCase(next) {
   if (!next || (current && next.caseId === current.caseId && next.version < current.version)) return;

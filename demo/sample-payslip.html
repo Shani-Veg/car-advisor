@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>תלוש לדוגמה</title>
+<!-- A made-up payslip for the demo (docs/demo-script.md). Its numbers are the engine's own breakdown of Noa's
+     reference case today, so the net printed here equals the "today" net on the comparison screen.
+     Rendered to demo/sample-payslip.png with a headless browser. -->
+<style>
+  body { margin: 0; background: #fff; color: #111; font: 15px/1.45 Arial, "Segoe UI", sans-serif; }
+  .page { width: 860px; margin: 0 auto; padding: 28px 30px 34px; position: relative; }
+  .sample { position: absolute; top: 330px; left: 50%; transform: translateX(-50%) rotate(-18deg); font-size: 64px; font-weight: 700; color: rgba(200, 0, 0, .10); white-space: nowrap; pointer-events: none; }
+  .banner { border: 2px solid #c00; color: #c00; text-align: center; font-weight: 700; padding: 6px; margin-bottom: 14px; }
+  header { display: flex; justify-content: space-between; border-bottom: 2px solid #111; padding-bottom: 10px; }
+  h1 { font-size: 22px; margin: 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  th, td { border: 1px solid #999; padding: 5px 8px; text-align: right; }
+  th { background: #eee; }
+  td.n { text-align: left; direction: ltr; font-family: "Courier New", monospace; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .net { margin-top: 16px; font-size: 20px; font-weight: 700; border: 2px solid #111; padding: 8px 12px; display: flex; justify-content: space-between; }
+  .details td { width: 25%; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sample">דוגמה בלבד</div>
+  <div class="banner">תלוש לדוגמה להדגמה בלבד · לא מסמך אמיתי · כל הפרטים בדויים</div>
+  <header>
+    <div><h1>חברה לדוגמה בע"מ</h1><div>תלוש משכורת לחודש ספטמבר 2026</div></div>
+    <div>תיק ניכויים: 000000000<br>מחלקת שכר</div>
+  </header>
+  <table class="details">
+    <tr><th>שם העובד</th><td>נועה דוגמה</td><th>מספר עובד</th><td class="n">000123</td></tr>
+    <tr><th>תפקיד</th><td>מנהלת מוצר</td><th>נקודות זיכוי</th><td class="n">2.75</td></tr>
+    <tr><th>מצב משפחתי</th><td>נשואה + 2</td><th>היקף משרה</th><td class="n">100%</td></tr>
+  </table>
+  <div class="grid">
+    <table>
+      <tr><th colspan="2">תשלומים</th></tr>
+      <tr><td>שכר יסוד</td><td class="n">18,500.00</td></tr>
+      <tr><td>עמלות</td><td class="n">0.00</td></tr>
+      <tr><td>בונוס</td><td class="n">0.00</td></tr>
+      <tr><th>סה"כ תשלומים</th><td class="n">18,500.00</td></tr>
+      <tr><th colspan="2">זקיפות לצורכי מס</th></tr>
+      <tr><td>שווי רכב (COROLLA CROSS)</td><td class="n">4,070.00</td></tr>
+      <tr><th>ברוטו למס</th><td class="n">22,570.00</td></tr>
+    </table>
+    <table>
+      <tr><th colspan="2">ניכויים</th></tr>
+      <tr><td>מס הכנסה</td><td class="n">3,443.15</td></tr>
+      <tr><td>ביטוח לאומי</td><td class="n">1,131.59</td></tr>
+      <tr><td>מס בריאות</td><td class="n">1,020.94</td></tr>
+      <tr><td>קרן פנסיה - תגמולי עובד 6%</td><td class="n">1,110.00</td></tr>
+      <tr><td>קרן השתלמות - עובד 2.5%</td><td class="n">462.50</td></tr>
+      <tr><td>השתתפות עובד ברכב</td><td class="n">300.00</td></tr>
+      <tr><th>סה"כ ניכויים</th><td class="n">7,468.18</td></tr>
+    </table>
+  </div>
+  <div class="net"><span>נטו לתשלום</span><span style="direction: ltr">11,031.82 ₪</span></div>
+</div>
+</body>
+</html>

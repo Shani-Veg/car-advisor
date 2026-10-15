@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +103,51 @@ public class GeminiClient implements LlmClient {
             }
         }
         throw new UnavailableException("No Gemini model answered");
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> extract(String instruction, byte[] document, String mimeType, Map<String, Object> schema) {
+        if (!isConfigured()) {
+            throw new UnavailableException("GEMINI_API_KEY is not set");
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("contents", List.of(Map.of("role", "user", "parts", List.of(
+                Map.of("text", instruction),
+                Map.of("inline_data", Map.of("mime_type", mimeType, "data", Base64.getEncoder().encodeToString(document)))))));
+        body.put("generationConfig", Map.of("responseMimeType", "application/json", "responseSchema", schema,
+                "temperature", 0));
+        String payload = json.writeValueAsString(body);
+        for (String model : models) {
+            long started = System.currentTimeMillis();
+            try {
+                HttpRequest request = HttpRequest.newBuilder(URI.create(String.format(ENDPOINT, model)))
+                        .timeout(timeout)
+                        .header("Content-Type", "application/json; charset=utf-8")
+                        .header("x-goog-api-key", apiKey)
+                        .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
+                        .build();
+                HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (response.statusCode() != 200) {
+                    log.warn("Gemini model {} could not read the document (HTTP {})", model, response.statusCode());
+                    continue;
+                }
+                String text = parse(json.readValue(response.body(), Map.class), model).text();
+                Map<String, Object> fields = json.readValue(text, Map.class);
+                if (recorder != null) {
+                    recorder.recordExtraction(DocumentHash.sha256(document), fields);
+                }
+                // Never log what was read: it is the employee's salary.
+                log.info("Gemini {} read a {} document in {} ms", model, mimeType, System.currentTimeMillis() - started);
+                return fields;
+            } catch (java.io.IOException | tools.jackson.core.JacksonException e) {
+                log.warn("Gemini model {} could not read the document: {}", model, e.getClass().getSimpleName());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new UnavailableException("interrupted");
+            }
+        }
+        throw new UnavailableException("No Gemini model read the document");
     }
 
     @SuppressWarnings("unchecked")
