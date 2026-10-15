@@ -140,3 +140,44 @@
 - [Medium: why automotive UI isn't mobile design on wheels](https://medium.com/design-bootcamp/why-automotive-ui-isnt-just-mobile-design-on-wheels-e5b251059a12)
 - [AI Goodies: aesthetics 2026](https://aigoodies.beehiiv.com/p/aesthetics-2026)
 - [Colorwhistle: best automotive brand websites](https://colorwhistle.com/automotive-brand-websites/)
+
+---
+
+# חלק ג: טכנולוגיה מתקדמת (15.10.2026)
+
+## מה ראינו
+- **BMW, Panoramic iDrive (Neue Klasse):** פס רחב לאורך כל בסיס השמשה. מידע הנהיגה קבוע, ולידו שישה "מקומות" שהנהג בוחר מה להציג בהם. מסך מרכזי עם ווידג'טים, ו"Shy-tech": כפתורים שנדלקים רק כשהפעולה זמינה.
+- **Mercedes, MBUX "Zero Layer":** המסך הראשון מציג רק את החשוב ביותר והצעות, בלי לחפש בתפריטים. "צמצום למהותי", גרפיקה בזמן אמת, ועוזר שיחה מבוסס AI.
+- **ממשקי HUD ומדע בדיוני:** שכבות שקופות עדינות רק למסגרת ולניווט, לא על הנתונים. צבעי ניאון רוויים "רוטטים" על רקע כהה ולא נעימים לעין, ותנועה רק כשהיא מאשרת מצב. תבניות "סאי-פיי" עם פונטים כמו Orbitron נראות זולות.
+- **סוכני AI:** במקום ספינר מסתובב, טקסט שאומר מה העוזר עושה עכשיו (דפוס "Thinking" במערכת Cloudscape, ומאמר ב-Smashing מ-2026). ציר פעולות של העוזר, אישור אנושי לפני צעד משמעותי, ויומן עם מקור לכל פעולה. העיקרון: גלוי, ניתן לעצירה, ניתן לבדיקה, הפיך.
+- **הצגת נתונים:** מסר אחד לכל גרף, להצביע ישר על התובנה, תוויות ישירות במקום מקרא, וצבע שנושא מידע ולא קישוט.
+- **תצוגת נקודות (Dot-matrix):** מספרים בסגנון לוח LED. מונוכרום עם צבע אות אחד, בהשראת Nothing (סיכום לא רשמי).
+
+## מה זה אומר עלינו
+1. **פס פנורמי** בראש המסך עם 4 "מקומות": היום, השינוי (מחוון), החלופה, סטטוס.
+2. **"מה העוזר עשה":** ציר פעולות עם מקור לכל צעד (טבלת העיסוקים, רשות המסים, המנוע, הנציג). זה בדיוק ה"שקיפות" שמוצרי AI מחפשים, ואצלנו זה אמיתי, כי לכל נתון יש מקור.
+3. **מצב "העוזר עובד":** טקסט מה הוא עושה ("מחשב נטו לכל 20 הרכבים… 14 מתוך 20"), לא ספינר.
+4. **הצעות בפתיחה,** בסגנון Zero Layer: "מה חשוב עכשיו" עם הכפתורים.
+5. **מספרים בגופן תצוגה** (נקודות או טבלאי), וצבע רק כשהוא אומר משהו.
+
+## כיוונים שנוספו ללוח
+- **ח. פנורמי, והעוזר עובד לעיניך:** פס כחול רחב עם 4 מקומות, כרטיס "מה העוזר עשה", ומצב חשיבה עם התקדמות בצ'אט.
+- **ט. מסך דיגיטלי:** בהיר, מונוכרום עם נקודה אדומה "LIVE", מספרים בסגנון לוח LED, פסי מדידה מחולקים לקוביות, והצעות "מה חשוב עכשיו" בראש הצ'אט.
+
+## מקורות נוספים
+- [TechCrunch: BMW Panoramic iDrive at CES 2025](https://techcrunch.com/2025/01/07/bmws-new-ui-puts-widgets-on-the-windshield-ces-2025)
+- [BMW Group press: the new iDrive in the Neue Klasse](https://www.press.bmwgroup.com/france/article/detail/T0433758FR/le-nouveau-bmw-idrive-arrive-dans-la-neue-klasse)
+- [Hagerty: BMW's new iDrive ditches the knob](https://hagerty.com/media/?p=459091)
+- [Mercedes-Benz press: the new CLA (MBUX Zero Layer)](https://media.mercedes-benz.be/download/45c7c648-a5fc-4644-b7d7-f628efb17c05/pm-cla-de.docx)
+- [Mercedes-Benz: MBUX Hyperscreen](https://mbusa.com/en/eq-electric-cars/technology/hyperscreen)
+- [Pixelmatters: 7 UI design trends to watch in 2026](https://www.pixelmatters.com/insights/7-UI-design-trends-to-watch-in-2026)
+- [Fuselab: UI/UX Design Trends 2026](https://fuselabcreative.com/ui-ux-design-trends-2026-modern-ui-trends-ux-trends-guide/)
+- [Aviation Today: next-gen HUDs in 2026](https://www.aviationtoday.com/2025/11/13/eyes-on-the-sky-how-next-gen-huds-will-transform-cockpits-in-2026/)
+- [Cloudscape: Generative AI "Thinking" pattern](https://cloudscape.design/patterns/genai/thinking/)
+- [Smashing Magazine: Practical Interface Patterns For AI Transparency](https://smashingmagazine.com/2026/05/practical-interface-patterns-ai-transparency/)
+- [LogRocket/DEV: architecting the frontend of an agent](https://dev.to/logrocket/your-ai-has-agency-heres-how-to-architect-its-frontend-4772)
+- [Blake Crosley: agentic design as a control surface](https://blakecrosley.com/blog/agentic-design-control-surface)
+- [UX Magazine: agentic UX](https://uxmag.com/articles/agentic-ux-when-the-interface-stops-waiting-for-you)
+- [Infogram: data visualization trends 2026](https://infogram.com/blog/10-trends-in-data-visualization-to-watch-in-2026/)
+- [Luzmo: data visualization trends](https://luzmo.com/blog/data-visualization-trends)
+- [Nothing DESIGN.md (unofficial)](https://www.shadcn.io/design/nothing)
