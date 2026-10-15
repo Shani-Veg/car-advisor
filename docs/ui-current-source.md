@@ -309,7 +309,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .choice-button:hover { background: var(--primary); color: var(--on-primary); }
 .choice-button:hover .vehicle-model, .choice-button:hover .vehicle-maker { color: var(--on-primary); }
 .choice-button .vehicle-identity { pointer-events: none; }
-.choices-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-height: 260px; margin-top: 8px; padding: 3px; overflow-y: auto; scrollbar-width: thin; }
+.choices-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .choices-list:has(.vehicle-identity) { grid-template-columns: minmax(0, 1fr); }
 .choices-list .choice-button { width: 100%; padding: 10px 12px; border-radius: 14px; text-align: center; line-height: 1.35; }
 .choices-list .choice-button:has(.vehicle-identity) { text-align: start; }
@@ -359,7 +359,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 /* the blue cluster: today | gauge | alternative | lights */
 .comparison-panel { display: block; animation: reveal 200ms ease-out; }
 #comparison { display: flex; flex-direction: column; gap: 18px; }
-.cluster { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr); overflow: hidden; border-radius: var(--r-xl); background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow); }
+.cluster { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr); overflow: hidden; border-radius: var(--r-xl); background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow); }
 .cluster > * { padding: 18px 20px; border-inline-start: 1px solid rgba(255, 255, 255, .18); }
 .cluster > :first-child { border-inline-start: 0; }
 .readout { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
@@ -383,11 +383,6 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .gauge-value.loss { stroke: #FFB38A; }
 .gauge-number { fill: #fff; font: 600 46px var(--num); }
 .gauge-caption { font-size: 14px; color: var(--primary-muted); text-align: center; }
-.cluster-lights { display: flex; flex-direction: column; gap: 10px; font-size: 15px; }
-.status-light { display: flex; align-items: center; gap: 8px; }
-.light-dot { width: 10px; height: 10px; flex: none; border-radius: 50%; }
-.light-dot.ok { background: var(--mint); }
-.light-dot.wait { background: var(--wait-light); }
 .blocked-card { padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; border-inline-start: 4px solid var(--danger); }
 
 /* why the net changes, and what the assistant did */
@@ -552,6 +547,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .art-check { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--gain); color: #fff; }
 .preview-lights { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 14px; }
 .preview-lights > span { display: inline-flex; align-items: center; gap: 7px; }
+.preview-lights .light-dot { width: 10px; height: 10px; flex: none; border-radius: 50%; }
 .preview-lights .light-dot.ok { background: var(--gain); }
 .preview-lights .light-dot.wait { background: var(--wait); }
 .welcome-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1160px; margin: 20px auto; padding: 8px 22px; color: var(--muted); font-size: 13px; }
@@ -942,8 +938,10 @@ function renderMessages(messages) {
   const incoming = new Set(messages.map(message => message.id));
   for (const [id, entry] of messageNodes) if (!incoming.has(id)) { entry.node.remove(); messageNodes.delete(id); }
   const announcements = [];
+  const added = [];
   for (const [index, message] of messages.entries()) {
     const existing = messageNodes.get(message.id);
+    if (!existing) added.push(message.id);
     const active = message.role === 'bot' && index === messages.length - 1;
     if (existing && same(existing.data, message) && existing.active === active) continue;
     if (message.role === 'system') {
@@ -978,7 +976,11 @@ function renderMessages(messages) {
         else { const label = el('bdi', '', choice.label); label.dir = 'auto'; button.append(label); }
         button.type = 'button'; button.dataset.mutation = ''; button.setAttribute('aria-label', choice.label);
         if (filter) filter.addEventListener('input', () => { button.hidden = !choice.label.toLocaleLowerCase('he-IL').includes(filter.value.trim().toLocaleLowerCase('he-IL')); });
-        button.addEventListener('click', () => mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id)));
+        button.addEventListener('click', async () => {
+          const before = alternativeKey();
+          const ok = await mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id));
+          if (ok && alternativeKey() !== before && !byId('comparison-panel').hidden) scrollToComparison();
+        });
         choices.append(button);
       }
       content.append(choices);
@@ -996,8 +998,20 @@ function renderMessages(messages) {
   }
   if (!messages.length) container.replaceChildren(emptyState('השיחה מתחילה כאן.', 'כתבו שאלה או עדכנו את הפרטים בפרופיל.'));
   if (announcements.length) { byId('chat-announcer').replaceChildren(); appendText(byId('chat-announcer'), announcements.join('\n')); }
-  if (first || nearBottom) container.scrollTop = container.scrollHeight;
+  if (added.length) reveal(container, messageNodes.get(added[0]).node, messageNodes.get(added.at(-1)).node, first);
+  else if (nearBottom) container.scrollTop = container.scrollHeight;
   container.setAttribute('aria-busy', 'false');
+}
+/**
+ * New messages: show them from the employee's own line when everything fits; otherwise start at the newest
+ * message, so a question is never hidden above a long list of answers (the rest is a short scroll away).
+ */
+function reveal(container, firstNew, lastNew, instant) {
+  const offset = node => container.scrollTop + node.getBoundingClientRect().top - container.getBoundingClientRect().top - 12;
+  let top = offset(firstNew);
+  if (container.scrollHeight - top > container.clientHeight) top = offset(lastNew);
+  const smooth = !instant && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  container.scrollTo({ top: Math.max(0, Math.min(top, container.scrollHeight - container.clientHeight)), behavior: smooth ? 'smooth' : 'instant' });
 }
 
 /** The four questions the chat asks, as a path: done (with the answer), current, and still ahead. */
@@ -1127,12 +1141,6 @@ function gauge(comparison) {
   svg.append(text);
   return svg;
 }
-function light(tone, text) {
-  const row = el('span', 'status-light');
-  const dot = el('span', 'light-dot ' + tone); dot.setAttribute('aria-hidden', 'true');
-  row.append(dot, el('span', '', text));
-  return row;
-}
 /** What the assistant did, read from the case itself: every step names where its number came from. */
 function activitySteps(comparison) {
   const steps = [];
@@ -1171,14 +1179,9 @@ function renderComparison(comparison, previous) {
   const cluster = el('div', 'cluster');
   const middle = el('div', 'cluster-gauge');
   middle.append(gauge(comparison), el('span', 'gauge-caption', (directionLabels[comparison.direction] || 'שינוי בנטו החודשי') + (estimates.length ? ' · משוער' : '')));
-  const lights = el('div', 'cluster-lights');
-  lights.append(el('span', 'readout-title', 'נוריות'), light('ok', 'זכאי לפי הקבוצה'));
-  if (estimates.includes('alternativeParticipation')) lights.append(light('wait', 'השתתפות: הערכה'));
-  else if (current.profile.find(field => field.key === 'alternativeParticipation')?.status === 'CONFIRMED') lights.append(light('ok', 'השתתפות אושרה'));
-  if (current.status === 'WAITING_FOR_REP') lights.append(light('wait', 'ממתין לנציג'));
   const today = readout(comparison.today, 'היום', false, estimates, 'today');
   const alternative = readout(comparison.alternative, 'החלופה', true, estimates, 'alternative');
-  cluster.append(today, middle, alternative, lights);
+  cluster.append(today, middle, alternative);
   if (previous && (previous.difference !== comparison.difference || previous.direction !== comparison.direction)) highlight(middle);
   if (previous && !same(previous.alternative, comparison.alternative)) highlight(alternative);
 
@@ -1383,7 +1386,21 @@ function setProfileExpanded(expanded) {
   byId('profile-content').hidden = !expanded;
   byId('profile-toggle').setAttribute('aria-expanded', String(expanded));
 }
-function scrollToComparison() { byId('comparison-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }
+/** Which alternative the comparison shows, to notice when a click changed it. */
+const alternativeKey = () => {
+  const alternative = current?.comparison?.alternative;
+  return alternative ? alternative.type + ':' + (alternative.vehicleId || '') : '';
+};
+/** Brings the comparison to the top: the side pane on a wide screen, the page (below the sticky header) on a phone. */
+function scrollToComparison() {
+  const panel = byId('comparison-panel');
+  const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+  const workspace = panel.closest('.decision-workspace');
+  if (workspace && getComputedStyle(workspace).overflowY === 'auto') { workspace.scrollTo({ top: 0, behavior }); return; }
+  const header = document.querySelector('.site-header');
+  const top = panel.getBoundingClientRect().top + scrollY - (header ? header.offsetHeight : 0) - 12;
+  window.scrollTo({ top: Math.max(0, top), behavior });
+}
 byId('profile-toggle').addEventListener('click', () => setProfileExpanded(byId('profile-content').hidden));
 byId('mobile-comparison').addEventListener('click', scrollToComparison);
 /** The phone bar must not sit on top of the full comparison, the message box, or the keyboard while typing. */

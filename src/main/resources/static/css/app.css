@@ -146,7 +146,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .choice-button:hover { background: var(--primary); color: var(--on-primary); }
 .choice-button:hover .vehicle-model, .choice-button:hover .vehicle-maker { color: var(--on-primary); }
 .choice-button .vehicle-identity { pointer-events: none; }
-.choices-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-height: 260px; margin-top: 8px; padding: 3px; overflow-y: auto; scrollbar-width: thin; }
+.choices-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .choices-list:has(.vehicle-identity) { grid-template-columns: minmax(0, 1fr); }
 .choices-list .choice-button { width: 100%; padding: 10px 12px; border-radius: 14px; text-align: center; line-height: 1.35; }
 .choices-list .choice-button:has(.vehicle-identity) { text-align: start; }
@@ -196,7 +196,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 /* the blue cluster: today | gauge | alternative | lights */
 .comparison-panel { display: block; animation: reveal 200ms ease-out; }
 #comparison { display: flex; flex-direction: column; gap: 18px; }
-.cluster { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr); overflow: hidden; border-radius: var(--r-xl); background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow); }
+.cluster { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr); overflow: hidden; border-radius: var(--r-xl); background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow); }
 .cluster > * { padding: 18px 20px; border-inline-start: 1px solid rgba(255, 255, 255, .18); }
 .cluster > :first-child { border-inline-start: 0; }
 .readout { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
@@ -220,11 +220,6 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .gauge-value.loss { stroke: #FFB38A; }
 .gauge-number { fill: #fff; font: 600 46px var(--num); }
 .gauge-caption { font-size: 14px; color: var(--primary-muted); text-align: center; }
-.cluster-lights { display: flex; flex-direction: column; gap: 10px; font-size: 15px; }
-.status-light { display: flex; align-items: center; gap: 8px; }
-.light-dot { width: 10px; height: 10px; flex: none; border-radius: 50%; }
-.light-dot.ok { background: var(--mint); }
-.light-dot.wait { background: var(--wait-light); }
 .blocked-card { padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; border-inline-start: 4px solid var(--danger); }
 
 /* why the net changes, and what the assistant did */
@@ -389,6 +384,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .art-check { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--gain); color: #fff; }
 .preview-lights { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 14px; }
 .preview-lights > span { display: inline-flex; align-items: center; gap: 7px; }
+.preview-lights .light-dot { width: 10px; height: 10px; flex: none; border-radius: 50%; }
 .preview-lights .light-dot.ok { background: var(--gain); }
 .preview-lights .light-dot.wait { background: var(--wait); }
 .welcome-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1160px; margin: 20px auto; padding: 8px 22px; color: var(--muted); font-size: 13px; }

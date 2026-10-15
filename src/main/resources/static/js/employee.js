@@ -112,8 +112,10 @@ function renderMessages(messages) {
   const incoming = new Set(messages.map(message => message.id));
   for (const [id, entry] of messageNodes) if (!incoming.has(id)) { entry.node.remove(); messageNodes.delete(id); }
   const announcements = [];
+  const added = [];
   for (const [index, message] of messages.entries()) {
     const existing = messageNodes.get(message.id);
+    if (!existing) added.push(message.id);
     const active = message.role === 'bot' && index === messages.length - 1;
     if (existing && same(existing.data, message) && existing.active === active) continue;
     if (message.role === 'system') {
@@ -148,7 +150,11 @@ function renderMessages(messages) {
         else { const label = el('bdi', '', choice.label); label.dir = 'auto'; button.append(label); }
         button.type = 'button'; button.dataset.mutation = ''; button.setAttribute('aria-label', choice.label);
         if (filter) filter.addEventListener('input', () => { button.hidden = !choice.label.toLocaleLowerCase('he-IL').includes(filter.value.trim().toLocaleLowerCase('he-IL')); });
-        button.addEventListener('click', () => mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id)));
+        button.addEventListener('click', async () => {
+          const before = alternativeKey();
+          const ok = await mutate('choice:' + choice.id, id => api.choose(caseId, choice.id, id));
+          if (ok && alternativeKey() !== before && !byId('comparison-panel').hidden) scrollToComparison();
+        });
         choices.append(button);
       }
       content.append(choices);
@@ -166,8 +172,20 @@ function renderMessages(messages) {
   }
   if (!messages.length) container.replaceChildren(emptyState('השיחה מתחילה כאן.', 'כתבו שאלה או עדכנו את הפרטים בפרופיל.'));
   if (announcements.length) { byId('chat-announcer').replaceChildren(); appendText(byId('chat-announcer'), announcements.join('\n')); }
-  if (first || nearBottom) container.scrollTop = container.scrollHeight;
+  if (added.length) reveal(container, messageNodes.get(added[0]).node, messageNodes.get(added.at(-1)).node, first);
+  else if (nearBottom) container.scrollTop = container.scrollHeight;
   container.setAttribute('aria-busy', 'false');
+}
+/**
+ * New messages: show them from the employee's own line when everything fits; otherwise start at the newest
+ * message, so a question is never hidden above a long list of answers (the rest is a short scroll away).
+ */
+function reveal(container, firstNew, lastNew, instant) {
+  const offset = node => container.scrollTop + node.getBoundingClientRect().top - container.getBoundingClientRect().top - 12;
+  let top = offset(firstNew);
+  if (container.scrollHeight - top > container.clientHeight) top = offset(lastNew);
+  const smooth = !instant && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  container.scrollTo({ top: Math.max(0, Math.min(top, container.scrollHeight - container.clientHeight)), behavior: smooth ? 'smooth' : 'instant' });
 }
 
 /** The four questions the chat asks, as a path: done (with the answer), current, and still ahead. */
@@ -297,12 +315,6 @@ function gauge(comparison) {
   svg.append(text);
   return svg;
 }
-function light(tone, text) {
-  const row = el('span', 'status-light');
-  const dot = el('span', 'light-dot ' + tone); dot.setAttribute('aria-hidden', 'true');
-  row.append(dot, el('span', '', text));
-  return row;
-}
 /** What the assistant did, read from the case itself: every step names where its number came from. */
 function activitySteps(comparison) {
   const steps = [];
@@ -341,14 +353,9 @@ function renderComparison(comparison, previous) {
   const cluster = el('div', 'cluster');
   const middle = el('div', 'cluster-gauge');
   middle.append(gauge(comparison), el('span', 'gauge-caption', (directionLabels[comparison.direction] || 'שינוי בנטו החודשי') + (estimates.length ? ' · משוער' : '')));
-  const lights = el('div', 'cluster-lights');
-  lights.append(el('span', 'readout-title', 'נוריות'), light('ok', 'זכאי לפי הקבוצה'));
-  if (estimates.includes('alternativeParticipation')) lights.append(light('wait', 'השתתפות: הערכה'));
-  else if (current.profile.find(field => field.key === 'alternativeParticipation')?.status === 'CONFIRMED') lights.append(light('ok', 'השתתפות אושרה'));
-  if (current.status === 'WAITING_FOR_REP') lights.append(light('wait', 'ממתין לנציג'));
   const today = readout(comparison.today, 'היום', false, estimates, 'today');
   const alternative = readout(comparison.alternative, 'החלופה', true, estimates, 'alternative');
-  cluster.append(today, middle, alternative, lights);
+  cluster.append(today, middle, alternative);
   if (previous && (previous.difference !== comparison.difference || previous.direction !== comparison.direction)) highlight(middle);
   if (previous && !same(previous.alternative, comparison.alternative)) highlight(alternative);
 
@@ -553,7 +560,21 @@ function setProfileExpanded(expanded) {
   byId('profile-content').hidden = !expanded;
   byId('profile-toggle').setAttribute('aria-expanded', String(expanded));
 }
-function scrollToComparison() { byId('comparison-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }
+/** Which alternative the comparison shows, to notice when a click changed it. */
+const alternativeKey = () => {
+  const alternative = current?.comparison?.alternative;
+  return alternative ? alternative.type + ':' + (alternative.vehicleId || '') : '';
+};
+/** Brings the comparison to the top: the side pane on a wide screen, the page (below the sticky header) on a phone. */
+function scrollToComparison() {
+  const panel = byId('comparison-panel');
+  const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+  const workspace = panel.closest('.decision-workspace');
+  if (workspace && getComputedStyle(workspace).overflowY === 'auto') { workspace.scrollTo({ top: 0, behavior }); return; }
+  const header = document.querySelector('.site-header');
+  const top = panel.getBoundingClientRect().top + scrollY - (header ? header.offsetHeight : 0) - 12;
+  window.scrollTo({ top: Math.max(0, top), behavior });
+}
 byId('profile-toggle').addEventListener('click', () => setProfileExpanded(byId('profile-content').hidden));
 byId('mobile-comparison').addEventListener('click', scrollToComparison);
 /** The phone bar must not sit on top of the full comparison, the message box, or the keyboard while typing. */
