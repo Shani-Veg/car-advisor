@@ -100,3 +100,43 @@
 - [BOIA: Israel's Digital Accessibility Laws](https://www.boia.org/blog/israels-digital-accessibility-laws-an-overview)
 - [University of St. Gallen: eye-tracking study, dark vs light dashboards](https://alexandria.unisg.ch/handle/20.500.14171/122292)
 - [InterWorks: light vs dark dashboards](https://interworks.com/blog/2025/01/07/how-to-decide-between-light-mode-versus-dark-mode-dashboards-in-tableau/)
+
+---
+
+# חלק ב: עולם הרכב והתעשייה (15.10.2026)
+
+## מה ראינו
+- **אתרי יצרנים (Polestar, Volvo, Tesla):** איפוק קיצוני. מונוכרום (לבן, אפור בהיר, גרפיט), גופן אחד ולעתים משקל אחד, קישורים כטקסט עם חץ במקום כפתורים צבעוניים, הרבה אוויר ותמונת מוצר גדולה. ב-Rivian צבע מבטא אחד (צהוב) מופיע רק על הפעולה הראשית. Volvo מפרסמת מערכת עיצוב רשמית עם גופן אחד לאתר ו-16px לגוף הטקסט. (סיכומי Polestar ו-Rivian הם של צד שלישי, לא רשמיים.)
+- **צבעי הרכבים עצמם:** ניטרליים שולטים: לבן 29%, שחור 23%, אפור 22% (Axalta, נתוני 2025). באירופה אפור במקום הראשון (26%). ירוק הוא הצבע הצבעוני שצומח הכי מהר, ואדום ירד ל-3% מהשוק (BASF, ינואר 2026). תחזית BASF ל-2025-2026: גוונים חמים יותר (חום, מוב, אדמדם), והצבע המוביל לאירופה הוא כחול עז עם נגיעות ירוק וסגול ("Tesseract Blue").
+- **לוגואים של יצרנים:** כולם עברו ללוגו שטוח, דו-ממדי (VW, BMW, Audi, Nissan, Toyota, ו-Mazda ב-2025), בגלל המסכים.
+- **מערכות לניהול צי רכב:** היררכיה של מספרים: עד 4 מדדים גדולים למעלה, השאר בלחיצה. להבליט חריגים (מה דורש תשובה) ולתת לשגרה לשקוע. תצוגה לפי תפקיד (עובד מול נציג).
+- **אסתטיקה טכנית-תעשייתית:** תוויות במונוספייס, קווי רשת גלויים, פינות חדות, "גיליון נתונים". קיים בעיקר בתרבות המפתחים (מקור יחיד כמגמה).
+- **ממשקים בתוך הרכב:** משטחים כהים, ניגודיות גבוהה, מינימום, ונוריות סטטוס.
+
+## מה זה אומר עלינו
+1. מקצועי ברכב = **בסיס ניטרלי (אפור, גרפיט, לבן) + צבע מבטא אחד שמשמש רק לפעולה ולתוצאה.**
+2. **ירוק-טורקיז כהה** מתאים גם למגמות הרכב (ירוק עולה) וגם למגמות הדיגיטל (טיל). אדום כדאי להשאיר רק לבוט ולאזהרות.
+3. **המספרים הם הגיבור:** מדד אחד גדול (השינוי בנטו), ומתחתיו מעט מדדים משניים.
+4. **חריגים בולטים:** "הערכה" ו"ממתין לנציג" בצבע אות (צהוב-ענבר), כמו נורית בלוח מחוונים.
+
+## כיוונים שנוספו ללוח
+- **ה. אולם תצוגה:** בהשראת Polestar ו-Volvo. אפור בהיר, גופן אחד דק, קישורים במקום כפתורים, רכב גדול.
+- **ו. גיליון הנדסי:** פס של 4 מדדים בראש (כמו מערכת צי), טבלת נתונים עם מונוספייס, פינות חדות, ענבר לחריגים.
+- **ז. תא נהג:** גרפיט כהה, מחוון חצי-עגול לשינוי בנטו, ונוריות סטטוס.
+
+## מקורות נוספים
+- [Volvo Cars Design System: Typography](https://designsystem.volvocars.com/web/core-concepts/typography/)
+- [Polestar DESIGN.md (unofficial)](https://www.shadcn.io/design/polestar)
+- [Rivian DESIGN.md (unofficial)](https://www.shadcn.io/design/rivian/raw)
+- [BASF Color Report, January 2026](https://www.basf.com/global/en/media/news-releases/2026/01/p-26-Coat01)
+- [European Coatings: BASF 2025-2026 automotive colour trends](https://www.european-coatings.com/news/markets-companies/basf-coatings-presents-2025-2026-automotive-colour-trends-driving-the-proxy/)
+- [Axalta Global Automotive Color Popularity Report](https://www.axalta.com/refinisheurope_eu/en_GB/about-axalta/colour-popularity-report-axalta.html)
+- [Design Week: why car brands redesign their identity](https://www.designweek.co.uk/issues/28-september-4-october/whats-driving-so-many-car-brands-to-redesign-their-identity/)
+- [Designcompass: Mazda logo redesigned for digital use](https://designcompass.org/en/2025/01/30/mazda-logo-redesigned-for-digital-use-after-28-years/)
+- [Dezeen: Toyota flat logo](https://www.dezeen.com/2020/07/22/toyota-rebrands-flat-logo/amp/)
+- [Hicron: fleet management dashboard UI design](https://hicronsoftware.com/blog/fleet-management-dashboard-ui-design/)
+- [Heavy Vehicle Inspection: fleet UI/UX KPIs guide](https://heavyvehicleinspection.com/blog/post/modern-fleet-management-ui-ux-dashboard-kpis-guide)
+- [Magna: UI/UX in vehicle development](https://www.magna.com/stories/inside-automotive/ux-ui-solutions/ui-ux-design-in-vehicle-development)
+- [Medium: why automotive UI isn't mobile design on wheels](https://medium.com/design-bootcamp/why-automotive-ui-isnt-just-mobile-design-on-wheels-e5b251059a12)
+- [AI Goodies: aesthetics 2026](https://aigoodies.beehiiv.com/p/aesthetics-2026)
+- [Colorwhistle: best automotive brand websites](https://colorwhistle.com/automotive-brand-websites/)
