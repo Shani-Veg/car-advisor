@@ -1,6 +1,6 @@
 import { api, isMock } from './api.js';
-import { el, appendText, moneyNode, formatDate, sourceText, statusBadge, caseLabels, directionLabels, breakdownLabels, emptyState, showNotice, keepDemoLinks } from './format.js';
-import { vehicleIdentity, choiceVehicle } from './vehicle.js';
+import { el, appendText, moneyNode, formatMoney, formatDate, sourceText, statusBadge, caseLabels, directionLabels, breakdownLabels, emptyState, showNotice, keepDemoLinks } from './format.js';
+import { vehicleIdentity, choiceVehicle, makerLogo, brandName, driveChip } from './vehicle.js';
 
 const byId = id => document.getElementById(id);
 let current = null;
@@ -125,10 +125,6 @@ function renderMessages(messages) {
       continue;
     }
     const node = el('article', 'message ' + (message.role === 'employee' ? 'employee' : 'bot'));
-    const avatar = el('img', 'message-avatar');
-    avatar.src = message.role === 'employee' ? 'assets/avatar-client.webp' : 'assets/avatar-bot.webp';
-    avatar.alt = ''; avatar.width = 40; avatar.height = 40;
-    node.append(avatar);
     const content = el('div', 'message-content');
     const meta = el('div', 'message-meta');
     meta.append(el('strong', '', message.role === 'employee' ? 'אני' : 'יועץ הרכב'), el('span', '', formatDate(message.at, true)));
@@ -239,15 +235,6 @@ function modelLink(url, label) {
   link.setAttribute('aria-label', 'עמוד הדגם ' + label + ' באתר היבואן (נפתח בחלון חדש)');
   return link;
 }
-function netCard(data, alternative, estimates, key) {
-  const node = el('div', 'net-card' + (alternative ? ' alternative-net' : ''));
-  node.append(el('span', 'net-label', alternative ? 'עם החלופה' : 'היום'), vehicleIdentity(data, catalog));
-  const link = modelLink(data.officialUrl, data.label);
-  if (link) node.append(link);
-  node.append(moneyNode(data.net, false, 'net-amount'), el('p', 'net-unit', 'נטו לחודש'));
-  if (estimates.includes(key + '.net')) node.append(statusBadge('DEFAULT'));
-  return node;
-}
 /** Bars only draw the server's per-factor impacts: widths are proportions of the largest one, every number shown is the server's. */
 function impactChart(factors = []) {
   const rows = factors.filter(factor => typeof factor.netImpact === 'number' && factor.netImpact !== 0);
@@ -271,6 +258,66 @@ function tableHead(labels) {
   for (const label of labels) { const cell = el('th', '', label); cell.scope = 'col'; row.append(cell); }
   head.append(row); return head;
 }
+/** One side of the cluster: the car in words (brand, model, drive) and its net, all from the server and the catalog. */
+function readout(data, title, alternative, estimates, key) {
+  const node = el('div', 'readout' + (alternative ? ' alternative' : ''));
+  const car = data.vehicleId ? catalog.find(item => item.id === data.vehicleId) : null;
+  const head = el('div', 'readout-head');
+  head.append(el('span', 'readout-title', title));
+  if (car) { const logo = makerLogo(car.maker); if (logo) head.append(logo); }
+  node.append(head);
+  if (data.type === 'waiver') node.append(el('span', 'readout-brand', 'ויתור על רכב'), el('span', 'readout-model', 'ללא רכב חברה'));
+  else {
+    node.append(el('span', 'readout-brand', brandName(car?.maker) || data.label));
+    const model = el('bdi', 'readout-model', car ? car.commercialName + ' · ' + car.regYear : data.label); model.dir = 'auto';
+    node.append(model);
+    if (car?.drive) node.append(driveChip(car.drive));
+  }
+  node.append(moneyNode(data.net, false, 'readout-amount'), el('span', 'readout-unit', 'נטו לחודש'));
+  if (estimates.includes(key + '.net')) node.append(statusBadge('DEFAULT'));
+  const link = modelLink(data.officialUrl, data.label);
+  if (link) node.append(link);
+  return node;
+}
+/** The gauge shows the direction only (an arc to the gain side or to the loss side); the number is the server's. */
+function gauge(comparison) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 300 170'); svg.setAttribute('class', 'gauge');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', (directionLabels[comparison.direction] || '') + ': ' + formatMoney(comparison.difference, true));
+  const path = (d, className) => { const node = document.createElementNS(ns, 'path'); node.setAttribute('d', d); node.setAttribute('class', className); svg.append(node); };
+  path('M30 150A120 120 0 0 1 270 150', 'gauge-track');
+  if (comparison.direction === 'GAIN') path('M30 150A120 120 0 0 1 204.5 43.1', 'gauge-value gain');
+  if (comparison.direction === 'LOSS') path('M270 150A120 120 0 0 0 95.5 43.1', 'gauge-value loss');
+  const text = document.createElementNS(ns, 'text');
+  text.setAttribute('x', '150'); text.setAttribute('y', '130'); text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('direction', 'ltr'); text.setAttribute('class', 'gauge-number');
+  text.textContent = formatMoney(comparison.difference, true);
+  svg.append(text);
+  return svg;
+}
+function light(tone, text) {
+  const row = el('span', 'status-light');
+  const dot = el('span', 'light-dot ' + tone); dot.setAttribute('aria-hidden', 'true');
+  row.append(dot, el('span', '', text));
+  return row;
+}
+/** What the assistant did, read from the case itself: every step names where its number came from. */
+function activitySteps(comparison) {
+  const steps = [];
+  const group = current.profile.find(field => field.key === 'group');
+  if (group?.value) steps.push(['done', 'קבוצה ' + group.display + ', לפי טבלת העיסוקים של החברה']);
+  if ((comparison.factors || []).some(factor => factor.component === 'USE_VALUE')) steps.push(['done', 'שווי שימוש מהמאגר של רשות המסים']);
+  steps.push(['done', 'נטו לשני המצבים, לפי כללי ' + comparison.rulesVersion]);
+  const estimated = (comparison.estimates || []).filter(key => key !== 'alternativeParticipation');
+  if (estimated.length) steps.push(['wait', estimated.length + ' פרטים משניים הם הערכה. אפשר לעדכן ב"המידע שלך"']);
+  const open = (current.pendingQuestions || []).filter(question => question.status === 'OPEN');
+  const participation = current.profile.find(field => field.key === 'alternativeParticipation');
+  if (open.length) steps.push(['wait', 'שאלה לנציג התחבורה על ההשתתפות: ממתין לתשובה']);
+  else if (participation?.status === 'CONFIRMED') steps.push(['done', 'נציג התחבורה אישר את ההשתתפות']);
+  return steps;
+}
 function renderComparison(comparison, previous) {
   const container = byId('comparison');
   const wasOpen = container.querySelector('details')?.open || false;
@@ -279,28 +326,51 @@ function renderComparison(comparison, previous) {
   byId('comparison-panel').hidden = comparison == null;
   byId('mobile-comparison').hidden = !comparison || comparison.eligible === false;
   if (!comparison) return;
-  if (comparison.eligible === false) { container.append(emptyState(comparison.eligibilityReason || 'החלופה אינה זמינה לפי הזכאות.')); return; }
+  if (comparison.eligible === false) {
+    const blocked = el('div', 'panel blocked-card');
+    blocked.append(el('h3', '', 'החלופה הזו לא זמינה לך'), el('p', '', comparison.eligibilityReason || 'החלופה אינה זמינה לפי הזכאות.'));
+    container.append(blocked);
+    return;
+  }
   showNotice(byId('mobile-direction'), directionLabels[comparison.direction] || 'שינוי בנטו החודשי');
   byId('mobile-difference').replaceChildren(moneyNode(comparison.difference, true));
   byId('mobile-comparison').classList.toggle('loss', comparison.direction === 'LOSS');
   byId('mobile-comparison').classList.toggle('none', comparison.direction === 'NONE');
   const estimates = comparison.estimates || [];
-  const content = el('div', 'comparison-content');
-  const pair = el('div', 'net-pair');
-  const today = netCard(comparison.today, false, estimates, 'today');
-  const alternative = netCard(comparison.alternative, true, estimates, 'alternative');
-  const arrow = el('span', 'pair-arrow', '←'); arrow.setAttribute('aria-hidden', 'true');
-  pair.append(today, arrow, alternative);
-  if (previous && !same(previous.today, comparison.today)) highlight(today);
+
+  const cluster = el('div', 'cluster');
+  const middle = el('div', 'cluster-gauge');
+  middle.append(gauge(comparison), el('span', 'gauge-caption', (directionLabels[comparison.direction] || 'שינוי בנטו החודשי') + (estimates.length ? ' · משוער' : '')));
+  const lights = el('div', 'cluster-lights');
+  lights.append(el('span', 'readout-title', 'נוריות'), light('ok', 'זכאי לפי הקבוצה'));
+  if (estimates.includes('alternativeParticipation')) lights.append(light('wait', 'השתתפות: הערכה'));
+  else if (current.profile.find(field => field.key === 'alternativeParticipation')?.status === 'CONFIRMED') lights.append(light('ok', 'השתתפות אושרה'));
+  if (current.status === 'WAITING_FOR_REP') lights.append(light('wait', 'ממתין לנציג'));
+  const today = readout(comparison.today, 'היום', false, estimates, 'today');
+  const alternative = readout(comparison.alternative, 'החלופה', true, estimates, 'alternative');
+  cluster.append(today, middle, alternative, lights);
+  if (previous && (previous.difference !== comparison.difference || previous.direction !== comparison.direction)) highlight(middle);
   if (previous && !same(previous.alternative, comparison.alternative)) highlight(alternative);
-  const directionClass = comparison.direction === 'LOSS' ? ' loss' : comparison.direction === 'NONE' ? ' none' : '';
-  const difference = el('div', 'difference-card' + directionClass);
-  const label = el('div');
-  label.append(el('span', 'difference-label', directionLabels[comparison.direction] || 'שינוי בנטו החודשי'), el('span', 'difference-subtitle', estimates.length ? 'תוצאה משוערת · לפי הנתונים בתיק' : 'לפי הנתונים בתיק'));
-  difference.append(label, moneyNode(comparison.difference, true, 'difference-amount'));
-  if (previous && (previous.difference !== comparison.difference || previous.direction !== comparison.direction || !same(previous.estimates, estimates))) highlight(difference);
-  content.append(pair, difference, el('h3', 'factors-heading', 'מה עומד מאחורי השינוי?'), impactChart(comparison.factors));
-  const wrapper = el('div', 'table-wrapper');
+
+  const cards = el('div', 'insight-grid');
+  const why = el('section', 'panel insight-card');
+  why.append(el('h3', '', comparison.direction === 'LOSS' ? 'למה הנטו יורד' : comparison.direction === 'NONE' ? 'למה הנטו לא משתנה' : 'למה הנטו עולה'),
+    el('p', 'explanation', comparison.explanation), impactChart(comparison.factors));
+  const activity = el('section', 'panel insight-card');
+  activity.append(el('h3', '', 'מה העוזר עשה'));
+  const list = el('ol', 'activity-list');
+  for (const [state, text] of activitySteps(comparison)) {
+    const item = el('li', 'activity-step ' + state);
+    const mark = el('span', 'activity-mark', state === 'done' ? '✓' : '…'); mark.setAttribute('aria-hidden', 'true');
+    item.append(mark, el('span', '', text));
+    list.append(item);
+  }
+  activity.append(list);
+  cards.append(why, activity);
+
+  const details = el('details', 'panel breakdown'); details.open = wasOpen;
+  details.append(el('summary', '', 'פירוט מלא: כל רכיבי השכר והניכויים'));
+  const factorsWrapper = el('div', 'table-wrapper');
   const table = el('table', 'data-table');
   table.setAttribute('aria-label', 'גורמים לשינוי בנטו');
   table.append(tableHead(['רכיב', 'היום', 'בחלופה', 'השפעה על הנטו']));
@@ -311,20 +381,10 @@ function renderComparison(comparison, previous) {
     if (estimates.includes(factor.component)) title.append(statusBadge('DEFAULT'));
     row.append(title);
     for (const key of ['from', 'to', 'netImpact']) { const cell = el('td', key === 'netImpact' ? 'impact' : ''); cell.append(moneyNode(factor[key], key === 'netImpact')); row.append(cell); }
-    const old = previous?.factors?.find(item => item.component === factor.component);
-    if (old && !same(old, factor)) highlight(row);
     tbody.append(row);
   }
-  table.append(tbody); wrapper.append(table); content.append(wrapper, el('p', 'explanation', comparison.explanation));
-  const estimatedLabels = estimates.map(key => current.profile.find(item => item.key === key)?.label).filter(Boolean);
-  if (estimatedLabels.length) {
-    const note = el('p', 'estimate-note');
-    note.append(statusBadge('DEFAULT'), el('span', '', 'בחישוב יש הערכות: ' + estimatedLabels.join(', ') + '. אפשר לעדכן אותן ב"המידע שלך".'));
-    content.append(note);
-  }
+  table.append(tbody); factorsWrapper.append(table); details.append(factorsWrapper);
   if (comparison.breakdown) {
-    const details = el('details', 'breakdown'); details.open = wasOpen;
-    details.append(el('summary', '', 'לכל רכיבי השכר והניכויים'));
     const detailWrapper = el('div', 'table-wrapper');
     const detailTable = el('table', 'data-table');
     detailTable.setAttribute('aria-label', 'פירוט רכיבי השכר');
@@ -337,15 +397,14 @@ function renderComparison(comparison, previous) {
       for (const [side, value] of [['today', from], ['alternative', to]]) {
         const cell = el('td'); cell.append(moneyNode(value));
         if (estimates.includes(key) || estimates.includes(side + '.' + key)) cell.append(statusBadge('DEFAULT'));
-        const old = previous?.breakdown?.[side]?.[key]; if (old !== undefined && old !== value) highlight(cell);
         row.append(cell);
       }
       detailBody.append(row);
     }
-    detailTable.append(detailBody); detailWrapper.append(detailTable); details.append(detailWrapper); content.append(details);
+    detailTable.append(detailBody); detailWrapper.append(detailTable); details.append(detailWrapper);
   }
-  content.append(el('p', 'rules-note', 'גרסת כללים: ' + comparison.rulesVersion));
-  container.append(content);
+  details.append(el('p', 'rules-note', 'גרסת כללים: ' + comparison.rulesVersion));
+  container.append(cluster, cards, details);
 }
 
 function renderRanking(ranking, previous) {
@@ -357,8 +416,7 @@ function renderRanking(ranking, previous) {
     const row = el('li', 'ranking-row');
     const info = el('div', 'ranking-info');
     info.append(vehicleIdentity(item.alternative, catalog, true));
-    const metadata = [item.alternative.drive, item.alternative.group ? 'קבוצה ' + item.alternative.group : 'ללא רכב חברה'].filter(Boolean);
-    info.append(el('small', '', metadata.join(' · ')));
+    if (item.alternative.group) info.append(el('small', '', 'קבוצה ' + item.alternative.group));
     if (item.participationEstimated) info.append(el('span', 'badge status-default', 'השתתפות משוערת'));
     const link = modelLink(item.alternative.officialUrl, item.alternative.label);
     if (link) info.append(link);
@@ -385,6 +443,7 @@ function applyCase(next) {
   // A later poll explicitly declaring availability is the recovery signal.
   else if (next.assistantAvailable === true) assistantOffline = false;
   showNotice(byId('case-state'), caseLabels[next.status] || next.status);
+  byId('case-state').dataset.status = next.status;
   byId('replay-banner').hidden = next.assistantMode !== 'REPLAY';
   renderMessages(next.messages || []);
   byId('message-input').placeholder = (next.messages || []).some(message => message.role === 'employee') ? 'הקלידו כאן…' : 'מה תרצו לבדוק?';
@@ -392,11 +451,9 @@ function applyCase(next) {
   renderJourney(next.profile || [], next.comparison);
   document.body.classList.toggle('has-comparison', next.comparison != null && next.comparison.eligible !== false);
   const estimateChanged = next.comparison?.estimates?.some(key => !same(previous?.profile?.find(field => field.key === key), next.profile.find(field => field.key === key)));
-  if (!previous || !same(previous.comparison, next.comparison) || estimateChanged) renderComparison(next.comparison, previous?.comparison);
+  const statusChanged = previous?.status !== next.status || !same(previous?.pendingQuestions, next.pendingQuestions);
+  if (!previous || !same(previous.comparison, next.comparison) || estimateChanged || statusChanged) renderComparison(next.comparison, previous?.comparison);
   if (!previous || !same(previous.ranking, next.ranking)) renderRanking(next.ranking, previous?.ranking);
-  byId('pending-banner').hidden = next.status !== 'WAITING_FOR_REP';
-  byId('pending-list').replaceChildren();
-  for (const question of next.pendingQuestions || []) if (question.status === 'OPEN') byId('pending-list').append(el('li', '', question.question));
   showNotice(byId('sync-label'), 'מעודכן · ' + formatDate(new Date().toISOString(), true));
   updateControls();
 }
@@ -499,11 +556,20 @@ function setProfileExpanded(expanded) {
 function scrollToComparison() { byId('comparison-panel').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }
 byId('profile-toggle').addEventListener('click', () => setProfileExpanded(byId('profile-content').hidden));
 byId('mobile-comparison').addEventListener('click', scrollToComparison);
-/** The phone bar must not sit on top of the full comparison, nor on the keyboard while typing. */
+/** The phone bar must not sit on top of the full comparison, the message box, or the keyboard while typing. */
 {
   const bar = byId('mobile-comparison');
-  let comparisonInView = false, typing = false;
-  const syncBar = () => bar.classList.toggle('bar-off', comparisonInView || typing);
+  const composer = byId('message-form');
+  let comparisonInView = false, typing = false, composerCovered = false;
+  const syncBar = () => bar.classList.toggle('bar-off', comparisonInView || typing || composerCovered);
+  const checkComposer = () => {
+    const box = composer.getBoundingClientRect();
+    const covered = box.top < innerHeight && box.bottom > innerHeight - 100;
+    if (covered !== composerCovered) { composerCovered = covered; syncBar(); }
+  };
+  addEventListener('scroll', checkComposer, { passive: true });
+  addEventListener('resize', checkComposer, { passive: true });
+  checkComposer();
   if ('IntersectionObserver' in window) new IntersectionObserver(entries => { comparisonInView = entries[0].isIntersecting; syncBar(); }, { threshold: 0.15 }).observe(byId('comparison-panel'));
   byId('message-input').addEventListener('focus', () => { typing = true; syncBar(); });
   byId('message-input').addEventListener('blur', () => { typing = false; syncBar(); });
