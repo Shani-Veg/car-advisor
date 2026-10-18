@@ -38,9 +38,9 @@ class CarGuideTest {
         assertThat(answer.cars()).first().isEqualTo("CAR-06");
         assertThat(answer.cars()).contains("CAR-10", "CAR-03").doesNotContain("CAR-14", "CAR-17");
         // the text frames the cards; each card carries its own numbers (CarCard)
-        assertThat(answer.text()).startsWith("רכבים חשמליים שזמינים לך, מהמשתלם ביותר לנטו:")
-                // group D electric cars are named, without numbers
-                .contains("MODEL 3 (2025) (קבוצה ד)").contains("מחוץ לזכאות שלך");
+        assertThat(answer.text()).startsWith("רכבים חשמליים בזכאות שלך, מהמשתלם לנטו:")
+                // group D electric cars are named, without numbers, under the cards
+                .contains("\nמחוץ לזכאות שלך: MODEL 3 (2025) (קבוצה ד)");
         assertThat(answer.forModel()).allSatisfy(car -> assertThat(car.toString()).doesNotContain("1,013").doesNotContain("1013"));
     }
 
@@ -51,7 +51,7 @@ class CarGuideTest {
         CarGuide.Answer answer = guide.find(id, Set.of(Drive.PLUG_IN), null, null);
 
         assertThat(answer.cars()).isEmpty();
-        assertThat(answer.text()).startsWith("לא מצאתי רכבי פלאג-אין שזמינים לך.").contains("SPORTAGE HEV (2026) (קבוצה ד)");
+        assertThat(answer.text()).startsWith("לא מצאתי רכבי פלאג-אין בזכאות שלך.").contains("SPORTAGE HEV (2026) (קבוצה ד)");
     }
 
     @Test
@@ -72,13 +72,12 @@ class CarGuideTest {
 
         CarGuide.Answer answer = guide.describe(id, "CAR-10");
 
-        assertThat(answer.text()).startsWith("ATTO 3 (2025), בי ווי די:")
-                .contains("הנעה: חשמלי").contains("החזר חשמל של 250 ₪ נטו בחודש")
-                .contains("קבוצה ג (בזכאות שלך: קבוצה ג)")
-                .contains("מחיר מחירון: 177,500 ₪")
-                .contains("שווי שימוש: 3,130 ₪ בחודש").contains("ברכב שלך היום: 4,070 ₪")
+        assertThat(answer.text()).startsWith("על ATTO 3 (2025) של בי ווי די:")
+                .contains("חשמלי: נטען מהחשמל בלבד").contains("החזר חשמל של 250 ₪ נטו בחודש")
+                .contains("קבוצה ג, בזכאות שלך · מחיר מחירון 177,500 ₪")
+                .contains("שווי שימוש 3,130 ₪ בחודש (היום: 4,070 ₪)")
                 .contains("אצלך: הנטו עולה ב-661 ₪ בחודש");
-        assertThat(guide.describe(id, "CAR-16").text()).contains("פלאג-אין").contains("רק על רכב חשמלי מלא")
+        assertThat(guide.describe(id, "CAR-16").text()).contains("פלאג-אין").contains("רק לחשמלי מלא")
                 .contains("מעל הקבוצה שלך").contains("אין חישוב נטו");
     }
 
@@ -89,14 +88,15 @@ class CarGuideTest {
         CarGuide.Answer answer = guide.compare(id, List.of("CAR-10", "CAR-06", "CAR-11"));
 
         assertThat(answer.cars()).containsExactly("CAR-10", "CAR-06", "CAR-11");
-        assertThat(answer.text()).contains("הכי משתלם לנטו מבין אלה: MG4 (2025)").contains("מיון לפי הנטו בלבד");
+        assertThat(answer.text()).startsWith("השוואה בין ATTO 3 (2025) ל-MG4 (2025) ל-EV3 (2025):")
+                .contains("הכי משתלם לנטו: MG4 (2025) (לפי הנטו בלבד").contains("MG4 (2025) 2,430 ₪");
     }
 
     @Test
     void theElectricButtonAndTheCardButtonsWorkWithoutTheModel() {
         String id = noa();
         workflow.deferAssumptions(id);
-        workflow.addBotMessage(id, ChatSummaries.PROFILE_COMPLETE);
+        workflow.addBotMessage(id, ChatSummaries.PROFILE_COMPLETE, MessageEntity.Offers.NEXT_STEPS);
 
         CaseView found = choices.choose(id, "find:ELECTRIC", "find-tap");
         MessageView last = found.messages().get(found.messages().size() - 1);

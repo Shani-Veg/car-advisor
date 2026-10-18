@@ -22,6 +22,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * Texts come in one layout: the first line is a short heading shown above the car cards, and any further lines are
+ * shown under them. So the cars are always near the top of the answer.
+ *
  * Helps the employee find their way in the catalog: which cars of a kind they may take, what one model means for
  * them, and how a few models compare. Every sentence with a number is written here, from the catalog and the engine,
  * so the chat can show real cars and amounts without the language model writing a single number. Works the same with
@@ -77,22 +80,19 @@ public class CarGuide {
         String what = kind(drives) + conditions(maxListPrice, maxNetDecrease);
         StringBuilder text = new StringBuilder();
         if (allowed.isEmpty()) {
-            text.append("לא מצאתי ").append(what).append(" שזמינים לך.");
+            text.append("לא מצאתי ").append(what).append(" בזכאות שלך.");
         } else {
-            // The cards under the message show each car with its numbers; the text only frames them.
-            text.append(what).append(" שזמינים לך").append(personal ? ", מהמשתלם ביותר לנטו:" : ":");
+            text.append(what).append(" בזכאות שלך").append(personal ? ", מהמשתלם לנטו:" : ":");
             if (allowed.size() > MAX_CARDS) {
-                text.append("\nועוד ").append(allowed.size() - MAX_CARDS).append(" ברשימת החלופות במסך.");
+                text.append("\nועוד ").append(allowed.size() - MAX_CARDS).append(" ברשימת החלופות.");
+            }
+            if (!personal) {
+                text.append("\nכשאדע את כל הפרטים שלך, אראה גם מה כל רכב עושה לנטו.");
             }
         }
         if (!others.isEmpty()) {
-            text.append("\nבקטלוג יש גם ").append(others.stream().limit(MAX_OTHERS)
-                    .map(v -> v.label() + " (" + groupName(v) + ")").collect(Collectors.joining(", ")))
-                    .append(", מחוץ לזכאות שלך.");
-        }
-        if (!allowed.isEmpty()) {
-            text.append(personal ? "\nלחצו על \"פרטים\" כדי להבין דגם, או על \"השוואה\" כדי לראות אותו מול הרכב שלך היום."
-                    : "\nכשאדע את כל הפרטים שלך, אראה גם מה כל רכב עושה לנטו.");
+            text.append("\nמחוץ לזכאות שלך: ").append(others.stream().limit(MAX_OTHERS)
+                    .map(v -> v.label() + " (" + groupName(v) + ")").collect(Collectors.joining(", "))).append(".");
         }
         List<Map<String, Object>> forModel = new ArrayList<>();
         allowed.stream().limit(MAX_CARDS).forEach(v -> forModel.add(modelView(v, effect.get(v.id()), true)));
@@ -106,19 +106,14 @@ public class CarGuide {
         Vehicle v = vehicle(vehicleId);
         Map<String, BigDecimal> effect = effects(state);
         Optional<Vehicle> today = todayCar(state);
-        StringBuilder text = new StringBuilder(v.label() + ", " + v.maker() + ":");
-        text.append("\n• הנעה: ").append(driveExplanation(v.drive()));
-        text.append("\n• ").append(groupLine(state, v));
-        text.append("\n• מחיר מחירון: ").append(Money.display(v.listPrice()));
-        text.append("\n• שווי שימוש: ").append(Money.display(v.monthlyUseValue())).append(" בחודש, שנוסף לשכר לצורך המס")
+        StringBuilder text = new StringBuilder("על " + v.label() + " של " + v.maker() + ":");
+        text.append("\n• ").append(driveExplanation(v.drive()));
+        text.append("\n• ").append(groupLine(state, v)).append(" · מחיר מחירון ").append(Money.display(v.listPrice()));
+        text.append("\n• שווי שימוש ").append(Money.display(v.monthlyUseValue())).append(" בחודש")
                 .append(today.filter(t -> !t.id().equals(v.id()))
-                        .map(t -> " (ברכב שלך היום: " + Money.display(t.monthlyUseValue()) + ")").orElse(""));
-        text.append("\n• השתתפות: ").append(Money.display(v.defaultParticipation()))
-                .append(" בחודש לפי הקטלוג. נציג התחבורה מאשר את הסכום הסופי");
+                        .map(t -> " (היום: " + Money.display(t.monthlyUseValue()) + ")").orElse(""));
+        text.append("\n• השתתפות ").append(Money.display(v.defaultParticipation())).append(" לפי הקטלוג, עד אישור הנציג");
         text.append("\n• ").append(personalLine(state, v, effect.get(v.id()), today));
-        if (v.officialUrl() != null) {
-            text.append("\nלמפרט המלא (טווח, גודל, אבזור) יש קישור לעמוד הדגם באתר היבואן.");
-        }
         return new Answer(text.toString(), List.of(v.id()), List.of(modelView(v, effect.get(v.id()), state.mayTake(v))));
     }
 
@@ -130,24 +125,49 @@ public class CarGuide {
         }
         CaseState state = state(caseId);
         Map<String, BigDecimal> effect = effects(state);
-        StringBuilder text = new StringBuilder("השוואה בין " + chosen.stream().map(Vehicle::label).collect(Collectors.joining(", ")) + ":");
-        for (Vehicle v : chosen) {
-            text.append("\n• ").append(v.label()).append(": ").append(v.drive().hebrew()).append(", ").append(groupName(v))
-                    .append(", מחיר מחירון ").append(Money.display(v.listPrice()))
-                    .append(", שווי שימוש ").append(Money.display(v.monthlyUseValue()));
-            if (!state.mayTake(v)) {
-                text.append(". לא בזכאות שלך");
-            } else if (effect.containsKey(v.id())) {
-                text.append(". הנטו ").append(signedPerMonth(effect.get(v.id())));
-            }
-        }
+        StringBuilder text = new StringBuilder("השוואה בין " + chosen.stream().map(Vehicle::label).collect(Collectors.joining(" ל-")) + ":");
         chosen.stream().filter(v -> effect.containsKey(v.id()))
                 .max(Comparator.comparing(v -> effect.get(v.id())))
                 .filter(best -> chosen.stream().filter(v -> effect.containsKey(v.id())).count() > 1)
-                .ifPresent(best -> text.append("\nהכי משתלם לנטו מבין אלה: ").append(best.label())
-                        .append(". זה מיון לפי הנטו בלבד, בלי שיקולים כמו גודל או טווח."));
+                .ifPresent(best -> text.append("\nהכי משתלם לנטו: ").append(best.label()).append(" (לפי הנטו בלבד, בלי גודל או טווח)."));
+        text.append("\nשווי שימוש בחודש: ").append(chosen.stream()
+                .map(v -> v.label() + " " + Money.display(v.monthlyUseValue())).collect(Collectors.joining(", "))).append(".");
         List<Map<String, Object>> forModel = chosen.stream().map(v -> modelView(v, effect.get(v.id()), state.mayTake(v))).toList();
         return new Answer(text.toString(), chosen.stream().map(Vehicle::id).toList(), forModel);
+    }
+
+    /** What pays best for the net: the best cars as cards, and giving up the car when it is an option. Today's car is not an option. */
+    public Answer best(String caseId) {
+        CaseState state = state(caseId);
+        if (!state.missingForToday().isEmpty()) {
+            return new Answer("כדי לדעת מה הכי משתלם חסרים עוד: "
+                    + state.missingForToday().stream().map(FactKey::label).collect(Collectors.joining(", ")) + ".", List.of(), List.of());
+        }
+        String today = state.fact(FactKey.CURRENT_CAR).map(FactEntity::value).orElse("");
+        List<Comparison> ranked = engine.rankAlternatives(state.employee(), state.occupation(), state.todayChoice(),
+                data.catalog().vehicles());
+        List<Vehicle> cars = ranked.stream()
+                .filter(c -> c.alternative().choice() instanceof CarChoice.CompanyCar)
+                .map(c -> ((CarChoice.CompanyCar) c.alternative().choice()).vehicle())
+                .filter(v -> !v.id().equals(today))
+                .limit(3)
+                .toList();
+        Optional<Comparison> waiver = ranked.stream().filter(c -> c.alternative().choice() instanceof CarChoice.NoCar).findFirst();
+        boolean waiverFirst = waiver.isPresent() && (cars.isEmpty() || waiver.get().difference().compareTo(
+                ranked.stream().filter(c -> c.alternative().choice() instanceof CarChoice.CompanyCar car && car.vehicle().id().equals(cars.get(0).id()))
+                        .findFirst().orElseThrow().difference()) > 0);
+        StringBuilder text = new StringBuilder(waiverFirst
+                ? "הכי משתלם לנטו: ויתור על הרכב, הנטו " + signedPerMonth(waiver.get().difference()) + ". ומבין הרכבים:"
+                : "הרכבים הכי משתלמים לנטו שלך:");
+        if (waiver.isPresent() && !waiverFirst) {
+            text.append("\nויתור על הרכב: הנטו ").append(signedPerMonth(waiver.get().difference())).append(".");
+        }
+        text.append("\nזה מיון לפי הנטו בלבד, לפי השתתפות משוערת.");
+        Map<String, BigDecimal> effect = effects(state);
+        List<Map<String, Object>> forModel = new ArrayList<>(cars.stream().map(v -> modelView(v, effect.get(v.id()), true)).toList());
+        waiver.ifPresent(w -> forModel.add(Map.of("option", "giving up the car", "effectOnNet",
+                w.difference().signum() > 0 ? "higher than today" : "lower than today")));
+        return new Answer(text.toString(), cars.stream().map(Vehicle::id).toList(), forModel);
     }
 
     /** The change in net for every car the employee may take, once their details are complete. Empty before that. */
@@ -167,12 +187,10 @@ public class CarGuide {
 
     static String driveExplanation(Drive drive, BigDecimal evBonus) {
         return switch (drive) {
-            case ELECTRIC -> "חשמלי. נוסע על סוללה בלבד ונטען מהחשמל. בשטראוס מגיע עליו החזר חשמל של "
-                    + Money.display(evBonus) + " נטו בחודש";
-            case PLUG_IN -> "פלאג-אין. מנוע בנזין וסוללה שנטענת גם מהשקע, כך שאפשר לנסוע מרחק קצר על חשמל בלבד. "
-                    + "החזר החשמל של שטראוס חל רק על רכב חשמלי מלא";
-            case HYBRID -> "היברידי. מנוע בנזין ומנוע חשמלי שעובדים יחד. הסוללה נטענת בזמן הנסיעה, לא מהשקע";
-            case PETROL -> "בנזין. מנוע בנזין בלבד";
+            case ELECTRIC -> "חשמלי: נטען מהחשמל בלבד. בשטראוס מגיע עליו החזר חשמל של " + Money.display(evBonus) + " נטו בחודש";
+            case PLUG_IN -> "פלאג-אין: בנזין וסוללה שנטענת מהשקע, למרחק קצר על חשמל. החזר החשמל של שטראוס רק לחשמלי מלא";
+            case HYBRID -> "היברידי: בנזין וחשמל יחד. נטען בזמן הנסיעה, לא מהשקע";
+            case PETROL -> "בנזין בלבד";
         };
     }
 
@@ -183,19 +201,18 @@ public class CarGuide {
     private String groupLine(CaseState state, Vehicle v) {
         String mine = state.fact(FactKey.GROUP).map(FactEntity::value).orElse(null);
         if (v.isFamilyTrack()) {
-            return "מסלול ברוכת ילדים: למי שיש לו לפחות " + data.rules().familyTrack().minChildren()
-                    + " ילדים עד גיל " + data.rules().familyTrack().childMaxAge()
-                    + (state.mayTake(v) ? "" : ". לפי מספר הילדים שמסרת, הוא לא בזכאות שלך");
+            return "מסלול ברוכת ילדים (מ-" + data.rules().familyTrack().minChildren() + " ילדים)"
+                    + (state.mayTake(v) ? "" : ", לא בזכאות שלך");
         }
         if (mine == null) {
             return "קבוצה " + v.group();
         }
-        return "קבוצה " + v.group() + (state.mayTake(v) ? " (בזכאות שלך: קבוצה " + mine + ")" : ", מעל הקבוצה שלך (" + mine + ")");
+        return "קבוצה " + v.group() + (state.mayTake(v) ? ", בזכאות שלך" : ", מעל הקבוצה שלך (" + mine + ")");
     }
 
     private String personalLine(CaseState state, Vehicle v, BigDecimal difference, Optional<Vehicle> today) {
         if (!state.mayTake(v)) {
-            return "הרכב לא בזכאות שלך, ולכן אין חישוב נטו";
+            return "לא בזכאות שלך, ולכן אין חישוב נטו";
         }
         if (today.map(t -> t.id().equals(v.id())).orElse(false)) {
             return "זה הרכב שלך היום";
@@ -204,7 +221,7 @@ public class CarGuide {
             List<String> missing = state.missingForToday().stream().map(FactKey::label).toList();
             return "כדי לחשב מה הוא עושה לנטו שלך חסרים עוד: " + String.join(", ", missing);
         }
-        return "אצלך: הנטו " + signedPerMonth(difference) + " לעומת היום (לפי השתתפות משוערת)";
+        return "אצלך: הנטו " + signedPerMonth(difference);
     }
 
     private Map<String, Object> modelView(Vehicle v, BigDecimal difference, boolean allowed) {

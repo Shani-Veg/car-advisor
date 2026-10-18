@@ -58,7 +58,7 @@ public class ChoiceService {
         long messageId = workflow.recordEmployeeMessage(caseId, text, clientRequestId).orElseThrow();
         workflow.setFact(caseId, answer.get().key(), answer.get().value(), FactEntity.Source.EMPLOYEE_MESSAGE,
                 "m-" + messageId, null);
-        workflow.addBotMessage(caseId, nextQuestionOrDone(caseEntity));
+        askNext(caseEntity);
         return Optional.of(workflow.view(caseId));
     }
 
@@ -83,7 +83,7 @@ public class ChoiceService {
             String[] parts = offer.id().split(":", 3);
             FactKey key = FactKey.fromApiName(parts[1]);
             workflow.setFact(caseId, key, parts[2], FactEntity.Source.EMPLOYEE_MESSAGE, "m-" + sourceMessage, null);
-            workflow.addBotMessage(caseId, nextQuestionOrDone(caseEntity));
+            askNext(caseEntity);
         } else if (offer.id().startsWith("alt:")) {
             String target = offer.id().substring("alt:".length());
             if ("waiver".equals(target)) {
@@ -91,21 +91,19 @@ public class ChoiceService {
             } else {
                 workflow.chooseAlternative(caseId, "car", target, null);
             }
-            CaseView view = workflow.view(caseId);
-            workflow.addBotMessage(caseId, view.comparison() != null
-                    ? ChatSummaries.comparisonSummary(view)
-                    : "בחרתי את החלופה. ההשוואה תופיע כשיהיו מספיק נתונים.");
+            sayComparison(caseId);
         } else if (ChoiceOptions.CONTINUE.equals(offer.id())) {
-            workflow.addBotMessage(caseId, nextQuestionOrDone(caseEntity));
+            askNext(caseEntity);
         } else if ("best".equals(offer.id())) {
             workflow.deferAssumptions(caseId);
-            workflow.addBotMessage(caseId, ChatSummaries.rankingSummary(workflow.view(caseId)));
+            CarGuide.Answer answer = guide.best(caseId);
+            workflow.addBotMessage(caseId, answer.text(), false, answer.cars());
         } else if (ChoiceOptions.REVIEW_OK.equals(offer.id())) {
             workflow.confirmAssumptions(caseId, "m-" + sourceMessage);
-            workflow.addBotMessage(caseId, ChatSummaries.assumptionsConfirmed());
+            workflow.addBotMessage(caseId, ChatSummaries.assumptionsConfirmed(), MessageEntity.Offers.NEXT_STEPS);
         } else if (ChoiceOptions.REVIEW_LATER.equals(offer.id())) {
             workflow.deferAssumptions(caseId);
-            workflow.addBotMessage(caseId, ChatSummaries.assumptionsDeferred());
+            workflow.addBotMessage(caseId, ChatSummaries.assumptionsDeferred(), MessageEntity.Offers.NEXT_STEPS);
         } else if (offer.id().startsWith(ChoiceOptions.FIND)) {
             Drive drive = Drive.valueOf(offer.id().substring(ChoiceOptions.FIND.length()));
             CarGuide.Answer answer = guide.find(caseId, Set.of(drive), null, null);
@@ -134,9 +132,7 @@ public class ChoiceService {
         } else if ("compare".equals(action)) {
             workflow.chooseAlternative(caseId, "car", vehicleId, null);
             workflow.recordEmployeeMessage(caseId, "להשוות את " + label(vehicleId) + " מול היום", clientRequestId);
-            CaseView view = workflow.view(caseId);
-            workflow.addBotMessage(caseId, view.comparison() != null ? ChatSummaries.comparisonSummary(view)
-                    : "בחרתי את החלופה. ההשוואה תופיע כשיהיו מספיק נתונים.");
+            sayComparison(caseId);
         } else {
             throw ApiException.badRequest("UNKNOWN_ACTION", "פעולה לא מוכרת: " + action);
         }
@@ -145,6 +141,21 @@ public class ChoiceService {
 
     private String label(String vehicleId) {
         return guide.label(vehicleId);
+    }
+
+    /** After a comparison the only button worth offering is confirming the participation with the rep. */
+    private void sayComparison(String caseId) {
+        CaseView view = workflow.view(caseId);
+        workflow.addBotMessage(caseId, view.comparison() != null ? ChatSummaries.comparisonSummary(view)
+                : "בחרתי את החלופה. ההשוואה תופיע כשיהיו מספיק נתונים.", MessageEntity.Offers.REP);
+    }
+
+    /** The next question, the review of the assumed details, or (when all is known) the next steps. */
+    private void askNext(CaseEntity caseEntity) {
+        CaseState state = views.state(caseEntity);
+        boolean done = state.missingForToday().isEmpty() && !state.reviewPending();
+        workflow.addBotMessage(caseEntity.id(), nextQuestionOrDone(caseEntity),
+                done ? MessageEntity.Offers.NEXT_STEPS : MessageEntity.Offers.NONE);
     }
 
     /** The "confirm with the rep" button next to the comparison: the same step as the chat button, said in the chat. */
@@ -175,7 +186,8 @@ public class ChoiceService {
         CaseView after = workflow.view(caseId);
         List<FactKey> missing = views.state(caseEntity).missingForToday();
         String next = missing.isEmpty() ? ChatSummaries.PROFILE_COMPLETE : ChatSummaries.nextQuestion(missing.get(0));
-        workflow.addBotMessage(caseId, ChatSummaries.payslipApplied(after, new ArrayList<>(values.keySet())) + " " + next);
+        workflow.addBotMessage(caseId, ChatSummaries.payslipApplied(after, new ArrayList<>(values.keySet())) + " " + next,
+                missing.isEmpty() ? MessageEntity.Offers.NEXT_STEPS : MessageEntity.Offers.NONE);
         return workflow.view(caseId);
     }
 
@@ -190,7 +202,7 @@ public class ChoiceService {
         workflow.setFact(caseId, key, value, FactEntity.Source.FORM, null, expectedVersion);
         Optional<FactKey> after = firstMissing(caseEntity);
         if (before.isPresent() && !before.equals(after) && lastMessageIsFromBot(caseId)) {
-            workflow.addBotMessage(caseId, nextQuestionOrDone(caseEntity));
+            askNext(caseEntity);
         }
         return workflow.view(caseId);
     }

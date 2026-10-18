@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public final class ChatSummaries {
 
     public static final String PROFILE_COMPLETE =
-            "יש לי את כל מה שצריך. אפשר לבחור חלופה להשוואה, או לשאול מה הכי משתלם.";
+            "יש לי את כל מה שצריך. אפשר לבדוק רכב, או לשאול מה הכי משתלם.";
 
     private static final Map<FactKey, String> QUESTIONS = Map.ofEntries(
             Map.entry(FactKey.OCCUPATION, "באיזה תפקיד את/ה עובד/ת?"),
@@ -59,23 +59,23 @@ public final class ChatSummaries {
                 .map(f -> f.label() + " " + f.display())
                 .collect(Collectors.joining(", "));
         if (again) {
-            return "עדכנתי. שאר הפרטים שהנחתי: " + items + ". הם נכונים?";
+            return "עדכנתי. עוד הנחתי: " + items + ". נכון?";
         }
-        return "יש לי את מה שצריך כדי להשוות. כמה פרטים הנחתי לפי מה שמקובל, וכדאי לוודא שהם נכונים אצלך: "
-                + items + ". נכון? אפשר גם להעלות תלוש שכר, ואמלא אותם ממנו.";
+        return "יש לי מה שצריך. הנחתי כמה פרטים, כדאי לוודא שהם נכונים: " + items
+                + ". אפשר גם להעלות תלוש שכר ואמלא מהתלוש.";
     }
 
     public static String assumptionsConfirmed() {
-        return "מעולה, סימנתי שהפרטים נכונים. " + PROFILE_COMPLETE;
+        return "מעולה, הפרטים אושרו. " + PROFILE_COMPLETE;
     }
 
     public static String assumptionsDeferred() {
-        return "בסדר. הפרטים שהנחתי נשארים מסומנים כהערכה, ואפשר לעדכן אותם בכל רגע ב\"המידע שלך\". " + PROFILE_COMPLETE;
+        return "בסדר, הם נשארים מסומנים כהערכה. " + PROFILE_COMPLETE;
     }
 
     public static String repRequested(CaseView view) {
-        return "שלחתי לנציג התחבורה שאלה: " + view.pendingQuestions().get(0).question()
-                + " ההשוואה תתעדכן כשתגיע תשובה, ובינתיים אפשר להמשיך לבדוק.";
+        return "שלחתי לנציג התחבורה: " + view.pendingQuestions().get(0).question()
+                + " ההשוואה תתעדכן כשיענה.";
     }
 
     /** What the payslip changed, and which details are still the system's assumption. */
@@ -102,26 +102,17 @@ public final class ChatSummaries {
                 .map(key -> field(view, key.apiName()))
                 .map(f -> f.label() + ": " + f.display())
                 .collect(Collectors.joining(", "));
-        return "רשמתי: " + items + ". אם משהו לא נכון, אפשר לתקן כאן או בטופס.";
+        return "רשמתי: " + items + ".";
     }
 
     public static String comparisonSummary(CaseView view) {
         String text = view.comparison().explanation();
         if (!view.pendingQuestions().isEmpty()) {
-            text += " השאלה לנציג התחבורה עדיין פתוחה (" + view.pendingQuestions().get(0).question()
-                    + "), וההשוואה תתעדכן כשתגיע תשובה.";
+            text += " ממתין לתשובת נציג התחבורה על ההשתתפות.";
         } else if (view.comparison().eligible() && view.comparison().estimates().contains("alternativeParticipation")) {
-            text += " ההשתתפות ברכב הזה היא הערכה לפי הקטלוג. אם הוא מעניין אותך, אפשר לבקש מנציג התחבורה לאשר אותה.";
+            text += " ההשתתפות היא הערכה. אפשר לבקש מנציג התחבורה לאשר אותה.";
         }
         return text;
-    }
-
-    public static String rankingSummary(CaseView view) {
-        String top = view.ranking().stream().limit(3)
-                .map(item -> item.alternative().label() + " (" + signed(item.difference()) + " בחודש"
-                        + (item.participationEstimated() ? ", לפי השתתפות משוערת" : "") + ")")
-                .collect(Collectors.joining(", "));
-        return "לפי המערכת, האפשרויות המשתלמות ביותר עבורך: " + top + ". כל האפשרויות מופיעות במסך.";
     }
 
     /** What the server says when the model produced nothing usable. */
@@ -135,11 +126,6 @@ public final class ChatSummaries {
             return "כדי להמשיך אצטרך עוד כמה פרטים: " + String.join(" ו", missing) + ".";
         }
         return view.comparison() != null ? "ההשוואה מעודכנת במסך." : "איזו חלופה תרצה/י לבדוק?";
-    }
-
-    private static String signed(BigDecimal amount) {
-        String sign = amount.signum() > 0 ? "+" : amount.signum() < 0 ? "-" : "";
-        return sign + Money.display(amount.abs());
     }
 
     private static ProfileField field(CaseView view, String key) {

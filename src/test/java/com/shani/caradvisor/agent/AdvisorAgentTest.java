@@ -91,7 +91,7 @@ class AdvisorAgentTest {
         String id = noaToday();
         llm.play(
                 ScriptedLlm.call(AgentTools.CHOOSE_ALTERNATIVE, Map.of("type", "car", "vehicleId", "CAR-10")),
-                ScriptedLlm.text("בדקתי את האטו 3 בשבילך, ההשוואה במסך."));
+                ScriptedLlm.text("בדקתי את האטו 3 בשבילך."));
 
         CaseView view = agent.reply(id, "מה אם אעבור לאטו 3?", "c-4");
 
@@ -110,7 +110,7 @@ class AdvisorAgentTest {
         CaseView view = agent.reply(id, "אני רוצה את האטו 3, תבדוק מול הנציג", "c-rep");
 
         assertThat(view.status()).isEqualTo("WAITING_FOR_REP");
-        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("שלחתי לנציג התחבורה שאלה:"));
+        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("שלחתי לנציג התחבורה:"));
     }
 
     @Test
@@ -137,10 +137,10 @@ class AdvisorAgentTest {
 
         CaseView view = agent.reply(id, "מה הכי משתלם לי?", "c-8");
 
-        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t)
-                .startsWith("לפי המערכת")
-                .contains("ויתור על רכב (+3,199 ₪ בחודש)")
-                .contains("MG4 (2025) (+1,013 ₪ בחודש, לפי השתתפות משוערת)"));
+        MessageView best = view.messages().stream().filter(m -> !m.cars().isEmpty()).reduce((a, b) -> b).orElseThrow();
+        assertThat(best.text()).startsWith("הכי משתלם לנטו: ויתור על הרכב, הנטו עולה ב-3,199 ₪ בחודש.");
+        assertThat(best.cars().get(0).label()).isEqualTo("MG4 (2025)");
+        assertThat(best.cars().get(0).difference()).isEqualByComparingTo("1013");
     }
 
     @Test
@@ -181,7 +181,7 @@ class AdvisorAgentTest {
         // the list with its cards comes first, the model's words about it after
         MessageView cars = view.messages().get(view.messages().size() - 2);
         assertThat(botTexts(view)).last().isEqualTo("הנה הרכבים החשמליים שזמינים לך. כדאי להתחיל מהראשון ברשימה.");
-        assertThat(cars.text()).startsWith("רכבים חשמליים עד מחיר מחירון של 180,000 ₪ שזמינים לך");
+        assertThat(cars.text()).startsWith("רכבים חשמליים עד מחיר מחירון של 180,000 ₪ בזכאות שלך");
         assertThat(cars.cars()).isNotEmpty().allSatisfy(car -> assertThat(car.drive()).isEqualTo("חשמלי"));
     }
 
@@ -194,7 +194,7 @@ class AdvisorAgentTest {
 
         CaseView view = agent.reply(id, "אני רוצה רכב חשמלי זול", "c-find-2");
 
-        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("רכבים חשמליים שזמינים לך"));
+        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("רכבים חשמליים בזכאות שלך"));
         assertThat(llm.received.get(1).toString()).contains("maxListPrice").contains("does not appear in the employee's message");
     }
 
@@ -207,7 +207,17 @@ class AdvisorAgentTest {
 
         CaseView view = agent.reply(id, "ספר לי על האטו 3", "c-describe");
 
-        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("ATTO 3 (2025)").contains("661 ₪"));
+        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("על ATTO 3 (2025)").contains("661 ₪"));
+    }
+
+    @Test
+    void aReplyThatSendsTheEmployeeToTheScreenIsRewritten() {
+        String id = workflow.create().caseId();
+        llm.play(ScriptedLlm.text("הכל מופיע במסך בצד."), ScriptedLlm.text("אשמח לעזור לבחור רכב."));
+
+        CaseView view = agent.reply(id, "מה אפשר לעשות כאן?", "c-screen");
+
+        assertThat(botTexts(view)).contains("אשמח לעזור לבחור רכב.").noneMatch(t -> t.contains("מסך"));
     }
 
     private String noaToday() {

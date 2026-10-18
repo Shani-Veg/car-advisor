@@ -133,7 +133,7 @@ public class AgentTools {
             case CHOOSE_ALTERNATIVE -> chooseAlternative(caseId, call.args(), log);
             case LIST_OPTIONS -> {
                 log.optionsListed = true;
-                yield listOptions(caseId);
+                yield listOptions(caseId, log);
             }
             case REQUEST_REP_CONFIRMATION -> requestRep(caseId, log);
             case FIND_CARS -> findCars(caseId, employeeText, call.args(), log);
@@ -249,11 +249,13 @@ public class AgentTools {
         }
     }
 
-    private Map<String, Object> listOptions(String caseId) {
+    /** The best options go to the chat as cards (CarGuide.best); the model gets the order and directions only. */
+    private Map<String, Object> listOptions(String caseId, TurnLog log) {
         CaseView view = workflow.view(caseId);
         if (view.ranking() == null) {
             return Map.of("error", "Some details are still missing", "caseState", Prompts.caseState(view));
         }
+        log.carAnswers.add(guide.best(caseId));
         List<Map<String, Object>> options = new ArrayList<>();
         int rank = 1;
         for (RankingItem item : view.ranking()) {
@@ -265,7 +267,8 @@ public class AgentTools {
                             : item.difference().signum() < 0 ? "lower than today" : "same as today",
                     "participationIsEstimate", item.participationEstimated()));
         }
-        return Map.of("options", options, "note", "The screen shows the exact amounts.");
+        return Map.of("options", options,
+                "note", "The chat shows the best options with their amounts right above your reply. Add one short sentence.");
     }
 
     /** An amount counts only if the employee wrote it (or said there is none). Stops the model from inventing salaries. */

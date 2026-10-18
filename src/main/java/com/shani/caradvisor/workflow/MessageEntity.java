@@ -35,6 +35,16 @@ public class MessageEntity {
     /** True for a reply that did not move the case forward: the only button offered is "continue the questions". */
     private Boolean continueOnly;
 
+    /**
+     * The answer buttons that follow this message once the four questions are done: the next steps (what pays best,
+     * electric cars, a few alternatives), only "confirm with the rep", or none. Buttons are offered only where they
+     * help, not under every reply. Stored as text (null = none).
+     */
+    public enum Offers { NONE, NEXT_STEPS, REP }
+
+    @Column(length = 20)
+    private String offers;
+
     /** Catalog ids of cars shown as cards under this message (comma separated), or null. */
     @Column(length = 400)
     private String cars;
@@ -72,6 +82,14 @@ public class MessageEntity {
 
     void markContinueOnly() {
         this.continueOnly = true;
+    }
+
+    public Offers offers() {
+        return offers == null ? Offers.NONE : Offers.valueOf(offers);
+    }
+
+    void offer(Offers next) {
+        this.offers = next == Offers.NONE ? null : next.name();
     }
 
     public java.util.List<String> cars() {

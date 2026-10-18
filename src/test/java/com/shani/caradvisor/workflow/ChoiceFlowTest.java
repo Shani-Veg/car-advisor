@@ -90,14 +90,15 @@ class ChoiceFlowTest {
         assertThat(view.comparison().alternative().type()).isEqualTo("car");
         assertThat(view.comparison().today().vehicleId()).isEqualTo("CAR-09");
         assertThat(lastText(view)).contains("אפשר לבקש מנציג התחבורה לאשר");
-        assertThat(offered(view)).startsWith("rep:ask").contains("best").doesNotContain(offeredCar).hasSize(4);
+        // after a comparison the only button is the one that matters
+        assertThat(offered(view)).containsExactly("rep:ask");
 
         CaseView asked = choices.choose(id, "rep:ask", "rep-tap");
 
         assertThat(asked.status()).isEqualTo("WAITING_FOR_REP");
         assertThat(asked.pendingQuestions()).hasSize(1);
-        assertThat(lastText(asked)).startsWith("שלחתי לנציג התחבורה שאלה:");
-        assertThat(offered(asked)).doesNotContain("rep:ask");
+        assertThat(lastText(asked)).startsWith("שלחתי לנציג התחבורה:");
+        assertThat(offered(asked)).isEmpty();
     }
 
     @Test
@@ -111,7 +112,7 @@ class ChoiceFlowTest {
 
         assertThat(view.status()).isEqualTo("WAITING_FOR_REP");
         assertThat(texts(view, "employee")).last().isEqualTo("אבקש מנציג התחבורה לאשר את ההשתתפות");
-        assertThat(lastText(view)).startsWith("שלחתי לנציג התחבורה שאלה:");
+        assertThat(lastText(view)).startsWith("שלחתי לנציג התחבורה:");
         assertThat(texts(again, "employee")).hasSameSizeAs(texts(view, "employee"));
     }
 
@@ -128,13 +129,31 @@ class ChoiceFlowTest {
     }
 
     @Test
+    void repliesThatNeedNoAnswerHaveNoButtons() {
+        String id = workflow.create().caseId();
+        completeProfile(id);
+
+        CaseView found = choices.choose(id, "find:ELECTRIC", "find");
+        String other = workflow.create().caseId();
+        completeProfile(other);
+        CaseView best = choices.choose(other, "best", "best-again");
+
+        // the cards carry their own buttons; no list of answers is pushed under every reply
+        assertThat(offered(found)).isEmpty();
+        assertThat(offered(best)).isEmpty();
+    }
+
+    @Test
     void askingWhatPaysBestAnswersWithTheServersTopThree() {
         String id = workflow.create().caseId();
         completeProfile(id);
 
         CaseView view = choices.choose(id, "best", "best-tap");
 
-        assertThat(lastText(view)).startsWith("לפי המערכת").contains("ויתור על רכב (+3,199 ₪ בחודש)");
+        MessageView answer = view.messages().get(view.messages().size() - 1);
+        assertThat(answer.text()).startsWith("הכי משתלם לנטו: ויתור על הרכב, הנטו עולה ב-3,199 ₪ בחודש.");
+        // the best cars come as cards, and the car the employee has today is not one of them
+        assertThat(answer.cars()).hasSize(3).noneMatch(car -> car.vehicleId().equals("CAR-09"));
         assertThat(texts(view, "employee")).contains("מה הכי משתלם לי?");
     }
 
@@ -204,7 +223,7 @@ class ChoiceFlowTest {
         view = choices.choose(id, "fact:currentCar:CAR-09", "q4");
 
         // the assumed details are listed with their values, for the employee to confirm
-        assertThat(lastText(view)).startsWith("יש לי את מה שצריך כדי להשוות.")
+        assertThat(lastText(view)).startsWith("יש לי מה שצריך.")
                 .contains("עמלות 0 ₪").contains("הפרשת עובד לפנסיה 6%").contains("השתתפות ברכב היום").contains("תלוש שכר");
         assertThat(view.assumptionsToConfirm()).containsExactly("commissions", "bonus", "pensionPercent",
                 "studyFundPercent", "creditPoints", "currentParticipation");
@@ -224,7 +243,7 @@ class ChoiceFlowTest {
         assertThat(field(view, "pensionPercent").status()).isEqualTo("PROVIDED");
         assertThat(field(view, "currentParticipation").status()).isEqualTo("PROVIDED");
         assertThat(view.assumptionsToConfirm()).isEmpty();
-        assertThat(lastText(view)).startsWith("מעולה, סימנתי שהפרטים נכונים.");
+        assertThat(lastText(view)).startsWith("מעולה, הפרטים אושרו.");
         assertThat(offered(view)).contains("best");
     }
 
@@ -330,7 +349,7 @@ class ChoiceFlowTest {
         choices.choose(id, "fact:childrenUpTo23:2", "kids");
         choices.choose(id, "fact:currentCar:CAR-09", "car");
         workflow.setFact(id, FactKey.CURRENT_PARTICIPATION, "300", FactEntity.Source.FORM, null, null);
-        workflow.addBotMessage(id, ChatSummaries.PROFILE_COMPLETE);
+        workflow.addBotMessage(id, ChatSummaries.PROFILE_COMPLETE, MessageEntity.Offers.NEXT_STEPS);
     }
 
     private static List<String> offered(CaseView view) {

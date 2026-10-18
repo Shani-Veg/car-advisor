@@ -2,6 +2,7 @@ package com.shani.caradvisor.agent;
 
 import com.shani.caradvisor.workflow.ApiException;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
+import com.shani.caradvisor.workflow.MessageEntity;
 import com.shani.caradvisor.workflow.ChatSummaries;
 import com.shani.caradvisor.workflow.ChoiceService;
 import com.shani.caradvisor.workflow.Views.CaseView;
@@ -88,20 +89,19 @@ public class AdvisorAgent {
         // A reply that only answered a side question must not re-offer the same buttons: it offers to carry on.
         boolean moved = !turnLog.recorded.isEmpty() || turnLog.alternativeChosen || turnLog.optionsListed
                 || turnLog.repRequested || !turnLog.carAnswers.isEmpty();
-        // The cars the model looked up come first, written by the server with their numbers and shown as cards;
-        // the model's words about them follow.
+        // One order for every reply: what the server knows first (cars as cards, the comparison with its numbers),
+        // then the model's sentence about it, and the buttons, if any, last.
         for (var answer : turnLog.carAnswers) {
             workflow.addBotMessage(caseId, answer.text(), false, answer.cars());
         }
-        workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved);
+        MessageEntity.Offers offers = MessageEntity.Offers.NONE;
         if (turnLog.repRequested) {
             workflow.addBotMessage(caseId, ChatSummaries.repRequested(after));
         } else if (after.comparison() != null && (turnLog.alternativeChosen || !turnLog.recorded.isEmpty())) {
             workflow.addBotMessage(caseId, ChatSummaries.comparisonSummary(after));
+            offers = MessageEntity.Offers.REP;
         }
-        if (turnLog.optionsListed && after.ranking() != null) {
-            workflow.addBotMessage(caseId, ChatSummaries.rankingSummary(after));
-        }
+        workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved, offers);
         // The details just became complete, or the employee corrected an assumed one: ask about the rest, in code.
         if (!turnLog.recorded.isEmpty() && !after.assumptionsToConfirm().isEmpty()) {
             workflow.addBotMessage(caseId, ChatSummaries.assumptionsReview(after, !before.assumptionsToConfirm().isEmpty()));
@@ -153,13 +153,19 @@ public class AdvisorAgent {
         }
         log.info("Reply contained an amount or foreign letters; asking the model to rewrite it");
         contents.add(Map.of("role", "user", "parts", List.of(Map.of("text",
-                "[system] Your last reply contained numbers, amounts or non-Hebrew letters. Rewrite it in Hebrew only, without them."))));
+                "[system] Your last reply contained numbers, amounts or non-Hebrew letters, or sent the employee to the screen. "
+                        + "Rewrite it in Hebrew only, without them. Everything you show appears in the chat."))));
         String rewritten = clean(llm.next(Prompts.RULES, contents, List.of()).text());
         return acceptable(rewritten) ? rewritten : "";
     }
 
+    /** "Look at the screen" sends the employee away from the chat, where the cars and numbers are. */
+    private static boolean pointsToTheScreen(String text) {
+        return text.contains("מסך");
+    }
+
     private boolean acceptable(String text) {
-        return !ReplyGuard.containsAmount(text, tools.safeNames()) && !ReplyGuard.containsForeignScript(text);
+        return !pointsToTheScreen(text) && !ReplyGuard.containsAmount(text, tools.safeNames()) && !ReplyGuard.containsForeignScript(text);
     }
 
     /** Gemini wants the conversation to start with the user and alternate; merge neighbours with the same role. */

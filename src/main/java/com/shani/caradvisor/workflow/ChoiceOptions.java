@@ -44,7 +44,8 @@ public class ChoiceOptions {
         this.engine = engine;
     }
 
-    List<Offer> offeredFor(CaseState state) {
+    /** after: the buttons the latest message asked for, used once the questions and the review are done. */
+    List<Offer> offeredFor(CaseState state, MessageEntity.Offers after) {
         List<FactKey> missing = state.missingForToday();
         if (!missing.isEmpty()) {
             return forMissing(missing.get(0));
@@ -56,7 +57,11 @@ public class ChoiceOptions {
                     new Offer(CLIENT_ACTION + "profile", "לעדכן בעצמי"),
                     new Offer(REVIEW_LATER, "אחר כך"));
         }
-        return nextSteps(state);
+        return switch (after) {
+            case NEXT_STEPS -> nextSteps(state);
+            case REP -> state.canAskRep() ? List.of(new Offer(REP_ASK, "לאשר את ההשתתפות מול נציג")) : List.of();
+            case NONE -> List.of();
+        };
     }
 
     private List<Offer> forMissing(FactKey next) {
@@ -80,9 +85,6 @@ public class ChoiceOptions {
 
     private List<Offer> nextSteps(CaseState state) {
         List<Offer> offers = new ArrayList<>();
-        if (state.canAskRep()) {
-            offers.add(new Offer(REP_ASK, "לאשר את ההשתתפות מול נציג"));
-        }
         offers.add(new Offer("best", "מה הכי משתלם לי?"));
         offers.add(new Offer(FIND + Drive.ELECTRIC.name(), "אילו רכבים חשמליים יש לי?"));
         String today = state.fact(FactKey.CURRENT_CAR).map(FactEntity::value).orElse("");

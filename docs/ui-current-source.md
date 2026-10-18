@@ -311,14 +311,15 @@ progress::-webkit-progress-bar { background: var(--line-2); border-radius: var(-
 progress::-webkit-progress-value { background: var(--primary); border-radius: var(--r-pill); }
 progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r-pill); }
 .messages { flex: 1; min-height: 100px; padding: 14px 16px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.message { display: flex; margin-bottom: 12px; animation: pop .22s ease-out both; }
+.message { display: flex; margin-bottom: 10px; animation: pop .22s ease-out both; }
 .message:last-child { margin-bottom: 0; }
 .message-content { min-width: 0; max-width: 92%; }
 .message.employee { justify-content: flex-end; }
 .message-meta { display: none; }
 /* speech bubbles: one corner cut toward the speaker */
-.message-text { display: inline-block; padding: 10px 15px; border-radius: 18px 18px 18px 6px; background: var(--surface-2); color: var(--ink); font-size: 16px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
-.employee .message-text { border-radius: 18px 18px 6px 18px; background: var(--primary); color: var(--on-primary); }
+.message-text { display: inline-block; padding: 8px 13px; border-radius: 16px 16px 16px 5px; background: var(--surface-2); color: var(--ink); font-size: 15px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.message-text.after-cards { margin-top: 8px; color: var(--ink-2); font-size: 14px; }
+.employee .message-text { border-radius: 16px 16px 5px 16px; background: var(--primary); color: var(--on-primary); }
 .system-message { margin: 14px 0; padding: 10px 14px; border-radius: var(--r-md); background: var(--gain-soft); color: var(--gain); font-size: 14px; font-weight: 600; text-align: center; overflow-wrap: anywhere; }
 .message-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .choice-button { max-width: 100%; min-height: 44px; padding: 8px 16px; border: 1.5px solid var(--primary); border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-size: 15px; font-weight: 600; text-align: start; overflow-wrap: anywhere; transition: background .15s, color .15s; }
@@ -335,19 +336,28 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .choices-search input:focus { border-color: var(--primary); outline: 0; }
 .choices-empty, .choices-hint { margin-top: 9px; color: var(--muted); font-size: 13px; }
 .message-content:has(.chat-cars) { width: 92%; }
-.chat-cars { display: grid; gap: 8px; margin-top: 10px; }
-.chat-car { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1.5px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); }
+.chat-cars { display: grid; gap: 6px; margin-top: 6px; }
+.chat-car { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1.5px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); }
 .chat-car.not-allowed { background: var(--surface-2); }
-.chat-car-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.chat-car-value { display: flex; flex-direction: column; align-items: flex-end; text-align: end; white-space: nowrap; }
-.chat-car-value bdi { font: 600 17px var(--num); }
+.chat-car-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chat-car-identity { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.chat-car-identity .vehicle-logo { width: 30px; height: 30px; padding: 3px; }
+.chat-car-names { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.chat-car-model { font-size: 15px; font-weight: 700; }
+.chat-car-maker { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; }
+.chat-car-maker .drive-badge { margin: 0; padding: 0 7px; font-size: 11px; }
+.chat-car-maker .bolt-icon { width: 10px; height: 10px; }
+.chat-car-value { display: flex; flex-direction: column; align-items: flex-end; text-align: end; white-space: nowrap; line-height: 1.2; }
+.chat-car-value bdi { font: 600 16px var(--num); }
 .chat-car-value.gain bdi { color: var(--gain); }
 .chat-car-value.loss bdi { color: var(--loss); }
 .chat-car-value small { color: var(--muted); font-size: 12px; }
-.chat-car-meta { color: var(--muted); font-size: 13px; }
+.chat-car-bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+.chat-car-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .chat-car-meta bdi { font-family: var(--num); }
-.chat-car-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.chat-car-actions .model-link { margin-top: 0; }
+.chat-car-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chat-car-actions .step-action { min-height: 30px; padding: 2px 12px; font-size: 13px; }
+.chat-car-actions .model-link { margin-top: 0; font-size: 12px; }
 .typing { display: flex; align-items: center; gap: 8px; margin: 0 16px 8px; padding: 8px 14px; border: 1px dashed #B9C7DD; border-radius: 18px; color: var(--ink-2); font-size: 15px; font-weight: 600; }
 .typing-dots { color: var(--primary); letter-spacing: 3px; animation: blink 1.2s ease-in-out infinite; }
 .composer { flex: none; padding: 8px 14px 14px; }
@@ -1004,7 +1014,6 @@ function messageText(text) {
 }
 function renderMessages(messages) {
   const container = byId('messages');
-  const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 90;
   const first = messageNodes.size === 0;
   if (first) container.replaceChildren();
   const incoming = new Set(messages.map(message => message.id));
@@ -1028,8 +1037,14 @@ function renderMessages(messages) {
     const content = el('div', 'message-content');
     const meta = el('div', 'message-meta');
     meta.append(el('strong', '', message.role === 'employee' ? 'אני' : 'יועץ הרכב'), el('span', '', formatDate(message.at, true)));
-    content.append(meta, messageText(message.text));
-    if (message.cars?.length) content.append(chatCars(message.cars));
+    if (message.cars?.length) {
+      // The first line is a heading, the cars come right after it, and any further lines go under the cars.
+      const [heading, ...rest] = message.text.split('\n');
+      content.append(meta, messageText(heading), chatCars(message.cars));
+      if (rest.length) { const after = messageText(rest.join('\n')); after.classList.add('after-cards'); content.append(after); }
+    } else {
+      content.append(meta, messageText(message.text));
+    }
     if (active && message.choices?.length) {
       const longList = message.choices.length > 8;
       const choices = el('div', longList ? 'choices-list' : 'message-choices');
@@ -1072,13 +1087,13 @@ function renderMessages(messages) {
   }
   if (!messages.length) container.replaceChildren(emptyState('השיחה מתחילה כאן.', 'כתבו שאלה או עדכנו את הפרטים בפרופיל.'));
   if (announcements.length) { byId('chat-announcer').replaceChildren(); appendText(byId('chat-announcer'), announcements.join('\n')); }
-  if (added.length) reveal(container, messageNodes.get(added[0]).node, messageNodes.get(added.at(-1)).node, first);
-  else if (nearBottom) container.scrollTop = container.scrollHeight;
+  const withCars = messages.find(message => added.includes(message.id) && message.cars?.length);
+  if (added.length) reveal(container, messageNodes.get(added[0]).node, messageNodes.get(withCars ? withCars.id : added.at(-1)).node, first);
   container.setAttribute('aria-busy', 'false');
 }
 /**
- * New messages: show them from the employee's own line when everything fits; otherwise start at the newest
- * message, so a question is never hidden above a long list of answers (the rest is a short scroll away).
+ * New messages: show them from the employee's own line when everything fits; otherwise start at the anchor: the cars
+ * the reply brought, or else the newest message, so neither cars nor a question hide above the view.
  */
 function reveal(container, firstNew, lastNew, instant) {
   const offset = node => container.scrollTop + node.getBoundingClientRect().top - container.getBoundingClientRect().top - 12;
@@ -1365,7 +1380,15 @@ function chatCars(cars) {
   for (const car of cars) {
     const card = el('div', 'chat-car' + (car.allowed ? '' : ' not-allowed'));
     const top = el('div', 'chat-car-top');
-    top.append(vehicleIdentity({ type: 'car', vehicleId: car.vehicleId, label: car.label, maker: car.maker, drive: car.drive }, catalog, true));
+    const identity = el('div', 'chat-car-identity');
+    identity.append(makerLogo(car.maker) || el('span', 'vehicle-logo initial', '?'));
+    const names = el('div', 'chat-car-names');
+    const model = el('bdi', 'chat-car-model', car.label.replace(/ \((\d{4})\)$/, ' · $1')); model.dir = 'ltr';
+    const line = el('span', 'chat-car-maker', brandName(car.maker) + ' · ');
+    line.append(driveChip(car.drive));
+    names.append(model, line);
+    identity.append(names);
+    top.append(identity);
     const value = el('div', 'chat-car-value');
     if (!car.allowed) value.append(el('small', '', 'מחוץ לזכאות שלך'));
     else if (typeof car.difference === 'number') {
@@ -1373,8 +1396,9 @@ function chatCars(cars) {
       value.append(moneyNode(car.difference, true), el('small', '', 'לנטו בחודש'));
     }
     top.append(value);
-    const meta = el('p', 'chat-car-meta');
-    meta.append(document.createTextNode((car.group === 'משפחתי' ? 'מסלול ברוכת ילדים' : 'קבוצה ' + car.group) + ' · מחיר מחירון '), moneyNode(car.listPrice));
+    const bottom = el('div', 'chat-car-bottom');
+    const meta = el('span', 'chat-car-meta');
+    meta.append(document.createTextNode((car.group === 'משפחתי' ? 'מסלול משפחתי' : 'קבוצה ' + car.group) + ' · '), moneyNode(car.listPrice));
     const actions = el('div', 'chat-car-actions');
     const button = (label, action) => {
       const b = el('button', 'step-action', label); b.type = 'button'; b.dataset.mutation = '';
@@ -1389,8 +1413,9 @@ function chatCars(cars) {
     actions.append(button('פרטים', 'details'));
     if (car.allowed) actions.append(button('השוואה', 'compare'));
     const link = modelLink(car.officialUrl, car.label);
-    if (link) actions.append(link);
-    card.append(top, meta, actions);
+    if (link) { link.textContent = 'לאתר ↗'; actions.append(link); }
+    bottom.append(meta, actions);
+    card.append(top, bottom);
     list.append(card);
   }
   return list;

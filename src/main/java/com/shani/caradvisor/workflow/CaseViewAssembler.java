@@ -153,7 +153,7 @@ class CaseViewAssembler {
         if (last.continueOnly() && (!state.missingForToday().isEmpty() || state.reviewPending())) {
             return List.of(new ChoiceOptions.Offer(ChoiceOptions.CONTINUE, "נמשיך בשאלות"));
         }
-        return choiceOptions.offeredFor(state);
+        return choiceOptions.offeredFor(state, last.offers());
     }
 
     RepQuestionView repView(RepQuestionEntity question, CaseEntity caseEntity) {
@@ -228,8 +228,10 @@ class CaseViewAssembler {
     }
 
     private List<RankingItem> ranking(CaseState state) {
+        String today = state.fact(FactKey.CURRENT_CAR).map(FactEntity::value).orElse("");
         return engine.rankAlternatives(state.employee(), state.occupation(), state.todayChoice(), data.catalog().vehicles())
                 .stream()
+                .filter(c -> !(c.alternative().choice() instanceof CarChoice.CompanyCar car && car.vehicle().id().equals(today)))
                 .map(c -> {
                     CarChoice choice = c.alternative().choice();
                     if (choice instanceof CarChoice.CompanyCar car) {

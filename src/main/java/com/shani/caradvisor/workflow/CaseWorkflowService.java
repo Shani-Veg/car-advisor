@@ -241,12 +241,27 @@ public class CaseWorkflowService {
 
     /** cars: catalog ids shown as cards under the message. */
     public void addBotMessage(String caseId, String text, boolean continueOnly, List<String> cars) {
+        addBotMessage(caseId, text, continueOnly, cars, MessageEntity.Offers.NONE);
+    }
+
+    /** offers: which answer buttons follow the message once the questions are done. */
+    public void addBotMessage(String caseId, String text, MessageEntity.Offers offers) {
+        addBotMessage(caseId, text, false, List.of(), offers);
+    }
+
+    public void addBotMessage(String caseId, String text, boolean continueOnly, MessageEntity.Offers offers) {
+        addBotMessage(caseId, text, continueOnly, List.of(), offers);
+    }
+
+    private void addBotMessage(String caseId, String text, boolean continueOnly, List<String> cars,
+                               MessageEntity.Offers offers) {
         CaseEntity caseEntity = load(caseId);
         MessageEntity message = new MessageEntity(caseId, MessageEntity.Role.BOT, text, null, Instant.now());
         if (continueOnly) {
             message.markContinueOnly();
         }
         message.attachCars(cars);
+        message.offer(offers);
         messages.save(message);
         caseEntity.touch(Instant.now());
     }
