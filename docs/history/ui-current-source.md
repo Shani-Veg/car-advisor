@@ -310,10 +310,10 @@ dialog::backdrop { background: rgba(20, 33, 61, .5); }
 .chat-heading h1 { font-size: 19px; }
 .header-avatar { width: 40px; height: 40px; flex: none; border-radius: 50%; }
 .chat-progress { flex: none; padding: 10px 18px 0; }
-progress { appearance: none; display: block; width: 100%; height: 4px; border: 0; border-radius: var(--r-pill); overflow: hidden; background: var(--line-2); color: var(--primary); }
+progress { appearance: none; display: block; width: 100%; height: 4px; border: 0; border-radius: var(--r-pill); overflow: hidden; background: var(--line-2); color: var(--warm); }
 progress::-webkit-progress-bar { background: var(--line-2); border-radius: var(--r-pill); }
-progress::-webkit-progress-value { background: var(--primary); border-radius: var(--r-pill); }
-progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r-pill); }
+progress::-webkit-progress-value { background: var(--warm); border-radius: var(--r-pill); }
+progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pill); }
 .messages { flex: 1; min-height: 100px; padding: 14px 16px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .message { display: flex; margin-bottom: 10px; animation: pop .22s ease-out both; }
 .message:last-child { margin-bottom: 0; }
@@ -372,7 +372,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .composer textarea { display: block; width: 100%; min-width: 0; min-height: 26px; max-height: 84px; padding: 5px 12px; border: 0; outline: 0; resize: none; overflow-y: hidden; background: transparent; color: var(--on-primary); caret-color: var(--on-primary); font-size: 16px; line-height: 1.5; }
 .composer textarea::placeholder { color: var(--on-primary); opacity: .85; }
 .composer textarea:disabled { opacity: .6; }
-.send-button { display: grid; place-items: center; width: 42px; height: 42px; flex: none; padding: 0; border: 0; border-radius: 50%; background: var(--surface); color: var(--primary); font-size: 22px; font-weight: 700; }
+.send-button { display: grid; place-items: center; width: 42px; height: 42px; flex: none; padding: 0; border: 0; border-radius: 50%; background: var(--surface); color: var(--warm); font-size: 22px; font-weight: 700; }
 .send-button:hover { background: var(--primary-soft); }
 
 /* ================= 7. Workspace ================= */
