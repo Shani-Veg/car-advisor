@@ -35,6 +35,13 @@ NOA = [
     ("say", "ומה הכי משתלם לי?"),
 ]
 
+MICHAL = [
+    ("say", "שלום, אני מפתחת תוכנה. שכר הבסיס שלי 16,000 ש\"ח ויש לי ילד אחד."),
+    ("say", "היום יש לי MG4 ואני משתתפת ב-250 ש\"ח בחודש."),
+    ("tap", "review:ok"),
+    ("say", "אני רוצה לוותר על הרכב. כמה זה ישנה לי בנטו?"),
+]
+
 DAVID = [
     ("say", "שלום, אני נציג מכירות שטח. שכר הבסיס שלי 9,800 ש\"ח, עמלות 2,400 ש\"ח ויש לי חמישה ילדים."),
     ("say", "היום יש לי קיה נירו ואני משתתף ב-250 ש\"ח בחודש. אין לי קרן השתלמות."),
@@ -162,6 +169,7 @@ def main():
     result = [
         scene(server, "Noa: payslip, comparison, and a confirmed answer from the rep", NOA, args.pause),
         scene(server, "David: bad news, and an attempt to talk his way into group D", DAVID, args.pause),
+        scene(server, "Michal: group B, giving up the car", MICHAL, args.pause),
     ]
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:

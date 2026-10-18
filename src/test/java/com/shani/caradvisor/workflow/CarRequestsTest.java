@@ -46,9 +46,17 @@ class CarRequestsTest {
         assertThat(requests.parse("אני לא רוצה חשמלי")).isEmpty();
         assertThat(requests.parse("ספר לי על ה-EV3")).isEmpty();
         assertThat(requests.parse("האטו 3 חשמלי?")).isEmpty();
-        assertThat(requests.parse("כדאי לי לוותר על הרכב?")).isEmpty();
         assertThat(requests.parse("שלום, אני מנהלת מוצר")).isEmpty();
         assertThat(requests.parse("השכר שלי 26,520")).isEmpty();
+    }
+
+    @Test
+    void givingUpTheCarIsComparedWhenTheEmployeeRaisesIt() {
+        assertThat(requests.parse("אני רוצה לוותר על הרכב, כמה זה ישנה לי בנטו?").orElseThrow().waiver()).isTrue();
+        assertThat(requests.parse("כדאי לי לוותר על הרכב?").orElseThrow().waiver()).isTrue();
+        // not when it is negated, or weighed against a kind of car
+        assertThat(requests.parse("אני לא רוצה לוותר על הרכב")).isEmpty();
+        assertThat(requests.parse("לוותר או לקחת חשמלי?")).isEmpty();
     }
 
     @Test

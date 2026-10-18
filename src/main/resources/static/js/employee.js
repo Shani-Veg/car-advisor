@@ -316,6 +316,11 @@ function readout(data, title, alternative, estimates, key) {
   }
   node.append(moneyNode(data.net, false, 'readout-amount'), el('span', 'readout-unit', 'נטו לחודש'));
   if (estimates.includes(key + '.net')) node.append(statusBadge('DEFAULT'));
+  if (typeof data.monthlyCost === 'number') {
+    const cost = el('span', 'readout-cost', 'עלות לחברה ');
+    cost.append(moneyNode(data.monthlyCost));
+    node.append(cost);
+  }
   const link = modelLink(data.officialUrl, data.label);
   if (link) node.append(link);
   return node;
@@ -449,7 +454,15 @@ function renderComparison(comparison, previous) {
     detailTable.append(detailBody); detailWrapper.append(detailTable); details.append(detailWrapper);
   }
   details.append(el('p', 'rules-note', 'גרסת כללים: ' + comparison.rulesVersion));
-  container.append(cluster, cards, details);
+  const parts = [cluster];
+  if (comparison.budget) {
+    const strip = el('div', 'budget-strip');
+    const amount = el('span', 'budget-amount', 'תקציב קבוצה ' + comparison.budget.group + ': ');
+    amount.append(moneyNode(comparison.budget.amount));
+    strip.append(amount, el('span', 'budget-note', comparison.budget.note));
+    parts.push(strip);
+  }
+  container.append(...parts, cards, details);
 }
 
 function renderRanking(ranking, previous) {

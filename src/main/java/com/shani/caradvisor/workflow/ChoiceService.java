@@ -64,6 +64,16 @@ public class ChoiceService {
             workflow.deferAssumptions(caseId);
         }
         CarRequests.Request r = request.get();
+        if (r.waiver()) {
+            workflow.chooseAlternative(caseId, "waiver", null, null);
+            if (state.missingForToday().isEmpty()) {
+                sayComparison(caseId);
+            } else {
+                workflow.addBotMessage(caseId, "כדי לחשב מה ויתור על הרכב עושה לנטו חסרים עוד: "
+                        + String.join(", ", state.missingForToday().stream().map(FactKey::label).toList()) + ".", true);
+            }
+            return Optional.of(workflow.view(caseId));
+        }
         CarGuide.Answer answer = r.best() ? guide.best(caseId)
                 : guide.find(caseId, r.drives(), r.maxListPrice(), null, r.order());
         workflow.addBotMessage(caseId, answer.text(), !state.missingForToday().isEmpty(), answer.cars());

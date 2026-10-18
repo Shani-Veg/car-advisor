@@ -57,7 +57,9 @@ class AdvisorAgentTest {
         assertThat(field(view, "baseSalary").source().type()).isEqualTo("EMPLOYEE_MESSAGE");
         assertThat(field(view, "childrenUpTo23").value()).isEqualTo(2);
         assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("רשמתי:").contains("18,500 ₪"));
-        assertThat(botTexts(view)).contains("תודה! כמה אחוזים את/ה מפריש/ה לפנסיה?");
+        // the next of the four questions is the server's, in the same words as the buttons
+        assertThat(botTexts(view)).last().isEqualTo("איזה רכב חברה יש לך היום?");
+        assertThat(botTexts(view)).doesNotContain("תודה! כמה אחוזים את/ה מפריש/ה לפנסיה?");
     }
 
     @Test
@@ -233,6 +235,24 @@ class AdvisorAgentTest {
         assertThat(cars.text()).startsWith("רכבים בזכאות שלך, מהיוקרתי ביותר (לפי מחיר מחירון):");
         // Noa is in group C: TUCSON (188,497) is the most expensive car she may take
         assertThat(cars.cars().get(0).label()).isEqualTo("TUCSON (2025)");
+    }
+
+    @Test
+    void anEmployeeInGroupBWhoWantsToGiveUpTheCarGetsTheComparisonAtOnce() {
+        String id = workflow.create().caseId();
+        Map.of(FactKey.OCCUPATION, "מפתח/ת תוכנה", FactKey.BASE_SALARY, "16000", FactKey.CHILDREN_UP_TO_23, "1",
+                        FactKey.CURRENT_CAR, "CAR-06")
+                .forEach((key, value) -> workflow.setFact(id, key, value, FactEntity.Source.FORM, null, null));
+        llm.play();
+
+        CaseView view = agent.reply(id, "אני רוצה לוותר על הרכב, כמה זה ישנה לי בנטו?", "c-waiver");
+
+        assertThat(llm.received).isEmpty();
+        assertThat(view.comparison().alternative().type()).isEqualTo("waiver");
+        assertThat(view.comparison().difference()).isEqualByComparingTo("1901");
+        assertThat(view.comparison().factors()).anySatisfy(f -> assertThat(f.label()).isEqualTo("אחזקת רכב"));
+        assertThat(view.comparison().budget().note()).contains("אחזקת רכב");
+        assertThat(botTexts(view)).last().asString().contains("ויתור על רכב").contains("1,901 ₪");
     }
 
     @Test

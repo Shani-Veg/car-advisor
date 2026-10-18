@@ -68,11 +68,21 @@ public final class Views {
             List<FactorView> factors,
             BreakdownView breakdown,
             List<String> estimates,
-            String explanation) {
+            String explanation,
+            BudgetView budget) {
+    }
+
+    /**
+     * The group's monthly car budget, next to what each car costs the company (SideView.monthlyCost).
+     * note: one plain sentence on what that means, written by the server. Null when the alternative is not allowed.
+     */
+    public record BudgetView(String group, BigDecimal amount, String note) {
     }
 
     /** officialUrl: the model's page on the importer's site; null for waiving the car or when there is none. */
-    public record SideView(String label, BigDecimal net, String officialUrl, String type, String vehicleId) {
+    /** monthlyCost: what the car costs the company per month (catalog); null without a car. */
+    public record SideView(String label, BigDecimal net, String officialUrl, String type, String vehicleId,
+                           BigDecimal monthlyCost) {
     }
 
     public record FactorView(String component, String label, BigDecimal from, BigDecimal to, BigDecimal netImpact) {

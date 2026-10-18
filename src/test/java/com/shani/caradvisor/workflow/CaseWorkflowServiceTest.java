@@ -74,6 +74,12 @@ class CaseWorkflowServiceTest {
         });
         assertThat(compared.comparison().difference()).isCloseTo(new BigDecimal("661"), within(BigDecimal.ONE));
         assertThat(compared.comparison().estimates()).contains("alternativeParticipation");
+        // cost and budget: ATTO 3 costs the company 4,100 a month, within group C's 4,500
+        assertThat(compared.comparison().alternative().monthlyCost()).isEqualByComparingTo("4100");
+        assertThat(compared.comparison().today().monthlyCost()).isEqualByComparingTo("4300");
+        assertThat(compared.comparison().budget().group()).isEqualTo("ג");
+        assertThat(compared.comparison().budget().amount()).isEqualByComparingTo("4500");
+        assertThat(compared.comparison().budget().note()).contains("תקציב שלא נוצל לא הופך לכסף בשכר");
 
         // The employee asks to have it confirmed: one question to the rep.
         CaseView waiting = workflow.requestRepConfirmation(id);

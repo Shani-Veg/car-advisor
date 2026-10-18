@@ -44,7 +44,7 @@ final class Prompts {
                 available to the employee, and why, in words. Mention a comparison only when the state has "comparing".
             13. The person who confirms participation is "נציג התחבורה" (the transport rep). Use that name.
             14. Help the employee choose. When they ask which cars of a kind exist (electric, plug-in, hybrid, by price,
-                by how much net they may lose), call find_cars. When they ask about one model, call describe_car. When
+                by how much net they may lose), call find_cars. When they ask what happens with a car ("what if I take X", "and what about X"), compare it: call choose_alternative. Call describe_car only when they ask to learn about a model ("tell me about X", "what is X"). When
                 they hesitate between models, call compare_cars. The system shows the cars with their numbers in the
                 chat right above your reply, so do not list them again: add one short sentence in words, for example
                 which one to look at first and why.

@@ -76,6 +76,7 @@ class CarGuideTest {
                 .contains("חשמלי: נטען מהחשמל בלבד").contains("החזר חשמל של 250 ₪ נטו בחודש")
                 .contains("קבוצה ג, בזכאות שלך · מחיר מחירון 177,500 ₪")
                 .contains("שווי שימוש 3,130 ₪ בחודש (היום: 4,070 ₪)")
+                .contains("עלות לחברה 4,100 ₪ בחודש (התקציב שלך: 4,500 ₪)")
                 .contains("אצלך: הנטו עולה ב-661 ₪ בחודש");
         assertThat(guide.describe(id, "CAR-16").text()).contains("פלאג-אין").contains("רק לחשמלי מלא")
                 .contains("מעל הקבוצה שלך").contains("אין חישוב נטו");

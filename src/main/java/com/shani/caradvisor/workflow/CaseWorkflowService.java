@@ -77,6 +77,12 @@ public class CaseWorkflowService {
         return views.caseView(created);
     }
 
+    /** What the chat still has to ask, in order. */
+    @Transactional(readOnly = true)
+    public List<FactKey> missingForToday(String caseId) {
+        return views.state(load(caseId)).missingForToday();
+    }
+
     @Transactional(readOnly = true)
     public CaseView view(String caseId) {
         return views.caseView(load(caseId));

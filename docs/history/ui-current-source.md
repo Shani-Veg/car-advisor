@@ -187,6 +187,8 @@
   --loss: #C2410C; --loss-soft: #FCEDE5;
   --wait: #E09B1B; --wait-soft: #FFF4DE; --wait-ink: #6B4A12; --wait-light: #FFC75A;
   --danger: #C9382B; --danger-soft: #FCECEA;
+  /* a warm touch on the welcome page only; inside the app orange means "the net goes down" */
+  --warm: #EA580C;
   --r-sm: 10px; --r-md: 16px; --r-lg: 20px; --r-xl: 24px; --r-pill: 999px;
   --shadow: 0 1px 2px rgba(20, 33, 61, .05), 0 12px 28px -16px rgba(20, 33, 61, .22);
   --focus: 3px solid var(--primary);
@@ -415,6 +417,12 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .readout .drive-badge.electric { background: var(--mint); color: var(--on-mint); border-color: var(--mint); }
 .readout .model-link { color: var(--primary-muted); }
 .readout .badge.status-default { margin-top: 4px; }
+.readout-cost { margin-top: 6px; color: var(--primary-muted); font-size: 13px; }
+.readout-cost bdi { font-family: var(--num); font-weight: 600; color: var(--on-primary); }
+.budget-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 16px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); font-size: 14px; }
+.budget-amount { font-weight: 700; white-space: nowrap; }
+.budget-amount bdi { font-family: var(--num); }
+.budget-note { color: var(--muted); }
 .cluster-gauge { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: rgba(255, 255, 255, .06); }
 .gauge { width: 100%; max-width: 250px; }
 .gauge-track { fill: none; stroke: rgba(255, 255, 255, .2); stroke-width: 18; stroke-linecap: round; }
@@ -574,6 +582,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .primary-role { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
 .primary-role:hover { background: #193F86; }
 .primary-role small { color: var(--primary-muted); }
+.primary-role .role-symbol { border-color: var(--warm); background: var(--warm); color: #fff; opacity: 1; }
 .role-symbol { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border: 1.5px solid currentColor; border-radius: 50%; font-size: 20px; opacity: .9; }
 .quiet-note { margin-top: 16px; color: var(--muted); font-size: 14px; }
 /* a quiet preview of the result screen: the same blue cluster, no numbers */
@@ -588,7 +597,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .art-result { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); }
 .art-result strong { display: block; font-size: 17px; }
 .art-result small { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; }
-.art-check { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--gain); color: #fff; }
+.art-check { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--warm); color: #fff; }
 .preview-lights { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 14px; }
 .preview-lights > span { display: inline-flex; align-items: center; gap: 7px; }
 .preview-lights .light-dot { width: 10px; height: 10px; flex: none; border-radius: 50%; }
@@ -1208,6 +1217,11 @@ function readout(data, title, alternative, estimates, key) {
   }
   node.append(moneyNode(data.net, false, 'readout-amount'), el('span', 'readout-unit', 'נטו לחודש'));
   if (estimates.includes(key + '.net')) node.append(statusBadge('DEFAULT'));
+  if (typeof data.monthlyCost === 'number') {
+    const cost = el('span', 'readout-cost', 'עלות לחברה ');
+    cost.append(moneyNode(data.monthlyCost));
+    node.append(cost);
+  }
   const link = modelLink(data.officialUrl, data.label);
   if (link) node.append(link);
   return node;
@@ -1341,7 +1355,15 @@ function renderComparison(comparison, previous) {
     detailTable.append(detailBody); detailWrapper.append(detailTable); details.append(detailWrapper);
   }
   details.append(el('p', 'rules-note', 'גרסת כללים: ' + comparison.rulesVersion));
-  container.append(cluster, cards, details);
+  const parts = [cluster];
+  if (comparison.budget) {
+    const strip = el('div', 'budget-strip');
+    const amount = el('span', 'budget-amount', 'תקציב קבוצה ' + comparison.budget.group + ': ');
+    amount.append(moneyNode(comparison.budget.amount));
+    strip.append(amount, el('span', 'budget-note', comparison.budget.note));
+    parts.push(strip);
+  }
+  container.append(...parts, cards, details);
 }
 
 function renderRanking(ranking, previous) {

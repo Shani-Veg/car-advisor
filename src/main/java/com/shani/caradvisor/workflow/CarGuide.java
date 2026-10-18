@@ -130,6 +130,8 @@ public class CarGuide {
         text.append("\n• שווי שימוש ").append(Money.display(v.monthlyUseValue())).append(" בחודש")
                 .append(today.filter(t -> !t.id().equals(v.id()))
                         .map(t -> " (היום: " + Money.display(t.monthlyUseValue()) + ")").orElse(""));
+        text.append("\n• עלות לחברה ").append(Money.display(v.monthlyCost())).append(" בחודש")
+                .append(state.fact(FactKey.GROUP).map(g -> " (התקציב שלך: " + Money.display(data.rules().budgetOf(g.value())) + ")").orElse(""));
         text.append("\n• השתתפות ").append(Money.display(v.defaultParticipation())).append(" לפי הקטלוג, עד אישור הנציג");
         text.append("\n• ").append(personalLine(state, v, effect.get(v.id()), today));
         return new Answer(text.toString(), List.of(v.id()), List.of(modelView(v, effect.get(v.id()), state.mayTake(v))));

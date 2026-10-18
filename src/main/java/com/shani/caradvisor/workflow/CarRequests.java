@@ -18,8 +18,8 @@ import java.util.regex.Pattern;
 @Component
 class CarRequests {
 
-    /** What the employee asked to see. best: the cars that pay most, in place of a search. */
-    record Request(Set<Drive> drives, BigDecimal maxListPrice, CarGuide.Order order, boolean best) {
+    /** What the employee asked to see. best: the cars that pay most; waiver: compare giving up the car. */
+    record Request(Set<Drive> drives, BigDecimal maxListPrice, CarGuide.Order order, boolean best, boolean waiver) {
     }
 
     private static final int MAX_WORDS = 12;
@@ -37,7 +37,9 @@ class CarRequests {
     private static final Pattern WHAT_CARS = Pattern.compile("(?:אילו|איזה|אלו|מה)\\s+רכבים|רכבים\\s+(?:יש|אפשר|מותר)|מה\\s+יש\\s+לי");
     private static final Pattern PRICE = Pattern.compile("עד\\s*(\\d[\\d,]*(?:\\.\\d+)?)\\s*(אלף|א'|k)?");
     /** Asking for an explanation, a comparison or something negated: the model handles it. */
-    private static final Pattern NOT_A_LIST = word("לא|בלי|אין|ללא|חוץ|מלבד|ההבדל|הבדל|למה|מדוע|איך|תסביר|הסבר|ספר|תספר|השווה|להשוות|לעומת|בין|עדיף|ויתור|לוותר");
+    private static final Pattern NOT_A_LIST = word("לא|בלי|אין|ללא|חוץ|מלבד|ההבדל|הבדל|למה|מדוע|איך|תסביר|הסבר|ספר|תספר|השווה|להשוות|לעומת|בין|עדיף");
+    /** "אני רוצה לוותר על הרכב": the employee raises it, so the system compares it (it never suggests it). */
+    private static final Pattern WAIVER = word("[והבלשמ]{0,2}(?:לוותר|ויתור|וויתור)");
     /** A model or maker named: a question about that car, for the model. */
     private static final Pattern NAMES_A_CAR = Pattern.compile("[A-Za-z]|טסלה|קיה|טויוטה|יונדאי|מזדה|סקודה|סיאט|אטו|דולפין|קורולה|נירו|קונה|טוסון|ספורטאז|קרניבל|סנטה|ראב|אוקטביה|ליאון|פיקנטו|יאריס|סיל");
 
@@ -69,6 +71,12 @@ class CarRequests {
         boolean best = BEST.matcher(text).find();
         BigDecimal price = price(text);
         boolean asksForCars = WHAT_CARS.matcher(text).find() || (price != null && text.contains("רכב"));
+        if (WAIVER.matcher(text).find()) {
+            // giving up the car next to a kind of car ("לוותר או לקחת חשמלי?") is a real question: for the model
+            return drives.isEmpty() && !luxury && !cheap && !best && price == null
+                    ? Optional.of(new Request(Set.of(), null, CarGuide.Order.BEST_FOR_NET, false, true))
+                    : Optional.empty();
+        }
         if (drives.isEmpty() && !luxury && !cheap && !best && !asksForCars) {
             return Optional.empty();
         }
@@ -77,7 +85,7 @@ class CarRequests {
         }
         CarGuide.Order order = luxury ? CarGuide.Order.MOST_LUXURIOUS : cheap ? CarGuide.Order.CHEAPEST : CarGuide.Order.BEST_FOR_NET;
         boolean onlyBest = best && drives.isEmpty() && !luxury && !cheap && price == null;
-        return Optional.of(new Request(Set.copyOf(drives), price, order, onlyBest));
+        return Optional.of(new Request(Set.copyOf(drives), price, order, onlyBest, false));
     }
 
     /** "עד 200 אלף", "עד 200,000", "עד 200" (thousands): a list price, when it is a plausible one. */

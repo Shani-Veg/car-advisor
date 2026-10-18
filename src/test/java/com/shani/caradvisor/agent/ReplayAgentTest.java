@@ -37,7 +37,7 @@ class ReplayAgentTest {
                     assertThat(f.source().type()).isEqualTo("EMPLOYEE_MESSAGE");
                 });
         assertThat(view.messages()).anySatisfy(m -> assertThat(m.text()).startsWith("רשמתי:").contains("18,500 ₪"));
-        assertThat(view.messages()).anySatisfy(m -> assertThat(m.text()).isEqualTo("תודה! כמה אחוזים מפרישים לפנסיה?"));
+        assertThat(view.messages()).last().satisfies(m -> assertThat(m.text()).isEqualTo("כמה ילדים עד גיל 23 יש לך?"));
     }
 
     @Test

@@ -117,17 +117,32 @@ public class AdvisorAgent {
             workflow.addBotMessage(caseId, ChatSummaries.comparisonSummary(after));
             offers = MessageEntity.Offers.REP;
         }
-        workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved, offers);
-        // The four questions were just answered: ask once about the assumed details. A later change of a detail is
-        // simply taken, with no questions about the other details (the model asks what they want to check).
+        // While the four questions are being answered the next question is the server's, in the same clear words as
+        // the buttons; once they are answered, the server's question about the assumed details takes the model's place.
+        boolean firstReview = !turnLog.recorded.isEmpty() && !after.assumptionsToConfirm().isEmpty()
+                && before.assumptionsToConfirm().isEmpty();
+        List<String> stillMissing = missingQuestions(after);
+        if (firstReview) {
+            workflow.addBotMessage(caseId, ChatSummaries.assumptionsReview(after, false));
+        } else if (!turnLog.recorded.isEmpty() && !stillMissing.isEmpty()) {
+            workflow.addBotMessage(caseId, stillMissing.get(0));
+        } else {
+            workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved, offers);
+        }
+        // A later change of a detail is simply taken, with no questions about the other details.
         if (!turnLog.recorded.isEmpty() && !after.assumptionsToConfirm().isEmpty()) {
-            if (before.assumptionsToConfirm().isEmpty()) {
-                workflow.addBotMessage(caseId, ChatSummaries.assumptionsReview(after, false));
+            if (firstReview) {
+                // asked above
             } else {
                 workflow.deferAssumptions(caseId);
             }
         }
         return workflow.view(caseId);
+    }
+
+    /** The questions still open, as the server words them (the order the chat asks them in). */
+    private List<String> missingQuestions(CaseView view) {
+        return workflow.missingForToday(view.caseId()).stream().map(ChatSummaries::nextQuestion).toList();
     }
 
     private String unavailableText() {

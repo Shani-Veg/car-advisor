@@ -8,6 +8,7 @@ import com.shani.caradvisor.engine.ComparisonEngine;
 import com.shani.caradvisor.engine.Factor;
 import com.shani.caradvisor.engine.Vehicle;
 import com.shani.caradvisor.workflow.Views.BreakdownView;
+import com.shani.caradvisor.workflow.Views.BudgetView;
 import com.shani.caradvisor.workflow.Views.CarCard;
 import com.shani.caradvisor.workflow.Views.ChoiceView;
 import com.shani.caradvisor.workflow.Views.CaseView;
@@ -195,7 +196,7 @@ class CaseViewAssembler {
         if (!c.eligible()) {
             return new ComparisonView(c.rulesVersion(), false, c.eligibility().reason(), today,
                     side(state.alternativeChoice(), null),
-                    null, "NONE", List.of(), null, state.estimates(), ExplanationWriter.explain(c));
+                    null, "NONE", List.of(), null, state.estimates(), ExplanationWriter.explain(c), null);
         }
         int sign = c.difference().signum();
         return new ComparisonView(
@@ -209,14 +210,35 @@ class CaseViewAssembler {
                 c.factors().stream().map(CaseViewAssembler::factorView).toList(),
                 new BreakdownView(c.today().result(), c.alternative().result()),
                 state.estimates(),
-                ExplanationWriter.explain(c));
+                ExplanationWriter.explain(c),
+                budget(state, c.alternative().choice()));
+    }
+
+    /** Strauss's rules: a budget per group; a cheaper car does not turn the rest into pay; the family track splits the gap. */
+    private BudgetView budget(CaseState state, CarChoice alternative) {
+        String group = state.fact(FactKey.GROUP).map(FactEntity::value).orElse(null);
+        if (group == null) {
+            return null;
+        }
+        java.math.BigDecimal amount = data.rules().budgetOf(group);
+        String note;
+        if (!(alternative instanceof CarChoice.CompanyCar car)) {
+            note = "בוויתור אין רכב, ולכן גם אין שימוש בתקציב: במקומו מקבלים אחזקת רכב לפי טבלת העיסוקים.";
+        } else if (car.vehicle().monthlyCost().compareTo(amount) <= 0) {
+            note = "הרכב בתוך התקציב. תקציב שלא נוצל לא הופך לכסף בשכר.";
+        } else if (car.vehicle().isFamilyTrack()) {
+            note = "הרכב יקר מהתקציב. על הפער העובד/ת משלם/ת חצי, והוא מופיע בפירוט כחלק העובד במסלול המשפחתי.";
+        } else {
+            note = "עלות הרכב גבוהה מתקציב הקבוצה.";
+        }
+        return new BudgetView(group, amount, note);
     }
 
     /** type and vehicleId let the screen recognise which card is being compared, without guessing from names. */
     private static SideView side(CarChoice choice, java.math.BigDecimal net) {
         return choice instanceof CarChoice.CompanyCar car
-                ? new SideView(choice.label(), net, car.vehicle().officialUrl(), "car", car.vehicle().id())
-                : new SideView(choice.label(), net, null, "waiver", null);
+                ? new SideView(choice.label(), net, car.vehicle().officialUrl(), "car", car.vehicle().id(), car.vehicle().monthlyCost())
+                : new SideView(choice.label(), net, null, "waiver", null, null);
     }
 
     private static String officialUrl(CarChoice choice) {
