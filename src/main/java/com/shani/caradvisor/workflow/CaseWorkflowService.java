@@ -298,7 +298,7 @@ public class CaseWorkflowService {
         applyFact(caseEntity, question.factKey(), value, FactEntity.Source.REP, question.id(), effectiveFrom);
         messages.save(new MessageEntity(caseEntity.id(), MessageEntity.Role.SYSTEM,
                 "נציג התחבורה עדכן: " + question.factKey().label() + " " + values.display(question.factKey(), value)
-                        + (effectiveFrom == null ? "" : ", בתוקף מ-" + effectiveFrom) + ". ההשוואה עודכנה.",
+                        + (effectiveFrom == null ? "" : ", בתוקף מ-" + FactValues.displayDate(effectiveFrom)) + ". ההשוואה עודכנה.",
                 null, Instant.now()));
         caseEntity.touch(Instant.now());
         return views.repView(question, caseEntity);

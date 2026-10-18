@@ -1,5 +1,5 @@
-import { api, isMock } from './api.js';
-import { el, appendText, moneyNode, formatMoney, formatDate, sourceText, statusBadge, caseLabels, directionLabels, breakdownLabels, emptyState, showNotice, keepDemoLinks } from './format.js';
+import { api } from './api.js';
+import { el, appendText, moneyNode, formatMoney, formatDate, sourceText, statusBadge, caseLabels, directionLabels, breakdownLabels, emptyState, showNotice } from './format.js';
 import { vehicleIdentity, choiceVehicle, makerLogo, brandName, driveChip } from './vehicle.js';
 
 const byId = id => document.getElementById(id);
@@ -21,8 +21,6 @@ const messageNodes = new Map();
 const profileNodes = new Map();
 const query = new URLSearchParams(location.search);
 let caseId = query.get('case');
-keepDemoLinks(['home-link', 'rep-link']);
-byId('mock-banner').hidden = !isMock;
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const unavailable = () => assistantOffline || current?.assistantAvailable === false;
@@ -689,7 +687,7 @@ byId('profile-form').addEventListener('submit', async event => {
   const value = input.type === 'number' ? input.valueAsNumber : input.value.trim();
   if (value === '' || (typeof value === 'number' && !Number.isFinite(value))) { showNotice(byId('edit-error'), 'יש להזין ערך תקין.'); return; }
   const session = editSession;
-  await mutate('profile:' + session.key + ':' + JSON.stringify(value), () => api.updateProfile(caseId, session.key, value, session.version), () => { byId('profile-dialog').close(); editSession = null; feedback(isMock ? 'הנתון נשמר. במצב הדגמה אין חישוב מחדש של ההשוואה.' : 'הנתון נשמר. ההשוואה מציגה את המידע העדכני מהשרת.'); });
+  await mutate('profile:' + session.key + ':' + JSON.stringify(value), () => api.updateProfile(caseId, session.key, value, session.version), () => { byId('profile-dialog').close(); editSession = null; feedback('הנתון נשמר. ההשוואה מציגה את המידע העדכני מהשרת.'); });
 });
 function closeEditor() { if (busy) return; byId('profile-dialog').close(); editSession = null; }
 byId('close-dialog').addEventListener('click', closeEditor);

@@ -6,6 +6,8 @@ import com.shani.caradvisor.engine.Vehicle;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /** Validates incoming values into one canonical string per fact, and turns them back into typed values and display text. */
 @Component
@@ -18,6 +20,7 @@ public class FactValues {
     private static final BigDecimal MAX_PERCENT = BigDecimal.valueOf(100);
     private static final BigDecimal MAX_POINTS = BigDecimal.valueOf(20);
     private static final BigDecimal MAX_CHILDREN = BigDecimal.valueOf(30);
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final ReferenceData data;
 
@@ -81,6 +84,11 @@ public class FactValues {
                     : data.catalog().byId(value).map(Vehicle::label).orElse(value);
             default -> value;
         };
+    }
+
+    /** A date as Israelis write it (18/10/2026), for texts the employee reads. */
+    public static String displayDate(LocalDate date) {
+        return DATE.format(date);
     }
 
     private static BigDecimal number(FactKey key, String text, BigDecimal max) {

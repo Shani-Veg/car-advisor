@@ -187,7 +187,7 @@ class CaseViewAssembler {
 
     private String display(FactKey key, FactEntity fact) {
         String text = values.display(key, fact.value());
-        return fact.effectiveFrom() == null ? text : text + " (בתוקף מ-" + fact.effectiveFrom() + ")";
+        return fact.effectiveFrom() == null ? text : text + " (בתוקף מ-" + FactValues.displayDate(fact.effectiveFrom()) + ")";
     }
 
     private ComparisonView comparison(CaseState state) {

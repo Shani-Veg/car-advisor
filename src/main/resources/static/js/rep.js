@@ -1,5 +1,5 @@
-import { api, isMock } from './api.js';
-import { el, appendText, formatDate, formatNumber, emptyState, showNotice, keepDemoLinks } from './format.js';
+import { api } from './api.js';
+import { el, appendText, formatDate, formatNumber, emptyState, showNotice } from './format.js';
 
 const byId = id => document.getElementById(id);
 const cards = new Map();
@@ -9,8 +9,6 @@ let refreshing = false;
 let activeAnswers = 0;
 let retryAction = null;
 let timer;
-keepDemoLinks(['home-link', 'employee-link']);
-byId('mock-banner').hidden = !isMock;
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 function reportError(error, retry) {
   showNotice(byId('error-text'), error.message || 'לא ניתן לטעון את השאלות כרגע.');

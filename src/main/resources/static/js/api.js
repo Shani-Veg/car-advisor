@@ -1,15 +1,8 @@
-/** All network access, including demo switching, belongs here. */
+/** All network access belongs here. */
 export class ApiError extends Error {
   constructor(status, code, message) { super(message); this.name = 'ApiError'; this.status = status; this.code = code; }
 }
-export const isMock = new URLSearchParams(globalThis.location?.search || '').get('mock') === '1';
-let mockModule;
 async function request(path, { method = 'GET', body } = {}) {
-  if (isMock) {
-    mockModule ||= import('./mock-api.js');
-    try { return await (await mockModule).mockRequest(path, { method, body }); }
-    catch (error) { throw new ApiError(error.status || 0, error.code || 'NETWORK_ERROR', error.message || 'לא ניתן להתחבר כרגע.'); }
-  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
@@ -26,7 +19,6 @@ async function request(path, { method = 'GET', body } = {}) {
 }
 /** The payslip is the one file upload. The custom header makes a cross-site post impossible without CORS. */
 async function upload(path, file) {
-  if (isMock) throw new ApiError(0, 'MOCK', 'במצב הדגמה מקומית אין קריאת תלוש.');
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60000);
   const form = new FormData(); form.append('file', file);

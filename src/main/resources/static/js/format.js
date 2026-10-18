@@ -64,13 +64,3 @@ export function emptyState(title, detail = '') {
   return node;
 }
 export function showNotice(node, message) { node.replaceChildren(); appendText(node, message); node.hidden = !message; }
-export function keepDemoLinks(ids) {
-  const query = new URLSearchParams(location.search);
-  for (const id of ids) {
-    const link = document.getElementById(id);
-    if (!link) continue;
-    const url = new URL(link.href);
-    for (const key of ['mock', 'down', 'replay']) if (query.has(key)) url.searchParams.set(key, query.get(key));
-    link.href = url.href;
-  }
-}
