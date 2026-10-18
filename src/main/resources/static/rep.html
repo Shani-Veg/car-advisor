@@ -11,13 +11,17 @@
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header"><a class="wordmark" id="home-link" href="index.html"><svg class="wordmark-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="mark-track" d="M3 16a9 9 0 0 1 18 0"></path><path class="mark-value" d="M3 16a9 9 0 0 1 12.5-8.3"></path></svg>יועץ הרכב</a><nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">עמדת נציג</span><a id="employee-link" href="employee.html">מסך עובד <span aria-hidden="true">↗</span></a></nav></header>
   <main id="main" class="app-main rep-main">
-    <div class="page-intro"><div><span class="eyebrow">המידע שלך עוזר לקבל החלטה</span><h1>משלימים את התמונה.</h1><p>שאלות שממתינות לאישור, עם כל ההקשר הדרוש למענה.</p></div><span class="badge soft-teal">עמדת נציג תחבורה</span></div>
+    <div class="rep-top">
+      <div><h1>תור השאלות</h1><p>שאלות שמחכות לאישור שלך, מהוותיקה לחדשה. התשובה מעדכנת מיד את ההשוואה אצל העובד/ת.</p></div>
+      <p id="sync-label" class="sync-label" role="status">מתחבר…</p>
+    </div>
     <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" class="text-button" type="button">נסה שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
-    <div class="rep-grid">
-      <aside class="rep-guide panel"><span class="section-kicker">מענה שמאפשר להתקדם</span><h2>כל שאלה,<br>בהקשר שלה.</h2><p>בדקו את הנתונים הידועים ואת ההערכה שהעוזר השתמש בה, ואז אשרו או עדכנו.</p><ol class="guide-steps"><li><bdi dir="ltr">1</bdi><span>עוברים על ההקשר</span></li><li><bdi dir="ltr">2</bdi><span>מאשרים את הערך</span></li><li><bdi dir="ltr">3</bdi><span>השיחה ממשיכה</span></li></ol><div class="guide-note">שאלה שהתיישנה לא ניתנת למענה. העובד כבר שינה את הבחירה.</div><p id="sync-label" class="small-muted" role="status">מתחבר…</p></aside>
-      <section class="questions-section" aria-labelledby="questions-heading"><div class="queue-heading"><h2 id="questions-heading">שאלות פתוחות <span id="open-count" class="count-badge"><bdi dir="ltr">0</bdi></span></h2><span class="small-muted">מתעדכן אוטומטית</span></div><div id="questions" aria-busy="true"><div class="panel"><p class="empty-state">טוען את תור השאלות…</p></div></div><details id="answered-section" class="answered-section"><summary>נענו <span id="answered-count" class="count-badge"><bdi dir="ltr">0</bdi></span></summary><div id="answered-list"></div></details></section>
-    </div>
+    <section class="queue" aria-labelledby="questions-heading">
+      <h2 id="questions-heading" class="queue-title">ממתינות למענה <span id="open-count" class="count-badge"><bdi dir="ltr">0</bdi></span></h2>
+      <ol id="questions" class="queue-list" aria-busy="true"><li class="queue-loading"><p class="empty-state">טוען את התור…</p></li></ol>
+    </section>
+    <details id="answered-section" class="answered-section"><summary>נענו לאחרונה <span id="answered-count" class="count-badge muted"><bdi dir="ltr">0</bdi></span></summary><div id="answered-list"></div></details>
   </main>
   <script type="module" src="js/rep.js"></script>
 </body>

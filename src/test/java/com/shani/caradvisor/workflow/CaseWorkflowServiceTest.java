@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,6 +118,27 @@ class CaseWorkflowServiceTest {
         assertThat(mg4.status()).isEqualTo("READY");
         assertThatThrownBy(() -> workflow.answer(atto3Question, 350, null, "", "req-2", "rep"))
                 .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("STALE_QUESTION"));
+    }
+
+    @Test
+    void theRepQueueHidesStaleQuestionsAndKeepsTheLongestWaitingFirst() {
+        String stale = noaToday();
+        workflow.chooseAlternative(stale, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(stale);
+        String staleQuestion = openQuestionFor(stale).id();
+        workflow.chooseAlternative(stale, "car", "CAR-06", null);
+        String first = noaToday();
+        workflow.chooseAlternative(first, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(first);
+        String second = noaToday();
+        workflow.chooseAlternative(second, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(second);
+
+        List<String> queue = workflow.repQuestions(RepQuestionEntity.Status.OPEN).stream()
+                .map(RepQuestionView::caseId).filter(c -> List.of(stale, first, second).contains(c)).toList();
+
+        assertThat(queue).containsExactly(first, second);
+        assertThat(workflow.repQuestions(RepQuestionEntity.Status.OPEN)).noneMatch(q -> q.id().equals(staleQuestion));
     }
 
     @Test

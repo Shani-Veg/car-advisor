@@ -152,13 +152,17 @@
   <a class="skip-link" href="#main">דילוג לתוכן</a>
   <header class="site-header"><a class="wordmark" id="home-link" href="index.html"><svg class="wordmark-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="mark-track" d="M3 16a9 9 0 0 1 18 0"></path><path class="mark-value" d="M3 16a9 9 0 0 1 12.5-8.3"></path></svg>יועץ הרכב</a><nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">עמדת נציג</span><a id="employee-link" href="employee.html">מסך עובד <span aria-hidden="true">↗</span></a></nav></header>
   <main id="main" class="app-main rep-main">
-    <div class="page-intro"><div><span class="eyebrow">המידע שלך עוזר לקבל החלטה</span><h1>משלימים את התמונה.</h1><p>שאלות שממתינות לאישור, עם כל ההקשר הדרוש למענה.</p></div><span class="badge soft-teal">עמדת נציג תחבורה</span></div>
+    <div class="rep-top">
+      <div><h1>תור השאלות</h1><p>שאלות שמחכות לאישור שלך, מהוותיקה לחדשה. התשובה מעדכנת מיד את ההשוואה אצל העובד/ת.</p></div>
+      <p id="sync-label" class="sync-label" role="status">מתחבר…</p>
+    </div>
     <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" class="text-button" type="button">נסה שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
-    <div class="rep-grid">
-      <aside class="rep-guide panel"><span class="section-kicker">מענה שמאפשר להתקדם</span><h2>כל שאלה,<br>בהקשר שלה.</h2><p>בדקו את הנתונים הידועים ואת ההערכה שהעוזר השתמש בה, ואז אשרו או עדכנו.</p><ol class="guide-steps"><li><bdi dir="ltr">1</bdi><span>עוברים על ההקשר</span></li><li><bdi dir="ltr">2</bdi><span>מאשרים את הערך</span></li><li><bdi dir="ltr">3</bdi><span>השיחה ממשיכה</span></li></ol><div class="guide-note">שאלה שהתיישנה לא ניתנת למענה. העובד כבר שינה את הבחירה.</div><p id="sync-label" class="small-muted" role="status">מתחבר…</p></aside>
-      <section class="questions-section" aria-labelledby="questions-heading"><div class="queue-heading"><h2 id="questions-heading">שאלות פתוחות <span id="open-count" class="count-badge"><bdi dir="ltr">0</bdi></span></h2><span class="small-muted">מתעדכן אוטומטית</span></div><div id="questions" aria-busy="true"><div class="panel"><p class="empty-state">טוען את תור השאלות…</p></div></div><details id="answered-section" class="answered-section"><summary>נענו <span id="answered-count" class="count-badge"><bdi dir="ltr">0</bdi></span></summary><div id="answered-list"></div></details></section>
-    </div>
+    <section class="queue" aria-labelledby="questions-heading">
+      <h2 id="questions-heading" class="queue-title">ממתינות למענה <span id="open-count" class="count-badge"><bdi dir="ltr">0</bdi></span></h2>
+      <ol id="questions" class="queue-list" aria-busy="true"><li class="queue-loading"><p class="empty-state">טוען את התור…</p></li></ol>
+    </section>
+    <details id="answered-section" class="answered-section"><summary>נענו לאחרונה <span id="answered-count" class="count-badge muted"><bdi dir="ltr">0</bdi></span></summary><div id="answered-list"></div></details>
   </main>
   <script type="module" src="js/rep.js"></script>
 </body>
@@ -358,7 +362,7 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .chat-car-meta bdi { font-family: var(--num); }
 .chat-car-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chat-car-actions .step-action { min-height: 30px; padding: 2px 12px; font-size: 13px; }
-.chat-car-actions .model-link { margin-top: 0; font-size: 12px; }
+.chat-car-actions .model-link { min-height: 30px; margin-top: 0; padding: 2px 11px; font-size: 13px; }
 .typing { display: flex; align-items: center; gap: 8px; margin: 0 16px 8px; padding: 8px 14px; border: 1px dashed #B9C7DD; border-radius: 18px; color: var(--ink-2); font-size: 15px; font-weight: 600; }
 .typing-dots { color: var(--primary); letter-spacing: 3px; animation: blink 1.2s ease-in-out infinite; }
 .composer { flex: none; padding: 8px 14px 14px; }
@@ -414,7 +418,8 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .readout .vehicle-logo { width: 32px; height: 32px; padding: 3px; border: 0; }
 .readout .drive-badge { margin-top: 4px; background: transparent; color: var(--on-primary); border: 1px solid rgba(255, 255, 255, .45); }
 .readout .drive-badge.electric { background: var(--mint); color: var(--on-mint); border-color: var(--mint); }
-.readout .model-link { color: var(--primary-muted); }
+.readout .model-link { margin-top: 12px; padding: 6px 14px; border-color: var(--surface); background: var(--surface); color: var(--primary); box-shadow: 0 4px 12px -6px rgba(8, 20, 50, .5); }
+.readout .model-link:hover { border-color: var(--mint); background: var(--mint); color: var(--on-mint); }
 .readout .badge.status-default { margin-top: 4px; }
 .readout-cost { margin-top: 6px; color: var(--primary-muted); font-size: 13px; }
 .readout-cost bdi { font-family: var(--num); font-weight: 600; color: var(--on-primary); }
@@ -465,7 +470,9 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .data-table th:not(:first-child), .data-table td:not(:first-child) { padding-inline-start: 10px; white-space: nowrap; }
 .impact { font-weight: 700; }
 .rules-note { margin-top: 12px; color: var(--muted); font-size: 13px; }
-.model-link { display: inline-block; margin-top: 6px; font-size: 13px; }
+.model-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 5px 13px; border: 1.5px solid var(--primary); border-radius: var(--r-pill); background: var(--surface); color: var(--primary); font-size: 13px; font-weight: 700; line-height: 1.3; white-space: nowrap; transition: background .15s, color .15s; }
+.model-link:hover { background: var(--primary); color: var(--on-primary); text-decoration: none; }
+.link-icon { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* alternatives */
 .ranking-list { display: grid; gap: 10px; margin: 0; padding: 0 20px 18px; list-style: none; }
@@ -527,45 +534,75 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .mobile-comparison bdi { font: 600 26px/1.1 var(--num); white-space: nowrap; }
 
 /* ================= 8. Rep screen ================= */
-.page-intro { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; padding: 22px 24px; border: 1px solid var(--line-2); border-radius: var(--r-xl); background: var(--surface); box-shadow: var(--shadow); }
-.page-intro h1 { margin-bottom: 6px; font-size: 30px; }
-.page-intro p { color: var(--muted); font-size: 15px; }
-.rep-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 22px; align-items: start; }
-.rep-guide { position: sticky; top: 80px; padding: 22px; }
-.rep-guide h2 { margin: 12px 0 16px; font-size: 26px; }
-.rep-guide > p { color: var(--muted); font-size: 15px; }
-.guide-steps { margin: 22px 0; padding: 0; list-style: none; }
-.guide-steps li { display: flex; align-items: center; gap: 10px; margin: 14px 0; font-size: 15px; }
-.guide-steps bdi { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font: 600 14px var(--num); }
-.guide-note { margin-bottom: 18px; padding-top: 16px; border-top: 1px solid var(--line-2); color: var(--muted); font-size: 13px; }
-.queue-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding: 14px 20px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); }
-.queue-heading h2 { display: flex; align-items: center; gap: 10px; font-size: 21px; }
+/* the rep's queue: one column, the longest waiting first */
+.rep-main { max-width: 920px; }
+.rep-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 8px 0 18px; }
+.rep-top h1 { font-size: 30px; line-height: 1.2; }
+.rep-top p { margin-top: 6px; color: var(--muted); font-size: 15px; }
+.sync-label { flex: none; margin: 0; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.queue-title { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 19px; }
 .count-badge { padding: 2px 10px; border-radius: var(--r-pill); background: var(--primary); color: #fff; font: 600 13px var(--num); }
-.question-card { margin-bottom: 16px; padding: 22px; }
-.question-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 20px; }
-.question-card h3 { font-size: 21px; line-height: 1.5; }
-.question-employee { margin-top: 6px; color: var(--muted); font-size: 15px; }
-.question-time { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
-.context-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-.context-box { padding: 16px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface-2); }
-.context-box.assumption { border-color: #F0D9A8; background: var(--wait-soft); }
-.context-box h4 { margin-bottom: 8px; color: var(--muted); font-size: 14px; }
-.context-box p { font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
-.known-item + .known-item { margin-top: 10px; }
-.known-label { display: block; color: var(--muted); font-size: 13px; }
-.suggested-answer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding: 14px 16px; border: 1.5px solid #BFE3DC; border-radius: var(--r-md); background: var(--gain-soft); font-size: 15px; }
-.suggested-answer small { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
-.answer-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.note-field { grid-column: 1 / -1; }
-.answer-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 20px; }
-.answer-footer small { color: var(--muted); font-size: 13px; }
-.question-card.stale { background: var(--surface-2); color: var(--muted); }
-.answered-section { margin-top: 22px; padding: 18px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); }
-.answered-section > summary { font-size: 16px; font-weight: 700; cursor: pointer; }
-.answered-card { margin-top: 14px; padding: 18px; box-shadow: none; }
-.answered-card summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; cursor: pointer; }
-.answer-result { margin-top: 14px; font-size: 15px; }
-.answer-result p + p { margin-top: 5px; }
+.count-badge.muted { background: var(--line-2); color: var(--ink-2); }
+.queue-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.queue-empty, .queue-loading { border: 1.5px dashed var(--line); border-radius: var(--r-lg); background: var(--surface); }
+.question-card { padding: 18px 20px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
+.question-card.next { border-color: var(--primary-muted); box-shadow: 0 0 0 1px var(--primary-muted), var(--shadow); }
+.question-top { display: flex; align-items: flex-start; gap: 12px; }
+.queue-position { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font: 600 14px var(--num); }
+.question-card.next .queue-position { background: var(--primary); color: var(--on-primary); }
+.question-titles { flex: 1; min-width: 0; }
+.next-tag { display: block; color: var(--primary); font-size: 13px; font-weight: 700; }
+.question-card h3 { font-size: 18px; line-height: 1.45; overflow-wrap: anywhere; }
+.question-employee { margin-top: 2px; color: var(--muted); font-size: 14px; }
+.wait-chip { flex: none; padding: 3px 10px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--ink-2); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.question-facts { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 14px 0 0; padding: 11px 14px; border-radius: var(--r-md); background: var(--surface-2); font-size: 14px; }
+.question-facts div { display: flex; gap: 6px; min-width: 0; }
+.question-facts dt { color: var(--muted); }
+.question-facts dt::after { content: ":"; }
+.question-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.question-assumption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin-top: 10px; }
+.question-assumption p { display: flex; align-items: baseline; gap: 8px; margin: 0; color: var(--muted); font-size: 13px; }
+.question-assumption p::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--wait); }
+.answer-form { margin-top: 14px; }
+.answer-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+.answer-row .form-field label { margin-bottom: 5px; font-size: 14px; }
+.answer-extras { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 8px; }
+.chip-button { min-height: 34px; padding: 4px 14px; border: 1.5px solid var(--primary); border-radius: var(--r-pill); background: var(--surface); color: var(--primary); font-size: 14px; font-weight: 700; }
+.chip-button:hover { background: var(--primary-soft); }
+.answer-extras .text-button { font-size: 14px; }
+.note-field { margin-top: 10px; }
+.answered-section { margin-top: 26px; padding: 14px 18px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); }
+.answered-section > summary { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+.answered-row { padding: 12px 0; border-top: 1px solid var(--line-2); font-size: 14px; }
+.answered-row:first-child { margin-top: 12px; }
+.answered-head { display: flex; justify-content: space-between; gap: 12px; }
+.answered-question { margin-top: 2px; color: var(--ink-2); }
+.answered-what { margin-top: 2px; color: var(--gain); font-weight: 600; }
+.answered-empty { margin-top: 10px; }
+
+/* the date field: our own calendar, so the days can be round */
+.date-control { position: relative; }
+.date-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font-size: 16px; text-align: start; }
+.date-trigger:hover { border-color: var(--primary-muted); }
+.date-trigger[aria-expanded="true"] { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.date-text.empty { color: var(--muted); }
+.date-text bdi { font-family: var(--num); }
+.date-icon { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.calendar { position: absolute; z-index: 40; top: calc(100% + 6px); inset-inline-start: 0; width: 300px; max-width: calc(100vw - 32px); padding: 14px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); box-shadow: 0 18px 40px -18px rgba(20, 33, 61, .35), 0 2px 6px rgba(20, 33, 61, .08); }
+.calendar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.calendar-head strong { font-size: 16px; }
+.calendar-nav { display: grid; place-items: center; width: 34px; height: 34px; padding: 0 0 3px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--ink); font-size: 22px; line-height: 1; }
+.calendar-nav:hover { background: var(--primary-soft); color: var(--primary); }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px 0; text-align: center; }
+.calendar-weekday { padding: 6px 0 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.calendar-day { display: grid; place-items: center; width: 36px; height: 36px; margin: auto; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink); font: 500 14px var(--num); transition: background .12s, color .12s; }
+.calendar-day:hover { background: var(--primary-soft); color: var(--primary); }
+.calendar-day.outside { color: #8A94A6; }
+.calendar-day.today { box-shadow: inset 0 0 0 1.5px var(--warm); color: var(--warm-ink); font-weight: 700; }
+.calendar-day[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); box-shadow: none; }
+.calendar-quick { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-2); }
+.calendar-quick button { min-height: 32px; padding: 2px 14px; border: 1.5px solid var(--line); border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; }
+.calendar-quick button:hover { border-color: var(--primary); color: var(--primary); }
 
 /* ================= 9. Landing ================= */
 .welcome { display: grid; grid-template-columns: 1.1fr 1fr; gap: 52px; align-items: center; max-width: 1160px; min-height: calc(100dvh - 250px); margin: 44px auto; padding: 44px; border: 1px solid var(--line-2); border-radius: 28px; background: var(--surface); box-shadow: var(--shadow); }
@@ -621,8 +658,6 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
   .journey-panel { padding: 20px 18px; }
   .journey-panel h2 { font-size: 22px; }
   .insight-grid { grid-template-columns: minmax(0, 1fr); }
-  .rep-grid { grid-template-columns: minmax(0, 1fr); }
-  .rep-guide { position: static; }
   .welcome { grid-template-columns: minmax(0, 1fr); gap: 30px; padding: 28px; margin: 22px auto; }
 }
 @media (max-width: 700px) {
@@ -637,11 +672,13 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
   .cluster > * { padding: 14px 16px; }
   .readout-amount { font-size: 26px; }
   .profile-field { padding: 13px 0; gap: 10px; }
-  .context-boxes, .answer-fields { grid-template-columns: 1fr; }
+  .answer-row { grid-template-columns: minmax(0, 1fr); }
+  .rep-top { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .rep-top h1 { font-size: 26px; }
+  .question-card { padding: 16px 14px; }
   .ranking-row { flex-wrap: wrap; }
   .ranking-info { flex: 1 1 100%; }
   .ranking-value { flex: 1; text-align: start; }
-  .page-intro { flex-direction: column; align-items: flex-start; }
   .welcome { padding: 22px 18px; }
   .welcome h1 { font-size: 34px; }
 }
@@ -865,6 +902,152 @@ export function choiceVehicle(label, catalog) {
     car.maker + ' ' + car.commercialName + ' (' + car.regYear + ')'
   ].includes(label));
   return matches.length === 1 ? { type: 'car', vehicleId: matches[0].id, label } : null;
+}
+```
+
+## `js/datepicker.js`
+
+```js
+import { el } from './format.js';
+
+/**
+ * A date field with its own small calendar: round day buttons, the week from Sunday, and the two dates a rep picks
+ * most ("today", "the 1st of next month"). The browser's own date picker cannot be styled, so this replaces it.
+ * The value is ISO (yyyy-mm-dd), kept in a hidden input with the field's name.
+ */
+const WEEKDAYS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+const monthTitle = new Intl.DateTimeFormat('he-IL', { month: 'long', year: 'numeric' });
+const dayName = new Intl.DateTimeFormat('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const pad = number => String(number).padStart(2, '0');
+const iso = day => day.getFullYear() + '-' + pad(day.getMonth() + 1) + '-' + pad(day.getDate());
+const parse = text => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+const addDays = (day, count) => new Date(day.getFullYear(), day.getMonth(), day.getDate() + count);
+function addMonths(day, count) {
+  const first = new Date(day.getFullYear(), day.getMonth() + count, 1);
+  const last = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  return new Date(first.getFullYear(), first.getMonth(), Math.min(day.getDate(), last));
+}
+function today() { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); }
+function firstOfNextMonth() { const now = today(); return new Date(now.getFullYear(), now.getMonth() + 1, 1); }
+
+/** "2026-11-01" as Israelis write it: 01/11/2026. */
+export function displayDate(text) {
+  const day = parse(text);
+  return day ? pad(day.getDate()) + '/' + pad(day.getMonth() + 1) + '/' + day.getFullYear() : String(text ?? '');
+}
+
+function calendarIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', 'date-icon');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z');
+  svg.append(path);
+  return svg;
+}
+
+export function datePicker(id, labelText, onChange = () => {}) {
+  const wrapper = el('div', 'form-field date-field');
+  const label = el('label', '', labelText); label.htmlFor = id;
+  const control = el('div', 'date-control');
+  const trigger = el('button', 'date-trigger'); trigger.type = 'button'; trigger.id = id;
+  trigger.setAttribute('aria-haspopup', 'dialog'); trigger.setAttribute('aria-expanded', 'false');
+  const text = el('span', 'date-text');
+  trigger.append(text, calendarIcon());
+  const input = el('input'); input.type = 'hidden'; input.name = id;
+
+  const popup = el('div', 'calendar'); popup.hidden = true;
+  popup.setAttribute('role', 'dialog'); popup.setAttribute('aria-label', 'בחירת ' + labelText);
+  const title = el('strong'); title.setAttribute('aria-live', 'polite');
+  const head = el('div', 'calendar-head');
+  // in a right-to-left page the earlier month sits on the right
+  head.append(navButton('›', 'החודש הקודם', -1), title, navButton('‹', 'החודש הבא', 1));
+  const grid = el('div', 'calendar-grid');
+  grid.addEventListener('keydown', moveWithKeys);
+  const quick = el('div', 'calendar-quick');
+  quick.append(quickPick('היום', today), quickPick('1 בחודש הבא', firstOfNextMonth));
+  popup.append(head, grid, quick);
+  control.append(trigger, input, popup);
+  wrapper.append(label, control);
+
+  let shown = today(); // a day in the month on screen
+  let focused = today();
+
+  function navButton(symbol, name, months) {
+    const button = el('button', 'calendar-nav', symbol); button.type = 'button';
+    button.setAttribute('aria-label', name);
+    button.addEventListener('click', () => { focused = addMonths(focused, months); shown = focused; render(false); });
+    return button;
+  }
+  function quickPick(name, day) {
+    const button = el('button', '', name); button.type = 'button';
+    button.addEventListener('click', () => choose(day()));
+    return button;
+  }
+  function showValue() {
+    const day = parse(input.value);
+    text.replaceChildren(); text.classList.toggle('empty', !day);
+    if (day) { const value = el('bdi', '', displayDate(input.value)); value.dir = 'ltr'; text.append(value); }
+    else text.append(document.createTextNode('בחירת תאריך'));
+    trigger.setAttribute('aria-label', labelText + ': ' + (day ? dayName.format(day) : 'לא נבחר'));
+  }
+  function choose(day) {
+    input.value = iso(day); showValue(); close(); trigger.focus(); onChange(input.value);
+  }
+  function render(moveFocus) {
+    title.textContent = monthTitle.format(shown);
+    grid.replaceChildren();
+    for (const name of WEEKDAYS) { const cell = el('span', 'calendar-weekday', name); cell.setAttribute('aria-hidden', 'true'); grid.append(cell); }
+    const first = new Date(shown.getFullYear(), shown.getMonth(), 1);
+    const start = addDays(first, -first.getDay());
+    const now = iso(today());
+    let focusTarget = null;
+    for (let index = 0; index < 42; index += 1) {
+      const day = addDays(start, index);
+      const key = iso(day);
+      const button = el('button', 'calendar-day', String(day.getDate())); button.type = 'button';
+      if (day.getMonth() !== shown.getMonth()) button.classList.add('outside');
+      if (key === now) button.classList.add('today');
+      button.setAttribute('aria-pressed', String(key === input.value));
+      button.setAttribute('aria-label', dayName.format(day) + (key === now ? ', היום' : ''));
+      button.tabIndex = key === iso(focused) ? 0 : -1;
+      if (key === iso(focused)) focusTarget = button;
+      button.addEventListener('click', () => choose(day));
+      grid.append(button);
+    }
+    if (moveFocus) focusTarget?.focus();
+  }
+  function moveWithKeys(event) {
+    const moves = { ArrowRight: () => addDays(focused, -1), ArrowLeft: () => addDays(focused, 1), ArrowUp: () => addDays(focused, -7),
+      ArrowDown: () => addDays(focused, 7), PageUp: () => addMonths(focused, -1), PageDown: () => addMonths(focused, 1),
+      Home: () => addDays(focused, -focused.getDay()), End: () => addDays(focused, 6 - focused.getDay()) };
+    if (!moves[event.key]) return;
+    event.preventDefault();
+    focused = moves[event.key](); shown = focused; render(true);
+  }
+  function outside(event) { if (!control.contains(event.target)) close(); }
+  function onKey(event) { if (event.key === 'Escape') { event.preventDefault(); close(); trigger.focus(); } }
+  function open() {
+    if (trigger.disabled) return;
+    focused = parse(input.value) || today(); shown = focused;
+    popup.hidden = false; trigger.setAttribute('aria-expanded', 'true');
+    render(true);
+    document.addEventListener('pointerdown', outside);
+    popup.addEventListener('keydown', onKey);
+  }
+  function close() {
+    if (popup.hidden) return;
+    popup.hidden = true; trigger.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('pointerdown', outside);
+    popup.removeEventListener('keydown', onKey);
+  }
+  trigger.addEventListener('click', () => (popup.hidden ? open() : close()));
+  showValue();
+  return {
+    wrapper, open, close,
+    get value() { return input.value; },
+    set value(next) { input.value = parse(next) ? next : ''; showValue(); }
+  };
 }
 ```
 
@@ -1139,10 +1322,17 @@ function renderProfile(profile, previous) {
   container.setAttribute('aria-busy', 'false');
 }
 
-/** Link to the model's page on the importer's site. Only https links from the server are rendered. */
-function modelLink(url, label) {
+/** Link to the model's page on the importer's site, as a pill with an "opens elsewhere" icon. Only https links from the server are rendered. */
+function modelLink(url, label, text = 'עמוד הדגם') {
   if (typeof url !== 'string' || !url.startsWith('https://')) return null;
-  const link = el('a', 'model-link', 'לעמוד הדגם ↗');
+  const link = el('a', 'model-link');
+  const ns = 'http://www.w3.org/2000/svg';
+  const icon = document.createElementNS(ns, 'svg');
+  icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true'); icon.setAttribute('class', 'link-icon');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5');
+  icon.append(path);
+  link.append(el('span', '', text), icon);
   link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
   link.setAttribute('aria-label', 'עמוד הדגם ' + label + ' באתר היבואן (נפתח בחלון חדש)');
   return link;
@@ -1404,8 +1594,8 @@ function chatCars(cars) {
     };
     actions.append(button('פרטים', 'details'));
     if (car.allowed) actions.append(button('השוואה', 'compare'));
-    const link = modelLink(car.officialUrl, car.label);
-    if (link) { link.textContent = 'לאתר ↗'; actions.append(link); }
+    const link = modelLink(car.officialUrl, car.label, 'לאתר');
+    if (link) actions.append(link);
     bottom.append(meta, actions);
     card.append(top, bottom);
     list.append(card);
@@ -1657,6 +1847,7 @@ initialize();
 ```js
 import { api } from './api.js';
 import { el, appendText, formatDate, formatNumber, emptyState, showNotice } from './format.js';
+import { datePicker, displayDate } from './datepicker.js';
 
 const byId = id => document.getElementById(id);
 const cards = new Map();
@@ -1666,6 +1857,7 @@ let refreshing = false;
 let activeAnswers = 0;
 let retryAction = null;
 let timer;
+let answeredSeen = '';
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 function reportError(error, retry) {
   showNotice(byId('error-text'), error.message || 'לא ניתן לטעון את השאלות כרגע.');
@@ -1673,145 +1865,195 @@ function reportError(error, retry) {
 }
 function clearError() { byId('error-banner').hidden = true; retryAction = null; }
 function highlight(node) { node.classList.remove('changed'); void node.offsetWidth; node.classList.add('changed'); setTimeout(() => node.classList.remove('changed'), 2000); }
-function field(labelText, id, type, initial = '') {
+function field(labelText, id, type) {
   const wrapper = el('div', 'form-field');
   const label = el('label', '', labelText); label.htmlFor = id;
   const input = el(type === 'textarea' ? 'textarea' : 'input');
   if (type !== 'textarea') input.type = type;
-  input.id = id; input.name = id; input.value = initial;
-  if (type === 'number') { input.step = 'any'; input.dir = 'ltr'; }
-  if (type === 'date') input.dir = 'ltr';
+  input.id = id; input.name = id;
+  if (type === 'number') { input.step = 'any'; input.min = '0'; input.dir = 'ltr'; input.inputMode = 'decimal'; }
   wrapper.append(label, input);
   return { wrapper, input };
+}
+/** How long a question has been waiting, in words. */
+function waited(createdAt) {
+  const minutes = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+  if (!Number.isFinite(minutes) || minutes < 1) return 'ממתינה פחות מדקה';
+  if (minutes < 60) return 'ממתינה ' + minutes + ' דק׳';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours === 1 ? 'ממתינה שעה' : 'ממתינה ' + hours + ' שעות';
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'ממתינה יום' : 'ממתינה ' + days + ' ימים';
+}
+
+/** Answered questions, the latest first. */
+function renderAnswered() {
+  byId('answered-count').replaceChildren(); appendText(byId('answered-count'), formatNumber(answered.size));
+  const list = byId('answered-list'); list.replaceChildren();
+  const latestFirst = [...answered.values()].sort((a, b) => new Date(b.answer?.answeredAt) - new Date(a.answer?.answeredAt));
+  for (const question of latestFirst) {
+    const row = el('article', 'answered-row');
+    const head = el('div', 'answered-head');
+    head.append(el('strong', '', question.employeeLabel), el('span', 'small-muted', formatDate(question.answer.answeredAt)));
+    const what = ['אושר: ' + question.answer.display,
+      question.answer.effectiveFrom ? 'בתוקף מ-' + displayDate(question.answer.effectiveFrom) : '',
+      question.answer.answeredBy ? 'על ידי ' + question.answer.answeredBy : ''].filter(Boolean).join(' · ');
+    row.append(head, el('p', 'answered-question', question.question), el('p', 'answered-what', what));
+    if (question.answer.note) row.append(el('p', 'small-muted', 'הערה: ' + question.answer.note));
+    list.append(row);
+  }
+  if (!answered.size) list.append(el('p', 'small-muted answered-empty', 'עוד לא נענו שאלות.'));
 }
 function addAnswered(question) {
   answered.set(question.id, structuredClone(question));
   renderAnswered();
 }
-function renderAnswered() {
-  byId('answered-count').replaceChildren(); appendText(byId('answered-count'), formatNumber(answered.size));
-  byId('answered-list').replaceChildren();
-  for (const question of answered.values()) {
-    const details = el('details', 'panel answered-card');
-    const summary = el('summary'); summary.append(el('span', '', question.employeeLabel), el('span', 'badge status-confirmed', 'נענה'));
-    details.append(summary);
-    const content = el('div', 'answer-result');
-    content.append(el('p', '', question.question), el('p', '', 'ערך שאושר: ' + question.answer.display));
-    if (question.answer.effectiveFrom) content.append(el('p', '', 'תחולה: ' + question.answer.effectiveFrom));
-    if (question.answer.note) content.append(el('p', '', 'הערה: ' + question.answer.note));
-    if (question.answer.answeredBy) content.append(el('p', '', 'נענה על ידי ' + question.answer.answeredBy));
-    content.append(el('p', 'small-muted', 'נקבע על ידי נציג התחבורה · מקור: REP'));
-    content.append(el('p', 'small-muted', 'נענה: ' + formatDate(question.answer.answeredAt)));
-    details.append(content); byId('answered-list').append(details);
-  }
-}
+
+/** One question in the queue: what is asked, the case in one line, and the answer in one row. */
 function buildCard(question) {
-  const card = el('article', 'panel question-card' + (question.stale ? ' stale' : ''));
+  const card = el('li', 'question-card'); card.dataset.id = question.id;
   const headingId = 'heading-' + question.id;
   card.setAttribute('aria-labelledby', headingId);
-  const header = el('div', 'question-header');
-  const title = el('div'); title.append(el('span', 'section-kicker', question.fieldLabel));
+  const top = el('div', 'question-top');
+  const position = el('span', 'queue-position'); position.setAttribute('aria-hidden', 'true');
+  const titles = el('div', 'question-titles');
+  const nextTag = el('span', 'next-tag', 'הבאה בתור'); nextTag.hidden = true;
   const h3 = el('h3', '', question.question); h3.id = headingId;
-  title.append(h3, el('p', 'question-employee', question.employeeLabel), el('span', 'question-time', 'נפתחה: ' + formatDate(question.createdAt)));
-  header.append(title, el('span', 'badge ' + (question.stale ? 'status-missing' : 'status-default'), question.stale ? 'התיישנה' : 'ממתינה למענה'));
-  card.append(header);
-  const context = el('div', 'context-boxes');
-  const known = el('div', 'context-box'); known.append(el('h4', '', 'מה ידוע'));
-  for (const item of question.context.known || []) {
-    const row = el('p', 'known-item'); row.append(el('span', 'known-label', item.label), el('span', '', item.display)); known.append(row);
-  }
-  const assumption = el('div', 'context-box assumption'); assumption.append(el('h4', '', 'מה הבוט הניח'), el('p', '', question.context.assumption));
-  context.append(known, assumption); card.append(context);
-  const entry = { node: card, data: structuredClone(question), busy: false, form: null };
-  if (question.stale) { card.append(el('p', 'small-muted', 'התיישנה, העובד שינה בחירה')); return entry; }
-  const form = el('form');
+  titles.append(nextTag, h3, el('p', 'question-employee', question.employeeLabel));
+  const wait = el('span', 'wait-chip'); wait.title = 'נפתחה: ' + formatDate(question.createdAt);
+  top.append(position, titles, wait);
+  card.append(top);
+  const facts = el('dl', 'question-facts');
+  for (const item of question.context.known || []) { const pair = el('div'); pair.append(el('dt', '', item.label), el('dd', '', item.display)); facts.append(pair); }
+  card.append(facts);
+  // what the comparison uses now, with the button that takes it as the answer
+  const assumption = el('div', 'question-assumption');
+  if (question.context.assumption) assumption.append(el('p', '', question.context.assumption));
+  card.append(assumption);
+
+  const form = el('form', 'answer-form');
   form.setAttribute('aria-label', 'מענה לשאלה: ' + question.question);
-  const value = field('ערך', 'value-' + question.id, 'number'); value.input.required = true;
-  const effective = field('תאריך תחולה', 'effective-' + question.id, 'date'); effective.input.required = true;
-  const note = field('הערה (רשות)', 'note-' + question.id, 'textarea'); note.wrapper.classList.add('note-field'); note.input.maxLength = 2000;
+  const error = el('p', 'form-error'); error.hidden = true; error.setAttribute('role', 'alert');
+  const value = field('סכום חודשי (₪)', 'value-' + question.id, 'number'); value.input.required = true;
+  const effective = datePicker('effective-' + question.id, 'תאריך תחולה', () => showNotice(error, ''));
+  const submit = el('button', 'primary-button', 'שליחת תשובה'); submit.type = 'submit';
+  const row = el('div', 'answer-row'); row.append(value.wrapper, effective.wrapper, submit);
+  const extras = el('div', 'answer-extras');
+  const entry = { node: card, data: structuredClone(question), busy: false, form, value: value.input, effective, wait, position, nextTag, note: null };
   const suggestion = question.context.suggestedAnswer;
   if (suggestion) {
-    const box = el('div', 'suggested-answer');
-    const text = el('div'); text.append(el('strong', '', 'ההצעה: ' + suggestion.display), el('small', '', suggestion.source === 'CATALOG_DEFAULT' ? 'ברירת מחדל בקטלוג' : suggestion.source));
-    const button = el('button', 'secondary-button', 'אשר את ההצעה'); button.type = 'button';
-    button.addEventListener('click', () => {
+    const fill = el('button', 'chip-button', 'למלא את ההצעה: ' + suggestion.display); fill.type = 'button';
+    if (suggestion.source === 'CATALOG_DEFAULT') fill.title = 'ברירת המחדל בקטלוג';
+    fill.addEventListener('click', () => {
       if (entry.busy) return;
       value.input.value = String(suggestion.value);
-      if (!effective.input.value) { showNotice(error, 'יש לבחור תאריך תחולה לפני אישור ההצעה.'); effective.input.focus(); }
-      else form.requestSubmit();
+      if (!effective.value) effective.open(); else submit.focus();
     });
-    box.append(text, button); form.append(box);
+    assumption.append(fill);
   }
-  const fields = el('div', 'answer-fields'); fields.append(value.wrapper, effective.wrapper, note.wrapper);
-  const error = el('p', 'form-error'); error.hidden = true; error.setAttribute('role', 'alert');
-  const footer = el('div', 'answer-footer');
-  const submit = el('button', 'primary-button', 'שליחת תשובה'); submit.type = 'submit';
-  footer.append(submit, el('small', '', 'לאחר המענה, תיק העובד יתעדכן.'));
-  form.append(fields, error, footer); card.append(form); entry.form = form;
+  const note = field('הערה (רשות)', 'note-' + question.id, 'textarea'); note.input.maxLength = 2000;
+  note.wrapper.classList.add('note-field'); note.wrapper.hidden = true;
+  const addNote = el('button', 'text-button', 'הוספת הערה'); addNote.type = 'button';
+  const showNote = () => { note.wrapper.hidden = false; addNote.hidden = true; };
+  addNote.addEventListener('click', () => { showNote(); note.input.focus(); });
+  extras.append(addNote);
+  entry.note = { input: note.input, show: showNote };
+  form.append(row, extras, note.wrapper, error);
+  card.append(form);
+
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (entry.busy || !form.reportValidity()) return;
     const answerValue = value.input.valueAsNumber;
-    if (!Number.isFinite(answerValue)) { showNotice(error, 'יש להזין ערך מספרי תקין.'); return; }
-    const payload = { value: answerValue, effectiveFrom: effective.input.value, note: note.input.value.trim() };
+    if (!Number.isFinite(answerValue)) { showNotice(error, 'יש להזין סכום תקין.'); return; }
+    if (!effective.value) { showNotice(error, 'יש לבחור תאריך תחולה.'); effective.open(); return; }
+    const payload = { value: answerValue, effectiveFrom: effective.value, note: note.input.value.trim() };
     const key = question.id + ':' + JSON.stringify(payload);
     const requestId = requestIds.get(key) || crypto.randomUUID(); requestIds.set(key, requestId);
     entry.busy = true; activeAnswers += 1; clearError(); showNotice(error, '');
     for (const control of form.querySelectorAll('input, textarea, button')) control.disabled = true;
-    submit.textContent = 'שולח תשובה…';
+    submit.textContent = 'שולח…';
+    let done = false;
     try {
       const result = await api.answerQuestion(question.id, payload.value, payload.effectiveFrom, payload.note, requestId);
-      requestIds.delete(key); addAnswered(result); card.remove(); cards.delete(question.id);
-      showNotice(byId('feedback'), 'התשובה נשמרה. המידע בתיק העובד מתעדכן.');
+      requestIds.delete(key); addAnswered(result); removeCard(question.id); done = true;
+      showNotice(byId('feedback'), 'התשובה נשמרה, וההשוואה אצל העובד/ת התעדכנה.');
     } catch (failure) {
       if (failure.status === 409) {
-        requestIds.delete(key);
-        const stale = { ...question, stale: true };
-        const updated = buildCard(stale); card.replaceWith(updated.node); cards.set(question.id, updated);
-        showNotice(byId('feedback'), 'השאלה התיישנה, העובד שינה בחירה. הרשימה נטענת מחדש.');
+        requestIds.delete(key); removeCard(question.id); done = true;
+        showNotice(byId('feedback'), 'השאלה כבר לא רלוונטית: העובד/ת בחר/ה רכב אחר, או שכבר נענתה. היא הוסרה מהתור.');
       } else showNotice(error, failure.message);
     } finally {
       entry.busy = false; activeAnswers -= 1;
-      for (const control of form.querySelectorAll('input, textarea, button')) control.disabled = false;
-      submit.textContent = 'שליחת תשובה';
-      updateCount();
+      if (!done) {
+        for (const control of form.querySelectorAll('input, textarea, button')) control.disabled = false;
+        submit.textContent = 'שליחת תשובה';
+      }
+      updateQueue();
       if (activeAnswers === 0) refresh();
     }
   });
   return entry;
 }
-function updateCount() {
-  const count = [...cards.values()].filter(entry => !entry.data.stale && entry.data.status === 'OPEN').length;
-  byId('open-count').replaceChildren(); appendText(byId('open-count'), formatNumber(count));
+function removeCard(id) { cards.get(id)?.node.remove(); cards.delete(id); }
+/** What the rep typed survives when a card is redrawn with newer data. */
+function carryOver(from, to) {
+  to.value.value = from.value.value;
+  to.effective.value = from.effective.value;
+  if (from.note.input.value) { to.note.input.value = from.note.input.value; to.note.show(); }
 }
-function applyQuestions(questions) {
+/** Positions, the "next" mark and the waiting times follow the order on screen: the longest waiting first. */
+function updateQueue() {
   const container = byId('questions');
-  if (!cards.size) container.replaceChildren();
+  container.querySelector(':scope > .queue-empty')?.remove();
+  const nodes = [...container.querySelectorAll(':scope > .question-card')];
+  nodes.forEach((node, index) => {
+    const entry = cards.get(node.dataset.id);
+    if (!entry) return;
+    entry.position.textContent = String(index + 1);
+    node.classList.toggle('next', index === 0); entry.nextTag.hidden = index !== 0;
+    entry.wait.textContent = waited(entry.data.createdAt);
+  });
+  if (!nodes.length) {
+    const empty = el('li', 'queue-empty');
+    empty.append(emptyState('התור ריק.', 'שאלה חדשה תופיע כאן ברגע שעובד/ת יבקש/תבקש אישור.'));
+    container.append(empty);
+  }
+  byId('open-count').replaceChildren(); appendText(byId('open-count'), formatNumber(nodes.length));
+  container.setAttribute('aria-busy', 'false');
+}
+/** The server sends only questions that can still be answered, the longest waiting first. */
+function applyQueue(questions) {
+  const container = byId('questions');
+  container.querySelector(':scope > .queue-loading')?.remove();
   const incoming = new Set(questions.map(question => question.id));
-  for (const [id, entry] of cards) if (!incoming.has(id) && !entry.busy) { entry.node.remove(); cards.delete(id); }
+  for (const [id, entry] of cards) if (!incoming.has(id) && !entry.busy) removeCard(id);
   for (const question of questions) {
-    if (question.status === 'ANSWERED') { addAnswered(question); continue; }
     const existing = cards.get(question.id);
     if (existing && (existing.busy || same(existing.data, question))) continue;
     const next = buildCard(question);
-    if (existing?.form && next.form && !question.stale) {
-      for (const oldInput of existing.form.querySelectorAll('input, textarea')) {
-        const newInput = [...next.form.querySelectorAll('input, textarea')].find(input => input.name === oldInput.name);
-        if (newInput) newInput.value = oldInput.value;
-      }
-    }
-    if (existing) { existing.node.replaceWith(next.node); highlight(next.node); }
+    if (existing) { carryOver(existing, next); existing.node.replaceWith(next.node); highlight(next.node); }
     else container.append(next.node);
     cards.set(question.id, next);
   }
-  if (!cards.size) container.replaceChildren(emptyState('התור פנוי.', 'כשיהיו שאלות חדשות שמצריכות אישור, הן יופיעו כאן.'));
-  container.setAttribute('aria-busy', 'false'); updateCount();
+  updateQueue();
+}
+function applyAnswered(questions) {
+  const seen = JSON.stringify(questions);
+  if (seen === answeredSeen) return;
+  answeredSeen = seen;
+  for (const question of questions) answered.set(question.id, structuredClone(question));
+  renderAnswered();
 }
 async function refresh() {
   if (refreshing || activeAnswers) return;
   refreshing = true;
-  try { const [open, done] = await Promise.all([api.getQuestions(), api.getAnsweredQuestions()]); applyQuestions([...open, ...done]); clearError(); showNotice(byId('sync-label'), 'מעודכן · ' + formatDate(new Date().toISOString(), true)); }
-  catch (error) { reportError(error, refresh); showNotice(byId('sync-label'), 'העדכון מושהה · מנסה להתחבר'); }
+  try {
+    const [open, done] = await Promise.all([api.getQuestions(), api.getAnsweredQuestions()]);
+    applyQueue(open.filter(question => question.status === 'OPEN' && !question.stale));
+    applyAnswered(done);
+    clearError(); showNotice(byId('sync-label'), 'מתעדכן אוטומטית · ' + formatDate(new Date().toISOString(), true));
+  } catch (error) { reportError(error, refresh); showNotice(byId('sync-label'), 'העדכון מושהה · מנסה להתחבר'); }
   finally { refreshing = false; }
 }
 byId('retry-button').addEventListener('click', () => retryAction?.());

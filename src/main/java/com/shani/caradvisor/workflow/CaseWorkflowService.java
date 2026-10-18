@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -272,9 +273,18 @@ public class CaseWorkflowService {
         caseEntity.touch(Instant.now());
     }
 
+    /**
+     * The rep's queue. Open: only questions still worth answering, the one waiting longest first (a stale one
+     * cannot be answered, so it is not shown). Answered: the latest first.
+     */
     @Transactional(readOnly = true)
     public List<RepQuestionView> repQuestions(RepQuestionEntity.Status status) {
-        return questions.findByStatusOrderByCreatedAtAsc(status).stream()
+        List<RepQuestionEntity> found = questions.findByStatusOrderByCreatedAtAsc(status);
+        List<RepQuestionEntity> shown = status == RepQuestionEntity.Status.OPEN
+                ? found.stream().filter(RepQuestionEntity::isPending).toList()
+                : found.stream().sorted(Comparator.comparing(RepQuestionEntity::answeredAt,
+                        Comparator.nullsLast(Comparator.reverseOrder()))).toList();
+        return shown.stream()
                 .map(q -> views.repView(q, load(q.caseId())))
                 .toList();
     }

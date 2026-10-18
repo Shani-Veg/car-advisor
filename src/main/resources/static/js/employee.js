@@ -266,10 +266,17 @@ function renderProfile(profile, previous) {
   container.setAttribute('aria-busy', 'false');
 }
 
-/** Link to the model's page on the importer's site. Only https links from the server are rendered. */
-function modelLink(url, label) {
+/** Link to the model's page on the importer's site, as a pill with an "opens elsewhere" icon. Only https links from the server are rendered. */
+function modelLink(url, label, text = 'עמוד הדגם') {
   if (typeof url !== 'string' || !url.startsWith('https://')) return null;
-  const link = el('a', 'model-link', 'לעמוד הדגם ↗');
+  const link = el('a', 'model-link');
+  const ns = 'http://www.w3.org/2000/svg';
+  const icon = document.createElementNS(ns, 'svg');
+  icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true'); icon.setAttribute('class', 'link-icon');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5');
+  icon.append(path);
+  link.append(el('span', '', text), icon);
   link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
   link.setAttribute('aria-label', 'עמוד הדגם ' + label + ' באתר היבואן (נפתח בחלון חדש)');
   return link;
@@ -531,8 +538,8 @@ function chatCars(cars) {
     };
     actions.append(button('פרטים', 'details'));
     if (car.allowed) actions.append(button('השוואה', 'compare'));
-    const link = modelLink(car.officialUrl, car.label);
-    if (link) { link.textContent = 'לאתר ↗'; actions.append(link); }
+    const link = modelLink(car.officialUrl, car.label, 'לאתר');
+    if (link) actions.append(link);
     bottom.append(meta, actions);
     card.append(top, bottom);
     list.append(card);
