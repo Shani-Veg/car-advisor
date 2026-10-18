@@ -48,6 +48,10 @@ public class CaseController {
     public record RepRequest(String clientRequestId) {
     }
 
+    /** action: "details" or "compare". */
+    public record CarActionRequest(String action, String clientRequestId) {
+    }
+
     /** values: field key (as in the profile) to the value the employee approved. */
     public record PayslipApproval(Map<String, Object> values, String clientRequestId) {
     }
@@ -89,6 +93,13 @@ public class CaseController {
     public CaseView updateProfile(@PathVariable("caseId") String caseId, @PathVariable("key") String key,
                                   @RequestBody ProfileUpdate body) {
         return choices.editProfile(caseId, FactKey.fromApiName(key), body.value(), body.expectedVersion());
+    }
+
+    /** The buttons on a car card in the chat. */
+    @PostMapping("/{caseId}/cars/{vehicleId}")
+    public CaseView carAction(@PathVariable("caseId") String caseId, @PathVariable("vehicleId") String vehicleId,
+                              @RequestBody CarActionRequest body) {
+        return choices.carAction(caseId, vehicleId, body.action(), body.clientRequestId());
     }
 
     @PostMapping("/{caseId}/rep-request")

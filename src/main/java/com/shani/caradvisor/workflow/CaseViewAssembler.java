@@ -8,6 +8,7 @@ import com.shani.caradvisor.engine.ComparisonEngine;
 import com.shani.caradvisor.engine.Factor;
 import com.shani.caradvisor.engine.Vehicle;
 import com.shani.caradvisor.workflow.Views.BreakdownView;
+import com.shani.caradvisor.workflow.Views.CarCard;
 import com.shani.caradvisor.workflow.Views.ChoiceView;
 import com.shani.caradvisor.workflow.Views.CaseView;
 import com.shani.caradvisor.workflow.Views.ComparisonView;
@@ -97,13 +98,39 @@ class CaseViewAssembler {
     private List<MessageView> messageViews(CaseEntity caseEntity, CaseState state) {
         List<MessageEntity> all = messages.findByCaseIdOrderByIdAsc(caseEntity.id());
         List<ChoiceView> choices = offersFor(state, all).stream().map(o -> new ChoiceView(o.id(), o.label())).toList();
+        Map<String, java.math.BigDecimal> effects = all.stream().anyMatch(m -> !m.cars().isEmpty()) ? effects(state) : Map.of();
         List<MessageView> result = new ArrayList<>();
         for (int i = 0; i < all.size(); i++) {
             MessageEntity m = all.get(i);
+            List<CarCard> cards = m.cars().stream()
+                    .map(id -> data.catalog().byId(id).map(v -> card(v, state, effects)).orElse(null))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
             result.add(new MessageView("m-" + m.id(), m.role().name().toLowerCase(), m.text(), m.createdAt(),
-                    i == all.size() - 1 ? choices : List.of()));
+                    i == all.size() - 1 ? choices : List.of(), cards));
         }
         return result;
+    }
+
+    /** Numbers on a card come from the engine at read time, like every other number. */
+    private static CarCard card(Vehicle v, CaseState state, Map<String, java.math.BigDecimal> effects) {
+        boolean allowed = state.mayTake(v);
+        return new CarCard(v.id(), v.label(), v.maker(), v.drive().hebrew(), v.group(), v.listPrice(), allowed,
+                allowed ? effects.get(v.id()) : null, v.officialUrl());
+    }
+
+    private Map<String, java.math.BigDecimal> effects(CaseState state) {
+        if (!state.missingForToday().isEmpty()) {
+            return Map.of();
+        }
+        Map<String, java.math.BigDecimal> effect = new java.util.HashMap<>();
+        for (Comparison c : engine.rankAlternatives(state.employee(), state.occupation(), state.todayChoice(),
+                data.catalog().vehicles())) {
+            if (c.alternative().choice() instanceof CarChoice.CompanyCar car) {
+                effect.put(car.vehicle().id(), c.difference());
+            }
+        }
+        return effect;
     }
 
     List<ChoiceOptions.Offer> offersFor(CaseState state, CaseEntity caseEntity) {

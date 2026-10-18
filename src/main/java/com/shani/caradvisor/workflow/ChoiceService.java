@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import com.shani.caradvisor.engine.Drive;
 
 /**
  * The guided part of the chat, deterministic and never calling a language model: a tap on an answer button goes
@@ -26,15 +28,17 @@ public class ChoiceService {
     private final ChoiceOptions options;
     private final CaseWorkflowService workflow;
     private final DirectAnswers directAnswers;
+    private final CarGuide guide;
 
     ChoiceService(CaseRepository cases, MessageRepository messages, CaseViewAssembler views, ChoiceOptions options,
-                  CaseWorkflowService workflow, DirectAnswers directAnswers) {
+                  CaseWorkflowService workflow, DirectAnswers directAnswers, CarGuide guide) {
         this.cases = cases;
         this.messages = messages;
         this.views = views;
         this.options = options;
         this.workflow = workflow;
         this.directAnswers = directAnswers;
+        this.guide = guide;
     }
 
     /**
@@ -102,11 +106,45 @@ public class ChoiceService {
         } else if (ChoiceOptions.REVIEW_LATER.equals(offer.id())) {
             workflow.deferAssumptions(caseId);
             workflow.addBotMessage(caseId, ChatSummaries.assumptionsDeferred());
+        } else if (offer.id().startsWith(ChoiceOptions.FIND)) {
+            Drive drive = Drive.valueOf(offer.id().substring(ChoiceOptions.FIND.length()));
+            CarGuide.Answer answer = guide.find(caseId, Set.of(drive), null, null);
+            workflow.addBotMessage(caseId, answer.text(), false, answer.cars());
         } else if (ChoiceOptions.REP_ASK.equals(offer.id())) {
             workflow.requestRepConfirmation(caseId);
             workflow.addBotMessage(caseId, ChatSummaries.repRequested(workflow.view(caseId)));
         }
         return workflow.view(caseId);
+    }
+
+    /**
+     * The buttons on a car card in the chat: "פרטים" explains the model, "השוואה" compares it with today. Said in the
+     * chat as if typed, and answered by code, so they work with the assistant off or replaying.
+     */
+    public CaseView carAction(String caseId, String vehicleId, String action, String clientRequestId) {
+        CaseEntity caseEntity = cases.findById(caseId)
+                .orElseThrow(() -> ApiException.notFound("UNKNOWN_CASE", "התיק לא נמצא"));
+        if (clientRequestId != null && messages.findByCaseIdAndClientRequestId(caseId, clientRequestId).isPresent()) {
+            return views.caseView(caseEntity);
+        }
+        if ("details".equals(action)) {
+            CarGuide.Answer answer = guide.describe(caseId, vehicleId);
+            workflow.recordEmployeeMessage(caseId, "ספר/י לי על " + label(vehicleId), clientRequestId);
+            workflow.addBotMessage(caseId, answer.text(), false, answer.cars());
+        } else if ("compare".equals(action)) {
+            workflow.chooseAlternative(caseId, "car", vehicleId, null);
+            workflow.recordEmployeeMessage(caseId, "להשוות את " + label(vehicleId) + " מול היום", clientRequestId);
+            CaseView view = workflow.view(caseId);
+            workflow.addBotMessage(caseId, view.comparison() != null ? ChatSummaries.comparisonSummary(view)
+                    : "בחרתי את החלופה. ההשוואה תופיע כשיהיו מספיק נתונים.");
+        } else {
+            throw ApiException.badRequest("UNKNOWN_ACTION", "פעולה לא מוכרת: " + action);
+        }
+        return workflow.view(caseId);
+    }
+
+    private String label(String vehicleId) {
+        return guide.label(vehicleId);
     }
 
     /** The "confirm with the rep" button next to the comparison: the same step as the chat button, said in the chat. */

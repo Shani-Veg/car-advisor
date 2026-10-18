@@ -104,6 +104,22 @@ async function mutate(key, action, onSuccess) {
   } finally { busy = false; updateControls(); }
 }
 
+/**
+ * Car names such as "MG4 (2025)" are left-to-right inside Hebrew text; without isolation the browser scrambles them
+ * ("(2025) MG4"). Display only: the text itself is the server's.
+ */
+const LATIN_NAME = /[A-Za-z][A-Za-z0-9.\-]*(?:\s+[A-Za-z0-9][A-Za-z0-9.\-]*)*(?:\s+\(\d{4}\))?/g;
+function messageText(text) {
+  const p = el('p', 'message-text');
+  let last = 0;
+  for (const match of text.matchAll(LATIN_NAME)) {
+    if (match.index > last) p.append(document.createTextNode(text.slice(last, match.index)));
+    const name = el('bdi', '', match[0]); name.dir = 'ltr'; p.append(name);
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) p.append(document.createTextNode(text.slice(last)));
+  return p;
+}
 function renderMessages(messages) {
   const container = byId('messages');
   const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 90;
@@ -130,7 +146,8 @@ function renderMessages(messages) {
     const content = el('div', 'message-content');
     const meta = el('div', 'message-meta');
     meta.append(el('strong', '', message.role === 'employee' ? 'אני' : 'יועץ הרכב'), el('span', '', formatDate(message.at, true)));
-    content.append(meta, el('p', 'message-text', message.text));
+    content.append(meta, messageText(message.text));
+    if (message.cars?.length) content.append(chatCars(message.cars));
     if (active && message.choices?.length) {
       const longList = message.choices.length > 8;
       const choices = el('div', longList ? 'choices-list' : 'message-choices');
@@ -455,6 +472,46 @@ function renderRanking(ranking, previous) {
     if (old && !same(old, item)) highlight(row);
   }
   container.append(list);
+}
+
+/**
+ * Cars the bot shows in the chat. Every number on a card is the server's (change in net for this employee, list price);
+ * the buttons ask the server to explain the model or compare it with today, so they work without the assistant too.
+ */
+function chatCars(cars) {
+  const list = el('div', 'chat-cars');
+  for (const car of cars) {
+    const card = el('div', 'chat-car' + (car.allowed ? '' : ' not-allowed'));
+    const top = el('div', 'chat-car-top');
+    top.append(vehicleIdentity({ type: 'car', vehicleId: car.vehicleId, label: car.label, maker: car.maker, drive: car.drive }, catalog, true));
+    const value = el('div', 'chat-car-value');
+    if (!car.allowed) value.append(el('small', '', 'מחוץ לזכאות שלך'));
+    else if (typeof car.difference === 'number') {
+      value.classList.add(car.difference > 0 ? 'gain' : car.difference < 0 ? 'loss' : 'same');
+      value.append(moneyNode(car.difference, true), el('small', '', 'לנטו בחודש'));
+    }
+    top.append(value);
+    const meta = el('p', 'chat-car-meta');
+    meta.append(document.createTextNode((car.group === 'משפחתי' ? 'מסלול ברוכת ילדים' : 'קבוצה ' + car.group) + ' · מחיר מחירון '), moneyNode(car.listPrice));
+    const actions = el('div', 'chat-car-actions');
+    const button = (label, action) => {
+      const b = el('button', 'step-action', label); b.type = 'button'; b.dataset.mutation = '';
+      b.setAttribute('aria-label', label + ': ' + car.label);
+      b.addEventListener('click', async () => {
+        const before = alternativeKey();
+        const ok = await mutate('car:' + action + ':' + car.vehicleId, id => api.carAction(caseId, car.vehicleId, action, id));
+        if (ok && action === 'compare' && alternativeKey() !== before && !byId('comparison-panel').hidden) scrollToComparison();
+      });
+      return b;
+    };
+    actions.append(button('פרטים', 'details'));
+    if (car.allowed) actions.append(button('השוואה', 'compare'));
+    const link = modelLink(car.officialUrl, car.label);
+    if (link) actions.append(link);
+    card.append(top, meta, actions);
+    list.append(card);
+  }
+  return list;
 }
 
 /** Buttons the screen handles itself: choosing a payslip file, or opening the details to correct them. */

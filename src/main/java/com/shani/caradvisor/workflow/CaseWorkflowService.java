@@ -236,11 +236,17 @@ public class CaseWorkflowService {
 
     /** continueOnly: the reply answered a side question, so the chat offers to carry on instead of repeating the buttons. */
     public void addBotMessage(String caseId, String text, boolean continueOnly) {
+        addBotMessage(caseId, text, continueOnly, List.of());
+    }
+
+    /** cars: catalog ids shown as cards under the message. */
+    public void addBotMessage(String caseId, String text, boolean continueOnly, List<String> cars) {
         CaseEntity caseEntity = load(caseId);
         MessageEntity message = new MessageEntity(caseId, MessageEntity.Role.BOT, text, null, Instant.now());
         if (continueOnly) {
             message.markContinueOnly();
         }
+        message.attachCars(cars);
         messages.save(message);
         caseEntity.touch(Instant.now());
     }

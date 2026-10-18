@@ -3,7 +3,9 @@ package com.shani.caradvisor.agent;
 import com.shani.caradvisor.data.ReferenceData;
 import com.shani.caradvisor.engine.Occupation;
 import com.shani.caradvisor.engine.Vehicle;
+import com.shani.caradvisor.engine.Drive;
 import com.shani.caradvisor.workflow.ApiException;
+import com.shani.caradvisor.workflow.CarGuide;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
 import com.shani.caradvisor.workflow.FactEntity;
 import com.shani.caradvisor.workflow.FactKey;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,15 +36,23 @@ public class AgentTools {
     static final String CHOOSE_ALTERNATIVE = "choose_alternative";
     static final String LIST_OPTIONS = "list_options";
     static final String REQUEST_REP_CONFIRMATION = "request_rep_confirmation";
+    static final String FIND_CARS = "find_cars";
+    static final String DESCRIBE_CAR = "describe_car";
+    static final String COMPARE_CARS = "compare_cars";
+
+    private static final Map<String, Drive> DRIVES = Map.of(
+            "electric", Drive.ELECTRIC, "plug-in", Drive.PLUG_IN, "hybrid", Drive.HYBRID, "petrol", Drive.PETROL);
 
     private static final Pattern NUMBER = Pattern.compile("(\\d[\\d,]*(?:\\.\\d+)?)\\s*(אלף)?");
 
     private final ReferenceData data;
     private final CaseWorkflowService workflow;
+    private final CarGuide guide;
 
-    public AgentTools(ReferenceData data, CaseWorkflowService workflow) {
+    public AgentTools(ReferenceData data, CaseWorkflowService workflow, CarGuide guide) {
         this.data = data;
         this.workflow = workflow;
+        this.guide = guide;
     }
 
     /** What happened during one employee turn, for the confirmation messages the server writes itself. */
@@ -50,6 +61,8 @@ public class AgentTools {
         boolean alternativeChosen;
         boolean optionsListed;
         boolean repRequested;
+        /** What the car tools found, for the server to write in the chat (with the numbers) after the model's reply. */
+        final List<CarGuide.Answer> carAnswers = new ArrayList<>();
     }
 
     List<Map<String, Object>> declarations() {
@@ -84,6 +97,30 @@ public class AgentTools {
                 Map.of("name", LIST_OPTIONS,
                         "description", "All options the employee may take, best for their net first, with each car's drive type "
                                 + "(electric, hybrid...). Use when they ask what is worthwhile or which cars of a kind they can take."),
+                Map.of("name", FIND_CARS,
+                        "description", "Find catalog cars of a kind: by drive type, up to a list price, or losing at most "
+                                + "some amount of net a month. Use when the employee asks which cars exist, e.g. "
+                                + "'I want an electric car', 'a plug-in up to 200 thousand', 'what won't cost me more than 500'. "
+                                + "The system shows the cars and their numbers in the chat.",
+                        "parameters", Map.of("type", "object", "properties", Map.of(
+                                "drives", Map.of("type", "array", "items", Map.of("type", "string", "enum", List.copyOf(DRIVES.keySet())),
+                                        "description", "Drive types the employee asked for. Empty or missing = any."),
+                                "maxListPrice", money("Highest list price in NIS, only if the employee wrote it."),
+                                "maxNetDecrease", money("The most net pay the employee agrees to lose per month, in NIS, only if they wrote it.")))),
+                Map.of("name", DESCRIBE_CAR,
+                        "description", "Explain one catalog car: drive type, group, list price, use value, participation, and what it "
+                                + "does to this employee's net. Use when they ask about a specific model.",
+                        "parameters", Map.of("type", "object",
+                                "properties", Map.of("vehicleId", Map.of("type", "string", "enum", vehicleIds(),
+                                        "description", catalogLegend())),
+                                "required", List.of("vehicleId"))),
+                Map.of("name", COMPARE_CARS,
+                        "description", "Put two to four catalog cars side by side, when the employee hesitates between models.",
+                        "parameters", Map.of("type", "object",
+                                "properties", Map.of("vehicleIds", Map.of("type", "array",
+                                        "items", Map.of("type", "string", "enum", vehicleIds()),
+                                        "description", "Two to four cars. " + catalogLegend())),
+                                "required", List.of("vehicleIds"))),
                 Map.of("name", REQUEST_REP_CONFIRMATION,
                         "description", "Ask the transport rep to confirm the participation for the car being compared. "
                                 + "Only when the employee asks for it (for example: they want this car, or want the number confirmed)."));
@@ -99,6 +136,9 @@ public class AgentTools {
                 yield listOptions(caseId);
             }
             case REQUEST_REP_CONFIRMATION -> requestRep(caseId, log);
+            case FIND_CARS -> findCars(caseId, employeeText, call.args(), log);
+            case DESCRIBE_CAR -> carAnswer(log, () -> guide.describe(caseId, String.valueOf(call.args().get("vehicleId"))));
+            case COMPARE_CARS -> carAnswer(log, () -> guide.compare(caseId, strings(call.args().get("vehicleIds"))));
             default -> Map.of("error", "Unknown tool " + call.name());
         };
     }
@@ -149,6 +189,54 @@ public class AgentTools {
         } catch (ApiException e) {
             return Map.of("ok", false, "error", e.getMessage());
         }
+    }
+
+    /** Amount filters count only if the employee wrote the amount; otherwise the search runs without them, and says so. */
+    private Map<String, Object> findCars(String caseId, String employeeText, Map<String, Object> args, TurnLog log) {
+        Set<Drive> drives = new java.util.HashSet<>();
+        for (String name : strings(args.get("drives"))) {
+            Drive drive = DRIVES.get(name);
+            if (drive != null) {
+                drives.add(drive);
+            }
+        }
+        List<String> ignored = new ArrayList<>();
+        BigDecimal maxPrice = statedAmount(args.get("maxListPrice"), employeeText, "maxListPrice", ignored);
+        BigDecimal maxDecrease = statedAmount(args.get("maxNetDecrease"), employeeText, "maxNetDecrease", ignored);
+        Map<String, Object> result = new LinkedHashMap<>(carAnswer(log, () -> guide.find(caseId, drives, maxPrice, maxDecrease)));
+        if (!ignored.isEmpty()) {
+            result.put("ignored", ignored + ": the amount does not appear in the employee's message");
+        }
+        return result;
+    }
+
+    private static BigDecimal statedAmount(Object value, String employeeText, String name, List<String> ignored) {
+        if (value == null) {
+            return null;
+        }
+        if (!statedInMessage(value, employeeText)) {
+            ignored.add(name);
+            return null;
+        }
+        return new BigDecimal(String.valueOf(value).replace(",", "").trim());
+    }
+
+    private Map<String, Object> carAnswer(TurnLog log, java.util.function.Supplier<CarGuide.Answer> question) {
+        try {
+            CarGuide.Answer answer = question.get();
+            log.carAnswers.add(answer);
+            return Map.of("shownToEmployee", answer.forModel(),
+                    "note", "The chat already shows these cars with their numbers. Add one or two sentences in words.");
+        } catch (ApiException e) {
+            return Map.of("error", e.getMessage());
+        }
+    }
+
+    private static List<String> strings(Object value) {
+        if (value instanceof List<?> list) {
+            return list.stream().map(String::valueOf).toList();
+        }
+        return value == null ? List.of() : List.of(String.valueOf(value));
     }
 
     private Map<String, Object> requestRep(String caseId, TurnLog log) {

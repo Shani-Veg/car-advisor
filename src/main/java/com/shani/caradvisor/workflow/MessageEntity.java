@@ -35,6 +35,10 @@ public class MessageEntity {
     /** True for a reply that did not move the case forward: the only button offered is "continue the questions". */
     private Boolean continueOnly;
 
+    /** Catalog ids of cars shown as cards under this message (comma separated), or null. */
+    @Column(length = 400)
+    private String cars;
+
     protected MessageEntity() {
     }
 
@@ -68,5 +72,13 @@ public class MessageEntity {
 
     void markContinueOnly() {
         this.continueOnly = true;
+    }
+
+    public java.util.List<String> cars() {
+        return cars == null || cars.isBlank() ? java.util.List.of() : java.util.List.of(cars.split(","));
+    }
+
+    void attachCars(java.util.List<String> ids) {
+        this.cars = ids.isEmpty() ? null : String.join(",", ids);
     }
 }

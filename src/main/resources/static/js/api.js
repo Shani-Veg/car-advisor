@@ -49,6 +49,7 @@ export const api = Object.freeze({
   sendMessage: (id, text, clientRequestId) => request(casePath(id) + '/messages', { method: 'POST', body: { text, clientRequestId } }),
   choose: (id, choiceId, clientRequestId) => request(casePath(id) + '/choices', { method: 'POST', body: { choiceId, clientRequestId } }),
   updateProfile: (id, key, value, expectedVersion) => request(casePath(id) + '/profile/' + encodeURIComponent(key), { method: 'PUT', body: { value, expectedVersion } }),
+  carAction: (id, vehicleId, action, clientRequestId) => request(casePath(id) + '/cars/' + encodeURIComponent(vehicleId), { method: 'POST', body: { action, clientRequestId } }),
   requestRep: (id, clientRequestId) => request(casePath(id) + '/rep-request', { method: 'POST', body: { clientRequestId } }),
   readPayslip: (id, file) => upload(casePath(id) + '/payslip', file),
   applyPayslip: (id, values, clientRequestId) => request(casePath(id) + '/payslip/apply', { method: 'POST', body: { values, clientRequestId } }),

@@ -42,7 +42,16 @@ public final class Views {
     public record SourceView(String type, String ref, Instant at) {
     }
 
-    public record MessageView(String id, String role, String text, Instant at, List<ChoiceView> choices) {
+    public record MessageView(String id, String role, String text, Instant at, List<ChoiceView> choices,
+                              List<CarCard> cars) {
+    }
+
+    /**
+     * A car shown in the chat. difference: the change in net for this employee (null when they may not take it, or
+     * before their details are complete); participation is then the catalog's estimate.
+     */
+    public record CarCard(String vehicleId, String label, String maker, String drive, String group, BigDecimal listPrice,
+                          boolean allowed, BigDecimal difference, String officialUrl) {
     }
 
     public record ChoiceView(String id, String label) {

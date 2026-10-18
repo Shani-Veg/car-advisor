@@ -166,6 +166,20 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .choices-search input { width: 100%; min-height: 44px; padding: 8px 16px; border: 1.5px solid var(--line); border-radius: var(--r-pill); background: var(--surface); font-size: 15px; }
 .choices-search input:focus { border-color: var(--primary); outline: 0; }
 .choices-empty, .choices-hint { margin-top: 9px; color: var(--muted); font-size: 13px; }
+.message-content:has(.chat-cars) { width: 92%; }
+.chat-cars { display: grid; gap: 8px; margin-top: 10px; }
+.chat-car { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1.5px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); }
+.chat-car.not-allowed { background: var(--surface-2); }
+.chat-car-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.chat-car-value { display: flex; flex-direction: column; align-items: flex-end; text-align: end; white-space: nowrap; }
+.chat-car-value bdi { font: 600 17px var(--num); }
+.chat-car-value.gain bdi { color: var(--gain); }
+.chat-car-value.loss bdi { color: var(--loss); }
+.chat-car-value small { color: var(--muted); font-size: 12px; }
+.chat-car-meta { color: var(--muted); font-size: 13px; }
+.chat-car-meta bdi { font-family: var(--num); }
+.chat-car-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chat-car-actions .model-link { margin-top: 0; }
 .typing { display: flex; align-items: center; gap: 8px; margin: 0 16px 8px; padding: 8px 14px; border: 1px dashed #B9C7DD; border-radius: 18px; color: var(--ink-2); font-size: 15px; font-weight: 600; }
 .typing-dots { color: var(--primary); letter-spacing: 3px; animation: blink 1.2s ease-in-out infinite; }
 .composer { flex: none; padding: 8px 14px 14px; }

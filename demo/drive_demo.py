@@ -27,7 +27,9 @@ NOA = [
     ("say", "שלום, אני מנהלת מוצר. שכר הבסיס שלי 18,500 ש\"ח ויש לי שני ילדים."),
     ("say", "היום יש לי קורולה קרוס ואני משתתפת ב-300 ש\"ח בחודש."),
     ("payslip", PAYSLIP),
-    ("say", "מה יקרה אם אעבור ל-BYD Atto 3?"),
+    ("say", "אני רוצה רכב חשמלי. מה יש לי?"),
+    ("card", ("CAR-10", "details")),
+    ("card", ("CAR-10", "compare")),
     ("tap", "rep:ask"),
     ("rep", {"value": 350, "effectiveFrom": "2027-01-01", "note": ""}),
     ("say", "ומה הכי משתלם לי?"),
@@ -82,6 +84,10 @@ def step(server, case_id, kind, arg, transcript, seen):
     elif kind == "tap":
         status, _ = server.call("POST", f"/api/cases/{case_id}/choices", {"choiceId": arg, "clientRequestId": str(uuid.uuid4())})
         print(f"\n>>> [tap {arg}]   [HTTP {status}]")
+    elif kind == "card":
+        vehicle_id, action = arg
+        status, _ = server.call("POST", f"/api/cases/{case_id}/cars/{vehicle_id}", {"action": action, "clientRequestId": str(uuid.uuid4())})
+        print(f"\n>>> [card {vehicle_id} {action}]   [HTTP {status}]")
     elif kind == "payslip":
         status, reading = server.upload(f"/api/cases/{case_id}/payslip", arg)
         print(f"\n>>> [payslip]   [HTTP {status}, {time.time() - started:.1f}s]")
@@ -108,7 +114,11 @@ def step(server, case_id, kind, arg, transcript, seen):
     _, view = server.call("GET", f"/api/cases/{case_id}")
     for message in view["messages"][seen[0]:]:
         print(f"    [{message['role']}] {message['text']}")
-        transcript.append({"role": message["role"], "text": message["text"]})
+        line = {"role": message["role"], "text": message["text"]}
+        if message.get("cars"):
+            line["cars"] = [f"{c['label']} {c['difference']}" for c in message["cars"]]
+            print("      cards:", ", ".join(line["cars"]))
+        transcript.append(line)
     seen[0] = len(view["messages"])
 
 

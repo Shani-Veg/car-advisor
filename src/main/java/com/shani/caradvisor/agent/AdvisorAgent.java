@@ -87,7 +87,12 @@ public class AdvisorAgent {
         }
         // A reply that only answered a side question must not re-offer the same buttons: it offers to carry on.
         boolean moved = !turnLog.recorded.isEmpty() || turnLog.alternativeChosen || turnLog.optionsListed
-                || turnLog.repRequested;
+                || turnLog.repRequested || !turnLog.carAnswers.isEmpty();
+        // The cars the model looked up come first, written by the server with their numbers and shown as cards;
+        // the model's words about them follow.
+        for (var answer : turnLog.carAnswers) {
+            workflow.addBotMessage(caseId, answer.text(), false, answer.cars());
+        }
         workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved);
         if (turnLog.repRequested) {
             workflow.addBotMessage(caseId, ChatSummaries.repRequested(after));

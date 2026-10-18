@@ -4,6 +4,7 @@ import com.shani.caradvisor.data.ReferenceData;
 import com.shani.caradvisor.engine.CarChoice;
 import com.shani.caradvisor.engine.Comparison;
 import com.shani.caradvisor.engine.ComparisonEngine;
+import com.shani.caradvisor.engine.Drive;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ public class ChoiceOptions {
     static final String REVIEW_OK = "review:ok";
     static final String REVIEW_LATER = "review:later";
     static final String REP_ASK = "rep:ask";
+    /** "find:ELECTRIC": the cars of one drive type the employee may take (CarGuide.find). */
+    static final String FIND = "find:";
     /** Prefix of buttons the screen handles without calling the server. */
     static final String CLIENT_ACTION = "ui:";
 
@@ -81,6 +84,7 @@ public class ChoiceOptions {
             offers.add(new Offer(REP_ASK, "לאשר את ההשתתפות מול נציג"));
         }
         offers.add(new Offer("best", "מה הכי משתלם לי?"));
+        offers.add(new Offer(FIND + Drive.ELECTRIC.name(), "אילו רכבים חשמליים יש לי?"));
         String today = state.fact(FactKey.CURRENT_CAR).map(FactEntity::value).orElse("");
         String selected = state.caseEntity().alternativeSubject();
         List<Comparison> ranked = engine.rankAlternatives(state.employee(), state.occupation(), state.todayChoice(),

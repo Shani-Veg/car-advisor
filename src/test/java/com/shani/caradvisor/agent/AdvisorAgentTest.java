@@ -169,6 +169,47 @@ class AdvisorAgentTest {
         assertThat(field(afterForm, "baseSalary").status()).isEqualTo("PROVIDED");
     }
 
+    @Test
+    void askingForElectricCarsShowsThemAsCardsWithTheServersNumbers() {
+        String id = noaToday();
+        llm.play(
+                ScriptedLlm.call(AgentTools.FIND_CARS, Map.of("drives", List.of("electric"), "maxListPrice", 180000)),
+                ScriptedLlm.text("הנה הרכבים החשמליים שזמינים לך. כדאי להתחיל מהראשון ברשימה."));
+
+        CaseView view = agent.reply(id, "אני רוצה רכב חשמלי עד 180 אלף", "c-find");
+
+        // the list with its cards comes first, the model's words about it after
+        MessageView cars = view.messages().get(view.messages().size() - 2);
+        assertThat(botTexts(view)).last().isEqualTo("הנה הרכבים החשמליים שזמינים לך. כדאי להתחיל מהראשון ברשימה.");
+        assertThat(cars.text()).startsWith("רכבים חשמליים עד מחיר מחירון של 180,000 ₪ שזמינים לך");
+        assertThat(cars.cars()).isNotEmpty().allSatisfy(car -> assertThat(car.drive()).isEqualTo("חשמלי"));
+    }
+
+    @Test
+    void aPriceTheEmployeeDidNotWriteIsNotUsedAsAFilter() {
+        String id = noaToday();
+        llm.play(
+                ScriptedLlm.call(AgentTools.FIND_CARS, Map.of("drives", List.of("electric"), "maxListPrice", 150000)),
+                ScriptedLlm.text("אלה האפשרויות."));
+
+        CaseView view = agent.reply(id, "אני רוצה רכב חשמלי זול", "c-find-2");
+
+        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("רכבים חשמליים שזמינים לך"));
+        assertThat(llm.received.get(1).toString()).contains("maxListPrice").contains("does not appear in the employee's message");
+    }
+
+    @Test
+    void aModelTheEmployeeAsksAboutIsExplainedByTheServer() {
+        String id = noaToday();
+        llm.play(
+                ScriptedLlm.call(AgentTools.DESCRIBE_CAR, Map.of("vehicleId", "CAR-10")),
+                ScriptedLlm.text("זה רכב חשמלי בקבוצה שלך."));
+
+        CaseView view = agent.reply(id, "ספר לי על האטו 3", "c-describe");
+
+        assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("ATTO 3 (2025)").contains("661 ₪"));
+    }
+
     private String noaToday() {
         String id = workflow.create().caseId();
         Map<FactKey, String> facts = Map.of(

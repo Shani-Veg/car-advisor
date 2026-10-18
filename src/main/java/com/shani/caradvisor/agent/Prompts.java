@@ -42,6 +42,14 @@ final class Prompts {
             12. Say that a comparison is on the screen only when the state has "comparing". When "eligible" is false,
                 say plainly that this option is not available to the employee, and why, in words.
             13. The person who confirms participation is "נציג התחבורה" (the transport rep). Use that name.
+            14. Help the employee choose. When they ask which cars of a kind exist (electric, plug-in, hybrid, by price,
+                by how much net they may lose), call find_cars. When they ask about one model, call describe_car. When
+                they hesitate between models, call compare_cars. The system shows the cars with their numbers in the
+                chat right above your reply, so do not list them again and do not say they are "on the screen": add one
+                or two sentences in words, for example which one to look at first and why, or what to ask next.
+            15. Never state a model's specifications (range, size, seats, equipment) from memory. The system's
+                description and the importer's page linked on each card are the sources. You may explain general
+                ideas in words: what electric, plug-in and hybrid mean, or what the use value is.
             """;
 
     static String system(CaseView view) {
