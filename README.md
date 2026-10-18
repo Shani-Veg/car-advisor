@@ -92,8 +92,8 @@ powershell -ExecutionPolicy Bypass -File run.ps1
 ```powershell
 powershell -ExecutionPolicy Bypass -File run.ps1 -Replay    # השמעה, בלי רשת
 powershell -ExecutionPolicy Bypass -File run.ps1 -Record    # הקלטה מחדש מול Gemini חי
-python demo/drive_demo.py --base http://localhost:8080 --rep-password <סיסמה> --out demo/transcript.json
-python demo/drive_demo.py --base http://localhost:8080 --rep-password <סיסמה> --expect demo/transcript.json
+python demo/drive_demo.py --base http://localhost:8080 --rep-password $env:ADVISOR_REP_PASSWORD --out demo/transcript.json
+python demo/drive_demo.py --base http://localhost:8080 --rep-password $env:ADVISOR_REP_PASSWORD --expect demo/transcript.json
 ```
 
 הפקודה האחרונה מריצה את כל שיחת הדמו ומוודאת שמה שהעובד/ת רואה זהה להקלטה (נבדק: בלי מפתח ובלי רשת, הכול זהה).
