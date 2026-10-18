@@ -43,7 +43,7 @@ function feedback(message) { showNotice(byId('feedback'), message); }
 /** The bot's face follows the moment: thinking while it works, happy when the change in net is a gain. */
 function setMood() {
   const mood = busy && !byId('profile-dialog').open ? 'think' : current?.comparison?.direction === 'GAIN' ? 'happy' : 'default';
-  const src = { think: 'assets/avatar-bot-think.webp', happy: 'assets/avatar-bot-happy.webp', default: 'assets/avatar-bot.webp' }[mood];
+  const src = { think: 'assets/bot-think.svg', happy: 'assets/bot-happy.svg', default: 'assets/bot.svg' }[mood];
   const avatar = document.querySelector('.header-avatar');
   if (avatar && !avatar.src.endsWith(src)) avatar.src = src;
 }

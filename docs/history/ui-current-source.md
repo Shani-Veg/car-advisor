@@ -82,7 +82,7 @@
     <div id="feedback" class="notice" role="status" hidden></div>
     <div class="employee-grid">
       <section id="chat-panel" class="panel chat-panel" aria-labelledby="chat-heading">
-        <div class="chat-heading"><img class="header-avatar" src="assets/avatar-bot.webp" alt="" width="40" height="40"><h1 id="chat-heading">יועץ הרכב</h1></div>
+        <div class="chat-heading"><img class="header-avatar" src="assets/bot.svg" alt="" width="40" height="40"><h1 id="chat-heading">יועץ הרכב</h1></div>
         <div class="chat-progress"><span id="progress-label" class="sr-only">הפרטים שלי: טוען…</span><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
         <div id="messages" class="messages" role="log" aria-label="היסטוריית השיחה" aria-live="off" aria-busy="true"><p class="empty-state">טוען את השיחה…</p></div>
         <div id="chat-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -189,6 +189,8 @@
   --danger: #C9382B; --danger-soft: #FCECEA;
   /* a warm touch on the welcome page only; inside the app orange means "the net goes down" */
   --warm: #EA580C;
+  /* the bot's answers: a turquoise line on a pale mint, so they stand out from the employee's blue */
+  --bot-line: #2BB3A3; --bot-tint: #EEFAF7;
   --r-sm: 10px; --r-md: 16px; --r-lg: 20px; --r-xl: 24px; --r-pill: 999px;
   --shadow: 0 1px 2px rgba(20, 33, 61, .05), 0 12px 28px -16px rgba(20, 33, 61, .22);
   --focus: 3px solid var(--primary);
@@ -321,6 +323,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 /* speech bubbles: one corner cut toward the speaker */
 .message-text { display: inline-block; padding: 8px 13px; border-radius: 16px 16px 16px 5px; background: var(--surface-2); color: var(--ink); font-size: 15px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .message-text.after-cards { margin-top: 8px; color: var(--ink-2); font-size: 14px; }
+.bot .message-text { border: 1.5px solid var(--bot-line); background: var(--bot-tint); }
 .employee .message-text { border-radius: 16px 16px 5px 16px; background: var(--primary); color: var(--on-primary); }
 .system-message { margin: 14px 0; padding: 10px 14px; border-radius: var(--r-md); background: var(--gain-soft); color: var(--gain); font-size: 14px; font-weight: 600; text-align: center; overflow-wrap: anywhere; }
 .message-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -944,7 +947,7 @@ function feedback(message) { showNotice(byId('feedback'), message); }
 /** The bot's face follows the moment: thinking while it works, happy when the change in net is a gain. */
 function setMood() {
   const mood = busy && !byId('profile-dialog').open ? 'think' : current?.comparison?.direction === 'GAIN' ? 'happy' : 'default';
-  const src = { think: 'assets/avatar-bot-think.webp', happy: 'assets/avatar-bot-happy.webp', default: 'assets/avatar-bot.webp' }[mood];
+  const src = { think: 'assets/bot-think.svg', happy: 'assets/bot-happy.svg', default: 'assets/bot.svg' }[mood];
   const avatar = document.querySelector('.header-avatar');
   if (avatar && !avatar.src.endsWith(src)) avatar.src = src;
 }
