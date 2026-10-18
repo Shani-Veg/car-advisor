@@ -131,14 +131,15 @@ class AdvisorAgentTest {
     }
 
     @Test
-    void askingWhatPaysBestAddsTheServersTopThree() {
+    void askingWhatPaysBestIsAnsweredAtOnceByCode() {
         String id = noaToday();
-        llm.play(ScriptedLlm.call(AgentTools.LIST_OPTIONS, Map.of()), ScriptedLlm.text("הנה האפשרויות המשתלמות."));
+        llm.play();
 
         CaseView view = agent.reply(id, "מה הכי משתלם לי?", "c-8");
 
-        MessageView best = view.messages().stream().filter(m -> !m.cars().isEmpty()).reduce((a, b) -> b).orElseThrow();
-        assertThat(best.text()).startsWith("הכי משתלם לנטו: ויתור על הרכב, הנטו עולה ב-3,199 ₪ בחודש.");
+        assertThat(llm.received).isEmpty();
+        MessageView best = view.messages().get(view.messages().size() - 1);
+        assertThat(best.text()).startsWith("הרכבים הכי משתלמים לנטו שלך:").doesNotContain("ויתור");
         assertThat(best.cars().get(0).label()).isEqualTo("MG4 (2025)");
         assertThat(best.cars().get(0).difference()).isEqualByComparingTo("1013");
     }
@@ -176,7 +177,7 @@ class AdvisorAgentTest {
                 ScriptedLlm.call(AgentTools.FIND_CARS, Map.of("drives", List.of("electric"), "maxListPrice", 180000)),
                 ScriptedLlm.text("הנה הרכבים החשמליים שזמינים לך. כדאי להתחיל מהראשון ברשימה."));
 
-        CaseView view = agent.reply(id, "אני רוצה רכב חשמלי עד 180 אלף", "c-find");
+        CaseView view = agent.reply(id, "תסביר לי אילו רכבים חשמליים יש לי עד 180 אלף", "c-find");
 
         // the list with its cards comes first, the model's words about it after
         MessageView cars = view.messages().get(view.messages().size() - 2);
@@ -192,7 +193,7 @@ class AdvisorAgentTest {
                 ScriptedLlm.call(AgentTools.FIND_CARS, Map.of("drives", List.of("electric"), "maxListPrice", 150000)),
                 ScriptedLlm.text("אלה האפשרויות."));
 
-        CaseView view = agent.reply(id, "אני רוצה רכב חשמלי זול", "c-find-2");
+        CaseView view = agent.reply(id, "תסביר לי אילו רכבים חשמליים זולים יש", "c-find-2");
 
         assertThat(botTexts(view)).anySatisfy(t -> assertThat(t).startsWith("רכבים חשמליים בזכאות שלך"));
         assertThat(llm.received.get(1).toString()).contains("maxListPrice").contains("does not appear in the employee's message");
@@ -218,6 +219,50 @@ class AdvisorAgentTest {
         CaseView view = agent.reply(id, "מה אפשר לעשות כאן?", "c-screen");
 
         assertThat(botTexts(view)).contains("אשמח לעזור לבחור רכב.").noneMatch(t -> t.contains("מסך"));
+    }
+
+    @Test
+    void aPlainRequestForLuxuryShowsTheMostExpensiveAllowedCarsWithoutTheModel() {
+        String id = noaToday();
+        llm.play();
+
+        CaseView view = agent.reply(id, "משהו יוקרתי", "c-luxury");
+
+        assertThat(llm.received).isEmpty();
+        MessageView cars = view.messages().get(view.messages().size() - 1);
+        assertThat(cars.text()).startsWith("רכבים בזכאות שלך, מהיוקרתי ביותר (לפי מחיר מחירון):");
+        // Noa is in group C: TUCSON (188,497) is the most expensive car she may take
+        assertThat(cars.cars().get(0).label()).isEqualTo("TUCSON (2025)");
+    }
+
+    @Test
+    void aReplyThatPromisesCarsWithoutShowingAnyIsSentBackForThem() {
+        String id = noaToday();
+        llm.play(
+                ScriptedLlm.text("הנה כמה אפשרויות שוות להשוואה."),
+                ScriptedLlm.call(AgentTools.FIND_CARS, Map.of("order", "most_luxurious")),
+                ScriptedLlm.text("אלה הרכבים היוקרתיים בקבוצה שלך."));
+
+        CaseView view = agent.reply(id, "בא לי משהו מיוחד במיוחד, לא הכי רגיל", "c-claim");
+
+        assertThat(view.messages()).anySatisfy(m -> assertThat(m.cars()).isNotEmpty());
+    }
+
+    @Test
+    void aChangedDetailIsTakenWithoutAskingAboutTheOthers() {
+        String id = workflow.create().caseId();
+        Map.of(FactKey.OCCUPATION, "מנהל/ת מוצר", FactKey.BASE_SALARY, "18500", FactKey.CHILDREN_UP_TO_23, "2",
+                        FactKey.CURRENT_CAR, "CAR-09")
+                .forEach((key, value) -> workflow.setFact(id, key, value, FactEntity.Source.FORM, null, null));
+        llm.play(
+                ScriptedLlm.call(AgentTools.RECORD_FACTS, Map.of("childrenUpTo23", 3)),
+                ScriptedLlm.text("עדכנתי. מה תרצה לבדוק?"));
+
+        CaseView view = agent.reply(id, "בעצם יש לי שלושה ילדים", "c-change");
+
+        assertThat(botTexts(view)).last().isEqualTo("עדכנתי. מה תרצה לבדוק?");
+        assertThat(botTexts(view)).noneMatch(t -> t.startsWith("עדכנתי. עוד הנחתי"));
+        assertThat(view.assumptionsToConfirm()).isEmpty();
     }
 
     private String noaToday() {

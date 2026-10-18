@@ -106,7 +106,10 @@ public class AgentTools {
                                 "drives", Map.of("type", "array", "items", Map.of("type", "string", "enum", List.copyOf(DRIVES.keySet())),
                                         "description", "Drive types the employee asked for. Empty or missing = any."),
                                 "maxListPrice", money("Highest list price in NIS, only if the employee wrote it."),
-                                "maxNetDecrease", money("The most net pay the employee agrees to lose per month, in NIS, only if they wrote it.")))),
+                                "maxNetDecrease", money("The most net pay the employee agrees to lose per month, in NIS, only if they wrote it."),
+                                "order", Map.of("type", "string", "enum", List.of("best_for_net", "most_luxurious", "cheapest"),
+                                        "description", "most_luxurious for luxury or premium requests (highest list price first), "
+                                                + "cheapest for cheap ones, otherwise best_for_net.")))),
                 Map.of("name", DESCRIBE_CAR,
                         "description", "Explain one catalog car: drive type, group, list price, use value, participation, and what it "
                                 + "does to this employee's net. Use when they ask about a specific model.",
@@ -203,7 +206,12 @@ public class AgentTools {
         List<String> ignored = new ArrayList<>();
         BigDecimal maxPrice = statedAmount(args.get("maxListPrice"), employeeText, "maxListPrice", ignored);
         BigDecimal maxDecrease = statedAmount(args.get("maxNetDecrease"), employeeText, "maxNetDecrease", ignored);
-        Map<String, Object> result = new LinkedHashMap<>(carAnswer(log, () -> guide.find(caseId, drives, maxPrice, maxDecrease)));
+        CarGuide.Order order = switch (String.valueOf(args.getOrDefault("order", "best_for_net"))) {
+            case "most_luxurious" -> CarGuide.Order.MOST_LUXURIOUS;
+            case "cheapest" -> CarGuide.Order.CHEAPEST;
+            default -> CarGuide.Order.BEST_FOR_NET;
+        };
+        Map<String, Object> result = new LinkedHashMap<>(carAnswer(log, () -> guide.find(caseId, drives, maxPrice, maxDecrease, order)));
         if (!ignored.isEmpty()) {
             result.put("ignored", ignored + ": the amount does not appear in the employee's message");
         }
@@ -259,6 +267,9 @@ public class AgentTools {
         List<Map<String, Object>> options = new ArrayList<>();
         int rank = 1;
         for (RankingItem item : view.ranking()) {
+            if ("waiver".equals(item.alternative().type())) {
+                continue; // giving up the car is discussed only when the employee raises it
+            }
             options.add(Map.of(
                     "rank", rank++,
                     "option", item.alternative().label(),

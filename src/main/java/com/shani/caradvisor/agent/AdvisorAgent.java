@@ -29,6 +29,8 @@ public class AdvisorAgent {
     private static final Logger log = LoggerFactory.getLogger(AdvisorAgent.class);
     private static final int MAX_STEPS = 6;
     private static final int HISTORY_MESSAGES = 16;
+    private static final java.util.regex.Pattern CLAIMS_CARS = java.util.regex.Pattern.compile(
+            "(הנה|להלן|אלו|אלה|ריכזתי|מצאתי)[^.]{0,30}(אפשרויות|רכבים|דגמים|חלופות)");
     private static final String UNAVAILABLE = "העוזר לא זמין כרגע. אפשר לענות על השאלה במספר או במילה, ללחוץ על כפתור, או לעדכן ב\"המידע שלך\".";
     private static final String REPLAY_UNAVAILABLE = "במצב השמעה העוזר מכיר רק משפטים שהוקלטו. אפשר לענות על השאלה במספר או במילה, ללחוץ על כפתור, או לעדכן ב\"המידע שלך\".";
 
@@ -54,6 +56,11 @@ public class AdvisorAgent {
         if (direct.isPresent()) {
             return direct.get();
         }
+        // So is a plain request for cars: instant, and the cars always show.
+        Optional<CaseView> cars = choices.answerCarRequest(caseId, text, clientRequestId);
+        if (cars.isPresent()) {
+            return cars.get();
+        }
         if (!workflow.assistantAvailable()) {
             throw ApiException.unavailable("ASSISTANT_UNAVAILABLE", unavailableText());
         }
@@ -71,6 +78,13 @@ public class AdvisorAgent {
         String reply;
         try {
             reply = converse(caseId, messageId.get(), text.trim(), contents, turnLog);
+            if (claimsToShowCars(reply) && turnLog.carAnswers.isEmpty() && !turnLog.alternativeChosen) {
+                log.info("Reply offered cars without looking them up; asking the model to call find_cars");
+                contents.add(Map.of("role", "user", "parts", List.of(Map.of("text",
+                        "[system] You said you are showing cars or options, but no car appears in the chat. "
+                                + "Call find_cars now with what the employee asked for, then reply in one short sentence."))));
+                reply = converse(caseId, messageId.get(), text.trim(), contents, turnLog);
+            }
             reply = guarded(reply, contents);
         } catch (LlmClient.UnavailableException e) {
             log.warn("Assistant unavailable: {}", e.getMessage());
@@ -94,7 +108,9 @@ public class AdvisorAgent {
         for (var answer : turnLog.carAnswers) {
             workflow.addBotMessage(caseId, answer.text(), false, answer.cars());
         }
-        MessageEntity.Offers offers = MessageEntity.Offers.NONE;
+        MessageEntity.Offers offers = !turnLog.recorded.isEmpty() && after.ranking() != null && after.comparison() == null
+                && turnLog.carAnswers.isEmpty() && after.assumptionsToConfirm().isEmpty()
+                ? MessageEntity.Offers.NEXT_STEPS : MessageEntity.Offers.NONE;
         if (turnLog.repRequested) {
             workflow.addBotMessage(caseId, ChatSummaries.repRequested(after));
         } else if (after.comparison() != null && (turnLog.alternativeChosen || !turnLog.recorded.isEmpty())) {
@@ -102,9 +118,14 @@ public class AdvisorAgent {
             offers = MessageEntity.Offers.REP;
         }
         workflow.addBotMessage(caseId, reply.isBlank() ? ChatSummaries.fallback(after) : clean(reply), !moved, offers);
-        // The details just became complete, or the employee corrected an assumed one: ask about the rest, in code.
+        // The four questions were just answered: ask once about the assumed details. A later change of a detail is
+        // simply taken, with no questions about the other details (the model asks what they want to check).
         if (!turnLog.recorded.isEmpty() && !after.assumptionsToConfirm().isEmpty()) {
-            workflow.addBotMessage(caseId, ChatSummaries.assumptionsReview(after, !before.assumptionsToConfirm().isEmpty()));
+            if (before.assumptionsToConfirm().isEmpty()) {
+                workflow.addBotMessage(caseId, ChatSummaries.assumptionsReview(after, false));
+            } else {
+                workflow.deferAssumptions(caseId);
+            }
         }
         return workflow.view(caseId);
     }
@@ -157,6 +178,11 @@ public class AdvisorAgent {
                         + "Rewrite it in Hebrew only, without them. Everything you show appears in the chat."))));
         String rewritten = clean(llm.next(Prompts.RULES, contents, List.of()).text());
         return acceptable(rewritten) ? rewritten : "";
+    }
+
+    /** "Here are the options" with nothing shown: the model meant to look cars up and did not. */
+    private static boolean claimsToShowCars(String text) {
+        return CLAIMS_CARS.matcher(text).find();
     }
 
     /** "Look at the screen" sends the employee away from the chat, where the cars and numbers are. */

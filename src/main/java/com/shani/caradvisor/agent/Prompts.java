@@ -52,6 +52,14 @@ final class Prompts {
                 shown in the chat by your tools: if the employee asks to see cars or says they do not see them, call
                 find_cars (or describe_car / compare_cars) again.
             17. Strauss's electricity refund is for fully electric cars only. Plug-in and hybrid cars do not get it.
+            18. Whenever the employee asks to see cars or options of any kind (luxury, cheap, a drive type, a price,
+                "what is there"), call find_cars in the same turn: order most_luxurious for luxury or premium, cheapest
+                for cheap. Never write that you are showing options without calling a tool.
+            19. Never recommend giving up the company car, and do not bring it up yourself: Strauss wants employees to
+                have a car. If the employee asks about giving it up, call choose_alternative with type waiver and
+                explain the result neutrally.
+            20. When the employee changes a detail (salary, children, any other), record it and ask in one short
+                sentence what they would like to check. Do not ask about other details.
             15. Never state a model's specifications (range, size, seats, equipment) from memory. The system's
                 description and the importer's page linked on each card are the sources. You may explain general
                 ideas in words: what electric, plug-in and hybrid mean, or what the use value is.

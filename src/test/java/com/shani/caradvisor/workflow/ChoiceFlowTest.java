@@ -68,20 +68,17 @@ class ChoiceFlowTest {
 
         List<String> offers = offered(workflow.view(id));
 
-        assertThat(offers).contains("best", "alt:waiver").doesNotContain("alt:CAR-09");
-        assertThat(offers).hasSize(4);
+        // two questions to tap; no car names out of context, and giving up the car is never pushed
+        assertThat(offers).containsExactly("best", "find:ELECTRIC");
     }
 
     @Test
     void tappingAnAlternativeComparesItAndOffersToConfirmWithTheRep() {
         String id = workflow.create().caseId();
         completeProfile(id);
-        String offeredCar = offered(workflow.view(id)).stream()
-                .filter(o -> o.startsWith("alt:CAR-"))
-                .findFirst().orElseThrow();
-        String carId = offeredCar.substring("alt:".length());
+        String carId = "CAR-10";
 
-        CaseView view = choices.choose(id, offeredCar, "alt-tap");
+        CaseView view = choices.carAction(id, carId, "compare", "card-compare");
 
         // comparing a car asks nobody yet
         assertThat(view.status()).isEqualTo("READY");
@@ -117,15 +114,17 @@ class ChoiceFlowTest {
     }
 
     @Test
-    void tappingTheWaiverComparesAgainstGivingUpTheCar() {
+    void givingUpTheCarIsNeverAButtonButCanStillBeCompared() {
         String id = workflow.create().caseId();
         completeProfile(id);
 
-        CaseView view = choices.choose(id, "alt:waiver", "waiver-tap");
+        assertThat(offered(workflow.view(id))).noneMatch(o -> o.contains("waiver"));
+        CaseView view = workflow.chooseAlternative(id, "waiver", null, null);
 
         assertThat(view.comparison().alternative().type()).isEqualTo("waiver");
         assertThat(view.comparison().alternative().vehicleId()).isNull();
-        assertThat(offered(view)).doesNotContain("alt:waiver");
+        // in the alternatives list it comes last, whatever it does to the net
+        assertThat(view.ranking()).last().satisfies(item -> assertThat(item.alternative().type()).isEqualTo("waiver"));
     }
 
     @Test
@@ -151,7 +150,8 @@ class ChoiceFlowTest {
         CaseView view = choices.choose(id, "best", "best-tap");
 
         MessageView answer = view.messages().get(view.messages().size() - 1);
-        assertThat(answer.text()).startsWith("הכי משתלם לנטו: ויתור על הרכב, הנטו עולה ב-3,199 ₪ בחודש.");
+        // cars only: giving up the car is not presented as the best option, even when it pays more in net
+        assertThat(answer.text()).startsWith("הרכבים הכי משתלמים לנטו שלך:").doesNotContain("ויתור");
         // the best cars come as cards, and the car the employee has today is not one of them
         assertThat(answer.cars()).hasSize(3).noneMatch(car -> car.vehicleId().equals("CAR-09"));
         assertThat(texts(view, "employee")).contains("מה הכי משתלם לי?");

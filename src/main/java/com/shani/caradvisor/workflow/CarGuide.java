@@ -38,7 +38,12 @@ public class CarGuide {
     public record Answer(String text, List<String> cars, List<Map<String, Object>> forModel) {
     }
 
+    /** How a list of cars is ordered: best for the net (the default), most luxurious (list price), or cheapest. */
+    public enum Order { BEST_FOR_NET, MOST_LUXURIOUS, CHEAPEST }
+
     private static final int MAX_CARDS = 6;
+    /** A search over every drive type is wide: show fewer cards, the rest is in the alternatives list. */
+    private static final int MAX_CARDS_ALL_KINDS = 4;
     private static final int MAX_OTHERS = 3;
 
     private final CaseRepository cases;
@@ -58,6 +63,11 @@ public class CarGuide {
      * maxNetDecrease a month. Allowed cars first, best for the net; cars above the employee's group are only named.
      */
     public Answer find(String caseId, Set<Drive> drives, BigDecimal maxListPrice, BigDecimal maxNetDecrease) {
+        return find(caseId, drives, maxListPrice, maxNetDecrease, Order.BEST_FOR_NET);
+    }
+
+    /** As above, in the order the employee asked for ("something luxurious" = highest list price first). */
+    public Answer find(String caseId, Set<Drive> drives, BigDecimal maxListPrice, BigDecimal maxNetDecrease, Order order) {
         CaseState state = state(caseId);
         Map<String, BigDecimal> effect = effects(state);
         String today = state.fact(FactKey.CURRENT_CAR).map(FactEntity::value).orElse("");
@@ -73,18 +83,26 @@ public class CarGuide {
                 .toList());
         List<Vehicle> others = matching.stream().filter(v -> !state.mayTake(v)).toList();
         boolean personal = !effect.isEmpty();
-        allowed.sort(personal
-                ? Comparator.comparing((Vehicle v) -> effect.getOrDefault(v.id(), BigDecimal.ZERO)).reversed()
-                : Comparator.comparing(Vehicle::listPrice));
+        Order sort = order == Order.BEST_FOR_NET && !personal ? Order.CHEAPEST : order;
+        allowed.sort(switch (sort) {
+            case BEST_FOR_NET -> Comparator.comparing((Vehicle v) -> effect.getOrDefault(v.id(), BigDecimal.ZERO)).reversed();
+            case MOST_LUXURIOUS -> Comparator.comparing(Vehicle::listPrice).reversed();
+            case CHEAPEST -> Comparator.comparing(Vehicle::listPrice);
+        });
+        int cards = drives.isEmpty() ? MAX_CARDS_ALL_KINDS : MAX_CARDS;
 
         String what = kind(drives) + conditions(maxListPrice, maxNetDecrease);
         StringBuilder text = new StringBuilder();
         if (allowed.isEmpty()) {
             text.append("לא מצאתי ").append(what).append(" בזכאות שלך.");
         } else {
-            text.append(what).append(" בזכאות שלך").append(personal ? ", מהמשתלם לנטו:" : ":");
-            if (allowed.size() > MAX_CARDS) {
-                text.append("\nועוד ").append(allowed.size() - MAX_CARDS).append(" ברשימת החלופות.");
+            text.append(what).append(" בזכאות שלך").append(switch (sort) {
+                case BEST_FOR_NET -> ", מהמשתלם לנטו:";
+                case MOST_LUXURIOUS -> ", מהיוקרתי ביותר (לפי מחיר מחירון):";
+                case CHEAPEST -> ", מהזול ביותר (לפי מחיר מחירון):";
+            });
+            if (allowed.size() > cards) {
+                text.append("\nועוד ").append(allowed.size() - cards).append(" ברשימת החלופות.");
             }
             if (!personal) {
                 text.append("\nכשאדע את כל הפרטים שלך, אראה גם מה כל רכב עושה לנטו.");
@@ -95,9 +113,9 @@ public class CarGuide {
                     .map(v -> v.label() + " (" + groupName(v) + ")").collect(Collectors.joining(", "))).append(".");
         }
         List<Map<String, Object>> forModel = new ArrayList<>();
-        allowed.stream().limit(MAX_CARDS).forEach(v -> forModel.add(modelView(v, effect.get(v.id()), true)));
+        allowed.stream().limit(cards).forEach(v -> forModel.add(modelView(v, effect.get(v.id()), true)));
         others.stream().limit(MAX_OTHERS).forEach(v -> forModel.add(modelView(v, null, false)));
-        return new Answer(text.toString(), allowed.stream().limit(MAX_CARDS).map(Vehicle::id).toList(), forModel);
+        return new Answer(text.toString(), allowed.stream().limit(cards).map(Vehicle::id).toList(), forModel);
     }
 
     /** One model, in the terms that matter for the decision, and what it means for this employee. */
@@ -136,7 +154,10 @@ public class CarGuide {
         return new Answer(text.toString(), chosen.stream().map(Vehicle::id).toList(), forModel);
     }
 
-    /** What pays best for the net: the best cars as cards, and giving up the car when it is an option. Today's car is not an option. */
+    /**
+     * The cars that pay best for the net, as cards. Giving up the car is never offered here: it may pay more in net,
+     * but it is the employee's own choice to raise, not the company's recommendation. Today's car is not an option.
+     */
     public Answer best(String caseId) {
         CaseState state = state(caseId);
         if (!state.missingForToday().isEmpty()) {
@@ -152,22 +173,10 @@ public class CarGuide {
                 .filter(v -> !v.id().equals(today))
                 .limit(3)
                 .toList();
-        Optional<Comparison> waiver = ranked.stream().filter(c -> c.alternative().choice() instanceof CarChoice.NoCar).findFirst();
-        boolean waiverFirst = waiver.isPresent() && (cars.isEmpty() || waiver.get().difference().compareTo(
-                ranked.stream().filter(c -> c.alternative().choice() instanceof CarChoice.CompanyCar car && car.vehicle().id().equals(cars.get(0).id()))
-                        .findFirst().orElseThrow().difference()) > 0);
-        StringBuilder text = new StringBuilder(waiverFirst
-                ? "הכי משתלם לנטו: ויתור על הרכב, הנטו " + signedPerMonth(waiver.get().difference()) + ". ומבין הרכבים:"
-                : "הרכבים הכי משתלמים לנטו שלך:");
-        if (waiver.isPresent() && !waiverFirst) {
-            text.append("\nויתור על הרכב: הנטו ").append(signedPerMonth(waiver.get().difference())).append(".");
-        }
-        text.append("\nזה מיון לפי הנטו בלבד, לפי השתתפות משוערת.");
+        String text = "הרכבים הכי משתלמים לנטו שלך:\nזה מיון לפי הנטו בלבד, לפי השתתפות משוערת.";
         Map<String, BigDecimal> effect = effects(state);
-        List<Map<String, Object>> forModel = new ArrayList<>(cars.stream().map(v -> modelView(v, effect.get(v.id()), true)).toList());
-        waiver.ifPresent(w -> forModel.add(Map.of("option", "giving up the car", "effectOnNet",
-                w.difference().signum() > 0 ? "higher than today" : "lower than today")));
-        return new Answer(text.toString(), cars.stream().map(Vehicle::id).toList(), forModel);
+        List<Map<String, Object>> forModel = cars.stream().map(v -> modelView(v, effect.get(v.id()), true)).toList();
+        return new Answer(text, cars.stream().map(Vehicle::id).toList(), forModel);
     }
 
     /** The change in net for every car the employee may take, once their details are complete. Empty before that. */

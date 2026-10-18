@@ -29,9 +29,10 @@ public class ChoiceService {
     private final CaseWorkflowService workflow;
     private final DirectAnswers directAnswers;
     private final CarGuide guide;
+    private final CarRequests carRequests;
 
     ChoiceService(CaseRepository cases, MessageRepository messages, CaseViewAssembler views, ChoiceOptions options,
-                  CaseWorkflowService workflow, DirectAnswers directAnswers, CarGuide guide) {
+                  CaseWorkflowService workflow, DirectAnswers directAnswers, CarGuide guide, CarRequests carRequests) {
         this.cases = cases;
         this.messages = messages;
         this.views = views;
@@ -39,6 +40,34 @@ public class ChoiceService {
         this.workflow = workflow;
         this.directAnswers = directAnswers;
         this.guide = guide;
+        this.carRequests = carRequests;
+    }
+
+    /**
+     * A plain request for cars ("רכב חשמלי", "משהו יוקרתי", "מה הכי משתלם לי?") is answered by code at once, with the
+     * cars as cards. Empty for anything else, which goes to the model. In the middle of the questions the chat then
+     * offers to carry on with them.
+     */
+    public Optional<CaseView> answerCarRequest(String caseId, String text, String clientRequestId) {
+        CaseEntity caseEntity = cases.findById(caseId)
+                .orElseThrow(() -> ApiException.notFound("UNKNOWN_CASE", "התיק לא נמצא"));
+        Optional<CarRequests.Request> request = carRequests.parse(text);
+        if (request.isEmpty()) {
+            return Optional.empty();
+        }
+        if (clientRequestId != null && messages.findByCaseIdAndClientRequestId(caseId, clientRequestId).isPresent()) {
+            return Optional.of(views.caseView(caseEntity));
+        }
+        CaseState state = views.state(caseEntity);
+        workflow.recordEmployeeMessage(caseId, text, clientRequestId);
+        if (state.reviewPending()) {
+            workflow.deferAssumptions(caseId);
+        }
+        CarRequests.Request r = request.get();
+        CarGuide.Answer answer = r.best() ? guide.best(caseId)
+                : guide.find(caseId, r.drives(), r.maxListPrice(), null, r.order());
+        workflow.addBotMessage(caseId, answer.text(), !state.missingForToday().isEmpty(), answer.cars());
+        return Optional.of(workflow.view(caseId));
     }
 
     /**
@@ -84,14 +113,6 @@ public class ChoiceService {
             FactKey key = FactKey.fromApiName(parts[1]);
             workflow.setFact(caseId, key, parts[2], FactEntity.Source.EMPLOYEE_MESSAGE, "m-" + sourceMessage, null);
             askNext(caseEntity);
-        } else if (offer.id().startsWith("alt:")) {
-            String target = offer.id().substring("alt:".length());
-            if ("waiver".equals(target)) {
-                workflow.chooseAlternative(caseId, "waiver", null, null);
-            } else {
-                workflow.chooseAlternative(caseId, "car", target, null);
-            }
-            sayComparison(caseId);
         } else if (ChoiceOptions.CONTINUE.equals(offer.id())) {
             askNext(caseEntity);
         } else if ("best".equals(offer.id())) {

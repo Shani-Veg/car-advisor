@@ -1,9 +1,6 @@
 package com.shani.caradvisor.workflow;
 
 import com.shani.caradvisor.data.ReferenceData;
-import com.shani.caradvisor.engine.CarChoice;
-import com.shani.caradvisor.engine.Comparison;
-import com.shani.caradvisor.engine.ComparisonEngine;
 import com.shani.caradvisor.engine.Drive;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +10,10 @@ import java.util.stream.IntStream;
 
 /**
  * The answer buttons offered under the bot's latest question, decided by the server from the state of the case:
- * a closed list while a detail is missing (job, current car, number of children), and the next steps once the
- * details are complete (what pays best, and the best alternatives). Ids are "fact:KEY:VALUE", "alt:CAR-ID",
- * "alt:waiver", "best", "review:ok" / "review:later" (the assumed details), "rep:ask" (confirm the participation
- * with the transport rep), and "ui:..." for actions the screen performs itself (choose a payslip file, open the form).
+ * a closed list while a detail is missing (job, current car, number of children), the review of the assumed details,
+ * and, where the latest message asks for them, two next steps or "confirm with the rep". Ids are "fact:KEY:VALUE",
+ * "best", "find:DRIVE", "review:ok" / "review:later", "rep:ask", "continue", and "ui:..." for actions the screen
+ * performs itself (choose a payslip file, open the form). Cars are shown as cards, never as bare buttons.
  */
 @Component
 public class ChoiceOptions {
@@ -34,14 +31,10 @@ public class ChoiceOptions {
     static final String CLIENT_ACTION = "ui:";
 
     private static final int MAX_CHILDREN_BUTTON = 3;
-    private static final int MAX_NEXT_STEPS = 4;
 
     private final ReferenceData data;
-    private final ComparisonEngine engine;
-
-    public ChoiceOptions(ReferenceData data, ComparisonEngine engine) {
+    public ChoiceOptions(ReferenceData data) {
         this.data = data;
-        this.engine = engine;
     }
 
     /** after: the buttons the latest message asked for, used once the questions and the review are done. */
@@ -58,7 +51,7 @@ public class ChoiceOptions {
                     new Offer(REVIEW_LATER, "אחר כך"));
         }
         return switch (after) {
-            case NEXT_STEPS -> nextSteps(state);
+            case NEXT_STEPS -> nextSteps();
             case REP -> state.canAskRep() ? List.of(new Offer(REP_ASK, "לאשר את ההשתתפות מול נציג")) : List.of();
             case NONE -> List.of();
         };
@@ -83,28 +76,13 @@ public class ChoiceOptions {
         };
     }
 
-    private List<Offer> nextSteps(CaseState state) {
-        List<Offer> offers = new ArrayList<>();
-        offers.add(new Offer("best", "מה הכי משתלם לי?"));
-        offers.add(new Offer(FIND + Drive.ELECTRIC.name(), "אילו רכבים חשמליים יש לי?"));
-        String today = state.fact(FactKey.CURRENT_CAR).map(FactEntity::value).orElse("");
-        String selected = state.caseEntity().alternativeSubject();
-        List<Comparison> ranked = engine.rankAlternatives(state.employee(), state.occupation(), state.todayChoice(),
-                data.catalog().vehicles());
-        for (Comparison c : ranked) {
-            if (offers.size() >= MAX_NEXT_STEPS) {
-                break;
-            }
-            CarChoice choice = c.alternative().choice();
-            if (choice instanceof CarChoice.CompanyCar car) {
-                String id = car.vehicle().id();
-                if (!id.equals(today) && !id.equals(selected)) {
-                    offers.add(new Offer("alt:" + id, car.vehicle().label()));
-                }
-            } else if (!"WAIVER".equals(selected)) {
-                offers.add(new Offer("alt:waiver", choice.label()));
-            }
-        }
-        return offers;
+    /**
+     * Two questions the employee can ask with a tap. Cars appear only once they ask: a few car names out of context
+     * explain nothing, and giving up the car is never pushed as a next step.
+     */
+    private static List<Offer> nextSteps() {
+        return List.of(
+                new Offer("best", "מה הכי משתלם לי?"),
+                new Offer(FIND + Drive.ELECTRIC.name(), "אילו רכבים חשמליים יש לי?"));
     }
 }

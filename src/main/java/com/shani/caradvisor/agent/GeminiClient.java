@@ -34,6 +34,7 @@ public class GeminiClient implements LlmClient {
     private final String apiKey;
     private final List<String> models;
     private final Duration timeout;
+    private final Duration firstTry;
     private final HttpClient http;
     private final TurnRecorder recorder;
     private final ObjectMapper json = new ObjectMapper();
@@ -41,11 +42,13 @@ public class GeminiClient implements LlmClient {
     public GeminiClient(@Value("${advisor.gemini.api-key:}") String apiKey,
                         @Value("${advisor.gemini.models:gemini-3.5-flash-lite,gemini-flash-lite-latest}") String models,
                         @Value("${advisor.gemini.timeout-seconds:40}") int timeoutSeconds,
+                        @Value("${advisor.gemini.first-try-seconds:8}") int firstTrySeconds,
                         @Value("${advisor.llm.record-file:}") String recordFile) {
         this.recorder = recordFile == null || recordFile.isBlank() ? null : new TurnRecorder(java.nio.file.Path.of(recordFile.trim()));
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.models = Arrays.stream(models.split(",")).map(String::trim).filter(m -> !m.isEmpty()).toList();
         this.timeout = Duration.ofSeconds(timeoutSeconds);
+        this.firstTry = Duration.ofSeconds(Math.min(firstTrySeconds, timeoutSeconds));
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     }
 
@@ -68,11 +71,14 @@ public class GeminiClient implements LlmClient {
         }
         String payload = json.writeValueAsString(body);
 
-        for (String model : models) {
+        for (int i = 0; i < models.size(); i++) {
+            String model = models.get(i);
+            // Gemini sometimes answers in 10-15 s instead of 1-2 s. With a fallback model left, don't wait that long.
+            Duration wait = i < models.size() - 1 ? firstTry : timeout;
             long started = System.currentTimeMillis();
             try {
                 HttpRequest request = HttpRequest.newBuilder(URI.create(String.format(ENDPOINT, model)))
-                        .timeout(timeout)
+                        .timeout(wait)
                         .header("Content-Type", "application/json; charset=utf-8")
                         .header("x-goog-api-key", apiKey)
                         .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
@@ -95,6 +101,8 @@ public class GeminiClient implements LlmClient {
                 log.info("Gemini {} answered in {} ms ({} tool calls)", model, System.currentTimeMillis() - started,
                         turn.calls().size());
                 return turn;
+            } catch (java.net.http.HttpTimeoutException e) {
+                log.warn("Gemini model {} did not answer within {} s, trying the next one", model, wait.toSeconds());
             } catch (java.io.IOException e) {
                 log.warn("Gemini model {} unreachable: {}", model, e.getClass().getSimpleName());
             } catch (InterruptedException e) {

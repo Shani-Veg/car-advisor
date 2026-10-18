@@ -232,6 +232,7 @@ class CaseViewAssembler {
         return engine.rankAlternatives(state.employee(), state.occupation(), state.todayChoice(), data.catalog().vehicles())
                 .stream()
                 .filter(c -> !(c.alternative().choice() instanceof CarChoice.CompanyCar car && car.vehicle().id().equals(today)))
+                .sorted(java.util.Comparator.comparing((Comparison c) -> c.alternative().choice() instanceof CarChoice.NoCar))
                 .map(c -> {
                     CarChoice choice = c.alternative().choice();
                     if (choice instanceof CarChoice.CompanyCar car) {

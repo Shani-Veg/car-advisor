@@ -59,7 +59,9 @@ class CaseWorkflowServiceTest {
 
         CaseView beforeAlternative = workflow.view(id);
         assertThat(beforeAlternative.status()).isEqualTo("COLLECTING");
-        assertThat(beforeAlternative.ranking().get(0).alternative().type()).isEqualTo("waiver");
+        // cars first, best for the net; giving up the car last
+        assertThat(beforeAlternative.ranking().get(0).alternative().type()).isEqualTo("car");
+        assertThat(beforeAlternative.ranking()).last().satisfies(item -> assertThat(item.alternative().type()).isEqualTo("waiver"));
 
         // Comparing asks nobody: the catalog's participation is used, marked as an estimate.
         CaseView compared = workflow.chooseAlternative(id, "car", "CAR-10", null);
