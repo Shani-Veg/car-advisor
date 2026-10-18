@@ -104,7 +104,7 @@ class DirectAnswers {
         return word.matches("\\d{1,2}") ? Optional.of(word) : Optional.empty();
     }
 
-    /** "מנהלת מוצר" and "מנהל מוצר" both mean the table's "מנהל/ת מוצר"; the reply may carry other words around it. */
+    /** "מנהלת מוצר", "מנהל מוצר" and "מנהל/ת מוצר" all mean the table's "מנהל/ת מוצר"; the reply may carry other words around it. */
     private Optional<String> occupation(String text) {
         String said = String.join(" ", words(text));
         List<Occupation> matches = data.occupations().all().stream()
@@ -115,6 +115,8 @@ class DirectAnswers {
 
     private static Set<String> variants(String name) {
         Set<String> variants = new HashSet<>();
+        // exactly as the table writes it, as when it is copied from a button
+        variants.add(String.join(" ", words(name)));
         variants.add(String.join(" ", words(name.replaceAll("/\\S+", ""))));
         variants.add(String.join(" ", words(name.replace("/", ""))));
         return variants;

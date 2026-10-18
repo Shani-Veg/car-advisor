@@ -33,6 +33,14 @@ class DirectAnswersTest {
     }
 
     @Test
+    void anOccupationTypedExactlyAsTheTableWritesItIsRecognised() {
+        assertThat(direct.parse(FactKey.OCCUPATION, "מפתח/ת תוכנה")).get().extracting(DirectAnswers.Answer::value)
+                .isEqualTo("מפתח/ת תוכנה");
+        assertThat(direct.parse(FactKey.OCCUPATION, "אני מנהל/ת מוצר")).get().extracting(DirectAnswers.Answer::value)
+                .isEqualTo("מנהל/ת מוצר");
+    }
+
+    @Test
     void anAmbiguousOrUnknownOccupationIsLeftToTheAssistant() {
         assertThat(direct.parse(FactKey.OCCUPATION, "מנהל")).isEmpty();
         assertThat(direct.parse(FactKey.OCCUPATION, "אסטרונאוט")).isEmpty();
