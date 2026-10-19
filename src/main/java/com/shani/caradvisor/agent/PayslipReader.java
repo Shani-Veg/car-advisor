@@ -106,7 +106,7 @@ public class PayslipReader {
         }
         String mimeType = mimeTypeOf(file);
         if (mimeType == null) {
-            throw ApiException.badRequest("UNSUPPORTED_FILE", "אפשר להעלות תמונה (PNG, JPG, WEBP) או קובץ PDF");
+            throw ApiException.badRequest("UNSUPPORTED_FILE", "אפשר להעלות תמונה (PNG, JPG, WEBP) או קובץ PDF.");
         }
         if (!rateLimiter.tryAcquire(caseId, Instant.now())) {
             throw new ApiException(429, "RATE_LIMITED", "יותר מדי ניסיונות בזמן קצר. נסו שוב בעוד דקה.");

@@ -26,7 +26,7 @@ public final class EligibilityChecker {
                                 + track.childMaxAge() + " (רשומים " + employee.childrenUpTo23() + ")");
             }
             return Eligibility.yes(Eligibility.Code.FAMILY_TRACK,
-                    "מסלול ברוכת ילדים (" + employee.childrenUpTo23() + " ילדים); על הפער מעל תקציב הקבוצה העובד משלם "
+                    "מסלול ברוכת ילדים (" + employee.childrenUpTo23() + " ילדים); על הפער מעל תקציב הקבוצה משלמים "
                             + percent(track.employeeShareOfGap()) + "%");
         }
         if (rules.rankOf(vehicle.group()) > rules.rankOf(employee.group())) {

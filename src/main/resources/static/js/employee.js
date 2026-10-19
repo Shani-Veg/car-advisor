@@ -55,7 +55,12 @@ function updateControls() {
   byId('cancel-edit').disabled = busy;
   byId('assistant-banner').hidden = !unavailable();
   byId('typing').hidden = !busy || byId('profile-dialog').open || byId('payslip-dialog').open || unavailable();
+  // after a few seconds, say why it takes long, so a slow model does not look like a stuck screen
+  clearTimeout(slowTimer);
+  byId('typing-text').textContent = 'העוזר מכין תשובה…';
+  if (busy) slowTimer = setTimeout(() => { byId('typing-text').textContent = 'עוד רגע… העוזר עונה הפעם לאט מהרגיל'; }, 7000);
 }
+let slowTimer;
 /** Keep a request ID after network failure, so a manual retry stays idempotent. */
 async function mutate(key, action, onSuccess) {
   if (busy || !current) return false;
@@ -768,7 +773,7 @@ function openEditor(field) {
   }
   control.id = 'edit-value'; control.name = 'value'; control.required = true;
   wrapper.append(label, control);
-  if (readonly) wrapper.append(el('p', 'readonly-note', field.key === 'group' ? 'קבוצת הזכאות נקבעת לפי התפקיד בטבלת העיסוקים. כדי לשנות אותה, עדכנו את העיסוק.' : 'נקבע על ידי נציג התחבורה. ההשתתפות בחלופה אינה ניתנת לעריכה על ידי העובד.'));
+  if (readonly) wrapper.append(el('p', 'readonly-note', field.key === 'group' ? 'קבוצת הזכאות נקבעת לפי התפקיד בטבלת העיסוקים. כדי לשנות אותה, עדכנו את העיסוק.' : 'את ההשתתפות ברכב החדש קובע נציג התחבורה, ולכן אי אפשר לערוך אותה כאן.'));
   byId('save-profile').hidden = readonly; byId('cancel-edit').textContent = readonly ? 'סגירה' : 'ביטול';
   byId('edit-control').replaceChildren(wrapper);
   byId('profile-dialog').showModal(); control.focus();

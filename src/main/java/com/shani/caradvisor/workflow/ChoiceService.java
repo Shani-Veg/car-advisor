@@ -158,7 +158,7 @@ public class ChoiceService {
         }
         if ("details".equals(action)) {
             CarGuide.Answer answer = guide.describe(caseId, vehicleId);
-            workflow.recordEmployeeMessage(caseId, "ספר/י לי על " + label(vehicleId), clientRequestId);
+            workflow.recordEmployeeMessage(caseId, "פרטים על " + label(vehicleId), clientRequestId);
             workflow.addBotMessage(caseId, answer.text(), false, answer.cars());
         } else if ("compare".equals(action)) {
             workflow.chooseAlternative(caseId, "car", vehicleId, null);

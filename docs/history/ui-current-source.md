@@ -76,7 +76,7 @@
   </header>
   <main id="main" class="app-main">
     <div id="assistant-banner" class="notice warning" role="status" hidden>העוזר לא זמין כרגע. אפשר לענות בקצרה על השאלה (מספר או מילה), ללחוץ על כפתור, או לעדכן ב"המידע שלך".</div>
-    <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" type="button" class="text-button">נסה שוב</button></div>
+    <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" type="button" class="text-button">נסו שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
     <div class="employee-grid">
       <section id="chat-panel" class="panel chat-panel" aria-labelledby="chat-heading">
@@ -84,7 +84,7 @@
         <div class="chat-progress"><span id="progress-label" class="sr-only">הפרטים שלי: טוען…</span><progress id="profile-progress" max="1" value="0" aria-labelledby="progress-label"></progress></div>
         <div id="messages" class="messages" role="log" aria-label="היסטוריית השיחה" aria-live="off" aria-busy="true"><p class="empty-state">טוען את השיחה…</p></div>
         <div id="chat-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-        <div id="typing" class="typing" role="status" hidden><span class="typing-dots" aria-hidden="true">•••</span>העוזר מכין תשובה…</div>
+        <div id="typing" class="typing" role="status" hidden><span class="typing-dots" aria-hidden="true">•••</span><span id="typing-text">העוזר מכין תשובה…</span></div>
         <form id="message-form" class="composer">
           <label for="message-input" class="sr-only">הודעה ליועץ הרכב. Enter לשליחה, Shift ו-Enter לשורה חדשה</label>
           <div class="composer-input"><textarea id="message-input" name="message" placeholder="מה תרצו לבדוק?" rows="1" maxlength="2000" required disabled></textarea><button id="send-button" class="send-button" type="submit" data-mutation disabled aria-label="שליחת הודעה"><span aria-hidden="true">←</span></button></div>
@@ -156,7 +156,7 @@
       <div><h1>תור השאלות</h1><p>שאלות שמחכות לאישור שלך, מהוותיקה לחדשה. התשובה מעדכנת מיד את ההשוואה אצל העובד/ת.</p></div>
       <p id="sync-label" class="sync-label" role="status">מתחבר…</p>
     </div>
-    <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" class="text-button" type="button">נסה שוב</button></div>
+    <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" class="text-button" type="button">נסו שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>
     <section class="queue" aria-labelledby="questions-heading">
       <h2 id="questions-heading" class="queue-title">ממתינות למענה <span id="open-count" class="count-badge"><bdi dir="ltr">0</bdi></span></h2>
@@ -581,6 +581,12 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .mobile-comparison bdi { font: 600 26px/1.1 var(--num); white-space: nowrap; }
 
 /* ================= 8. Rep screen ================= */
+/* error pages */
+.error-page { max-width: 560px; padding-top: 80px; text-align: center; }
+.error-page h1 { font-size: 30px; margin-bottom: 10px; }
+.error-page p { margin-bottom: 22px; color: var(--muted); }
+.error-page .primary-button { display: inline-flex; align-items: center; text-decoration: none; }
+
 /* the rep's queue: one column, the longest waiting first */
 .rep-main { max-width: 920px; }
 .rep-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 8px 0 18px; }
@@ -776,9 +782,9 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 export class ApiError extends Error {
   constructor(status, code, message) { super(message); this.name = 'ApiError'; this.status = status; this.code = code; }
 }
-async function request(path, { method = 'GET', body } = {}) {
+async function request(path, { method = 'GET', body, wait = 15000 } = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), wait);
   try {
     const response = await fetch(path, { method, credentials: 'same-origin', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     let data;
@@ -812,7 +818,8 @@ const casePath = id => '/api/cases/' + encodeURIComponent(id);
 export const api = Object.freeze({
   createCase: () => request('/api/cases', { method: 'POST', body: {} }),
   getCase: id => request(casePath(id)),
-  sendMessage: (id, text, clientRequestId) => request(casePath(id) + '/messages', { method: 'POST', body: { text, clientRequestId } }),
+  // a chat turn may wait for a slow model and its fallback: give it longer than other calls
+  sendMessage: (id, text, clientRequestId) => request(casePath(id) + '/messages', { method: 'POST', body: { text, clientRequestId }, wait: 60000 }),
   choose: (id, choiceId, clientRequestId) => request(casePath(id) + '/choices', { method: 'POST', body: { choiceId, clientRequestId } }),
   updateProfile: (id, key, value, expectedVersion) => request(casePath(id) + '/profile/' + encodeURIComponent(key), { method: 'PUT', body: { value, expectedVersion } }),
   carAction: (id, vehicleId, action, clientRequestId) => request(casePath(id) + '/cars/' + encodeURIComponent(vehicleId), { method: 'POST', body: { action, clientRequestId } }),
@@ -1187,7 +1194,12 @@ function updateControls() {
   byId('cancel-edit').disabled = busy;
   byId('assistant-banner').hidden = !unavailable();
   byId('typing').hidden = !busy || byId('profile-dialog').open || byId('payslip-dialog').open || unavailable();
+  // after a few seconds, say why it takes long, so a slow model does not look like a stuck screen
+  clearTimeout(slowTimer);
+  byId('typing-text').textContent = 'העוזר מכין תשובה…';
+  if (busy) slowTimer = setTimeout(() => { byId('typing-text').textContent = 'עוד רגע… העוזר עונה הפעם לאט מהרגיל'; }, 7000);
 }
+let slowTimer;
 /** Keep a request ID after network failure, so a manual retry stays idempotent. */
 async function mutate(key, action, onSuccess) {
   if (busy || !current) return false;
@@ -1900,7 +1912,7 @@ function openEditor(field) {
   }
   control.id = 'edit-value'; control.name = 'value'; control.required = true;
   wrapper.append(label, control);
-  if (readonly) wrapper.append(el('p', 'readonly-note', field.key === 'group' ? 'קבוצת הזכאות נקבעת לפי התפקיד בטבלת העיסוקים. כדי לשנות אותה, עדכנו את העיסוק.' : 'נקבע על ידי נציג התחבורה. ההשתתפות בחלופה אינה ניתנת לעריכה על ידי העובד.'));
+  if (readonly) wrapper.append(el('p', 'readonly-note', field.key === 'group' ? 'קבוצת הזכאות נקבעת לפי התפקיד בטבלת העיסוקים. כדי לשנות אותה, עדכנו את העיסוק.' : 'את ההשתתפות ברכב החדש קובע נציג התחבורה, ולכן אי אפשר לערוך אותה כאן.'));
   byId('save-profile').hidden = readonly; byId('cancel-edit').textContent = readonly ? 'סגירה' : 'ביטול';
   byId('edit-control').replaceChildren(wrapper);
   byId('profile-dialog').showModal(); control.focus();

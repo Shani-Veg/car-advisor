@@ -105,7 +105,7 @@ class CarGuideTest {
         assertThat(last.cars().get(0).difference()).isEqualByComparingTo("1013");
 
         CaseView details = choices.carAction(id, "CAR-10", "details", "card-1");
-        assertThat(texts(details)).contains("ספר/י לי על ATTO 3 (2025)");
+        assertThat(texts(details)).contains("פרטים על ATTO 3 (2025)");
 
         CaseView compared = choices.carAction(id, "CAR-10", "compare", "card-2");
         assertThat(compared.comparison().alternative().vehicleId()).isEqualTo("CAR-10");

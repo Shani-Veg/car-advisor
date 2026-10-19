@@ -21,7 +21,7 @@ public final class ChatSummaries {
 
     private static final Map<FactKey, String> QUESTIONS = Map.ofEntries(
             Map.entry(FactKey.OCCUPATION, "מה התפקיד שלך?"),
-            Map.entry(FactKey.GROUP, "באיזו קבוצת זכאות את/ה?"),
+            Map.entry(FactKey.GROUP, "מה קבוצת הזכאות שלך?"),
             Map.entry(FactKey.BASE_SALARY, "מה שכר הבסיס החודשי שלך (ברוטו)?"),
             Map.entry(FactKey.COMMISSIONS, "יש לך עמלות חודשיות? אם אין, כתבו 0."),
             Map.entry(FactKey.BONUS, "יש לך בונוס חודשי? אם אין, כתבו 0."),
@@ -125,7 +125,7 @@ public final class ChatSummaries {
         if (!missing.isEmpty()) {
             return "כדי להמשיך אצטרך עוד כמה פרטים: " + String.join(" ו", missing) + ".";
         }
-        return view.comparison() != null ? "ההשוואה מעודכנת במסך." : "איזו חלופה תרצה/י לבדוק?";
+        return view.comparison() != null ? "ההשוואה מעודכנת." : "איזו חלופה תרצו לבדוק?";
     }
 
     private static ProfileField field(CaseView view, String key) {

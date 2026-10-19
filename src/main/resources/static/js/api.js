@@ -2,9 +2,9 @@
 export class ApiError extends Error {
   constructor(status, code, message) { super(message); this.name = 'ApiError'; this.status = status; this.code = code; }
 }
-async function request(path, { method = 'GET', body } = {}) {
+async function request(path, { method = 'GET', body, wait = 15000 } = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), wait);
   try {
     const response = await fetch(path, { method, credentials: 'same-origin', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     let data;
@@ -38,7 +38,8 @@ const casePath = id => '/api/cases/' + encodeURIComponent(id);
 export const api = Object.freeze({
   createCase: () => request('/api/cases', { method: 'POST', body: {} }),
   getCase: id => request(casePath(id)),
-  sendMessage: (id, text, clientRequestId) => request(casePath(id) + '/messages', { method: 'POST', body: { text, clientRequestId } }),
+  // a chat turn may wait for a slow model and its fallback: give it longer than other calls
+  sendMessage: (id, text, clientRequestId) => request(casePath(id) + '/messages', { method: 'POST', body: { text, clientRequestId }, wait: 60000 }),
   choose: (id, choiceId, clientRequestId) => request(casePath(id) + '/choices', { method: 'POST', body: { choiceId, clientRequestId } }),
   updateProfile: (id, key, value, expectedVersion) => request(casePath(id) + '/profile/' + encodeURIComponent(key), { method: 'PUT', body: { value, expectedVersion } }),
   carAction: (id, vehicleId, action, clientRequestId) => request(casePath(id) + '/cars/' + encodeURIComponent(vehicleId), { method: 'POST', body: { action, clientRequestId } }),

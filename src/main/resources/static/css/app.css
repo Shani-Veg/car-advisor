@@ -370,6 +370,12 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .mobile-comparison bdi { font: 600 26px/1.1 var(--num); white-space: nowrap; }
 
 /* ================= 8. Rep screen ================= */
+/* error pages */
+.error-page { max-width: 560px; padding-top: 80px; text-align: center; }
+.error-page h1 { font-size: 30px; margin-bottom: 10px; }
+.error-page p { margin-bottom: 22px; color: var(--muted); }
+.error-page .primary-button { display: inline-flex; align-items: center; text-decoration: none; }
+
 /* the rep's queue: one column, the longest waiting first */
 .rep-main { max-width: 920px; }
 .rep-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 8px 0 18px; }
