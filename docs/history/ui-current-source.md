@@ -356,7 +356,7 @@ progress { appearance: none; display: block; width: 100%; height: 4px; border: 0
 progress::-webkit-progress-bar { background: var(--line-2); border-radius: var(--r-pill); }
 progress::-webkit-progress-value { background: var(--warm); border-radius: var(--r-pill); }
 progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pill); }
-.messages { flex: 1; min-height: 100px; padding: 14px 16px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.messages { flex: 1; min-height: 100px; padding: 14px 16px 22px; scroll-padding-bottom: 22px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .message { display: flex; margin-bottom: 10px; animation: pop .22s ease-out both; }
 .message:last-child { margin-bottom: 0; }
 .message-content { min-width: 0; max-width: 92%; }
@@ -787,6 +787,7 @@ async function request(path, { method = 'GET', body, wait = 15000 } = {}) {
   const timeout = setTimeout(() => controller.abort(), wait);
   try {
     const response = await fetch(path, { method, credentials: 'same-origin', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+    if (response.status === 401) throw new ApiError(401, 'LOGIN_REQUIRED', 'נדרשת התחברות של נציג. רעננו את הדף והתחברו מחדש.');
     let data;
     try { data = await response.json(); }
     catch { throw new ApiError(response.status, 'INVALID_RESPONSE', 'השרת החזיר תשובה לא תקינה.'); }
@@ -2045,7 +2046,7 @@ function field(labelText, id, type) {
   const input = el(type === 'textarea' ? 'textarea' : 'input');
   if (type !== 'textarea') input.type = type;
   input.id = id; input.name = id;
-  if (type === 'number') { input.step = 'any'; input.min = '0'; input.dir = 'ltr'; input.inputMode = 'decimal'; }
+  if (type === 'number') { input.step = 'any'; input.min = '0'; input.max = '5000'; input.dir = 'ltr'; input.inputMode = 'decimal'; }
   wrapper.append(label, input);
   return { wrapper, input };
 }

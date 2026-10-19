@@ -121,6 +121,24 @@ class CaseWorkflowServiceTest {
     }
 
     @Test
+    void valuesThatWouldMakeTheNetMeaninglessAreRefusedForTheEmployeeAndTheRepAlike() {
+        String id = noaToday();
+        workflow.chooseAlternative(id, "car", "CAR-10", null);
+        workflow.requestRepConfirmation(id);
+        String question = openQuestionFor(id).id();
+
+        assertThatThrownBy(() -> workflow.answer(question, 999999, null, "", "req-big", "rep"))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("INVALID_VALUE"));
+        assertThatThrownBy(() -> form(id, FactKey.CURRENT_PARTICIPATION, 1_000_000))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("INVALID_VALUE"));
+        assertThatThrownBy(() -> form(id, FactKey.PENSION_PERCENT, 100))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getMessage()).contains("עד 10%"));
+        // realistic values still go through
+        form(id, FactKey.PENSION_PERCENT, 7);
+        assertThat(workflow.answer(question, 5000, null, "", "req-ok", "rep").answer().display()).isEqualTo("5,000 ₪");
+    }
+
+    @Test
     void theRepQueueHidesStaleQuestionsAndKeepsTheLongestWaitingFirst() {
         String stale = noaToday();
         workflow.chooseAlternative(stale, "car", "CAR-10", null);

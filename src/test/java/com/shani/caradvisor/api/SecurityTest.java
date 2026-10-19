@@ -50,6 +50,15 @@ class SecurityTest {
     }
 
     @Test
+    void aChatMessageMustBeText() throws Exception {
+        String id = workflow.create().caseId();
+        mvc.perform(post("/api/cases/" + id + "/messages").contentType("application/json")
+                        .content("{\"text\": 12345, \"clientRequestId\": \"t-num\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_MESSAGE"));
+    }
+
+    @Test
     void theAssistantsMetricsAreBehindTheSameLogin() throws Exception {
         mvc.perform(get("/api/rep/metrics")).andExpect(status().isUnauthorized());
         mvc.perform(get("/metrics.html")).andExpect(status().isUnauthorized());

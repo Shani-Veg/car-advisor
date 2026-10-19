@@ -56,7 +56,8 @@ public class CaseController {
     public record PayslipApproval(Map<String, Object> values, String clientRequestId) {
     }
 
-    public record MessageRequest(String text, String clientRequestId) {
+    /** text is read as is: a number or an object instead of text is refused, not turned into text. */
+    public record MessageRequest(Object text, String clientRequestId) {
     }
 
     public record ChoiceRequest(String choiceId, String clientRequestId) {
@@ -81,7 +82,10 @@ public class CaseController {
 
     @PostMapping("/{caseId}/messages")
     public CaseView message(@PathVariable("caseId") String caseId, @RequestBody MessageRequest body) {
-        return agent.reply(caseId, body.text(), body.clientRequestId());
+        if (body.text() != null && !(body.text() instanceof String)) {
+            throw com.shani.caradvisor.workflow.ApiException.badRequest("INVALID_MESSAGE", "ההודעה צריכה להיות טקסט");
+        }
+        return agent.reply(caseId, (String) body.text(), body.clientRequestId());
     }
 
     @PostMapping("/{caseId}/choices")

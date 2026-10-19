@@ -7,6 +7,7 @@ async function request(path, { method = 'GET', body, wait = 15000 } = {}) {
   const timeout = setTimeout(() => controller.abort(), wait);
   try {
     const response = await fetch(path, { method, credentials: 'same-origin', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+    if (response.status === 401) throw new ApiError(401, 'LOGIN_REQUIRED', 'נדרשת התחברות של נציג. רעננו את הדף והתחברו מחדש.');
     let data;
     try { data = await response.json(); }
     catch { throw new ApiError(response.status, 'INVALID_RESPONSE', 'השרת החזיר תשובה לא תקינה.'); }

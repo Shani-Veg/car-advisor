@@ -24,7 +24,7 @@ function field(labelText, id, type) {
   const input = el(type === 'textarea' ? 'textarea' : 'input');
   if (type !== 'textarea') input.type = type;
   input.id = id; input.name = id;
-  if (type === 'number') { input.step = 'any'; input.min = '0'; input.dir = 'ltr'; input.inputMode = 'decimal'; }
+  if (type === 'number') { input.step = 'any'; input.min = '0'; input.max = '5000'; input.dir = 'ltr'; input.inputMode = 'decimal'; }
   wrapper.append(label, input);
   return { wrapper, input };
 }

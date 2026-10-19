@@ -20,6 +20,15 @@ public class FactValues {
     private static final BigDecimal MAX_PERCENT = BigDecimal.valueOf(100);
     private static final BigDecimal MAX_POINTS = BigDecimal.valueOf(20);
     private static final BigDecimal MAX_CHILDREN = BigDecimal.valueOf(30);
+    /**
+     * Limits that keep the comparison sane: a participation of a million or a pension deduction of 100% gives a
+     * negative net that means nothing. The same limits hold for the form, the chat, the payslip and the rep.
+     */
+    private static final java.util.Map<FactKey, BigDecimal> REALISTIC_MAX = java.util.Map.of(
+            FactKey.CURRENT_PARTICIPATION, BigDecimal.valueOf(5_000),
+            FactKey.ALTERNATIVE_PARTICIPATION, BigDecimal.valueOf(5_000),
+            FactKey.PENSION_PERCENT, BigDecimal.valueOf(10),
+            FactKey.STUDY_FUND_PERCENT, BigDecimal.valueOf(10));
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final ReferenceData data;
@@ -45,8 +54,8 @@ public class FactValues {
                 }
                 yield text;
             }
-            case MONEY -> number(key, text, MAX_MONEY).toPlainString();
-            case PERCENT -> number(key, text, MAX_PERCENT).toPlainString();
+            case MONEY -> number(key, text, REALISTIC_MAX.getOrDefault(key, MAX_MONEY)).toPlainString();
+            case PERCENT -> number(key, text, REALISTIC_MAX.getOrDefault(key, MAX_PERCENT)).toPlainString();
             case POINTS -> number(key, text, MAX_POINTS).toPlainString();
             case COUNT -> {
                 BigDecimal count = number(key, text, MAX_CHILDREN);
@@ -100,7 +109,8 @@ public class FactValues {
             throw ApiException.badRequest("INVALID_VALUE", key.label() + ": '" + text + "' אינו מספר");
         }
         if (value.signum() < 0 || value.compareTo(max) > 0) {
-            throw ApiException.badRequest("INVALID_VALUE", key.label() + " מחוץ לטווח המותר");
+            throw ApiException.badRequest("INVALID_VALUE", key.label() + ": אפשר להזין מ-0 עד "
+                    + max.stripTrailingZeros().toPlainString() + (key.type() == FactKey.ValueType.PERCENT ? "%" : ""));
         }
         return value.scale() < 0 ? value.setScale(0) : value;
     }
