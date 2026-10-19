@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>מצב העוזר · יועץ הרכב</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">דילוג לתוכן</a>
+  <header class="site-header"><a class="wordmark" id="home-link" href="index.html"><svg class="wordmark-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="mark-track" d="M3 16a9 9 0 0 1 18 0"></path><path class="mark-value" d="M3 16a9 9 0 0 1 12.5-8.3"></path></svg>יועץ הרכב</a><nav class="header-nav" aria-label="ניווט ראשי"><a href="rep.html">עמדת נציג</a><span class="nav-current">מצב העוזר</span></nav></header>
+  <main id="main" class="app-main rep-main">
+    <div class="rep-top">
+      <div><h1>מצב העוזר</h1><p>מדדים חיים מאז שהשרת עלה, ותוצאות בדיקות האיכות לאורך זמן. בלי שום מידע אישי: רק ספירות וזמנים.</p></div>
+      <p id="sync-label" class="sync-label" role="status">מתחבר…</p>
+    </div>
+    <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span></div>
+    <section aria-labelledby="live-heading">
+      <h2 id="live-heading" class="queue-title">מאז ההפעלה</h2>
+      <div id="tiles" class="metric-tiles"></div>
+      <div class="metric-grid">
+        <div class="metric-card"><h3>איך נענו ההודעות</h3><table class="metric-table" id="paths"></table></div>
+        <div class="metric-card"><h3>קריאות למודל</h3><table class="metric-table" id="models"></table></div>
+        <div class="metric-card"><h3>שומרים שנכנסו לפעולה</h3><table class="metric-table" id="guards"></table></div>
+        <div class="metric-card"><h3>כלים שהמודל הפעיל</h3><table class="metric-table" id="tools"></table></div>
+      </div>
+    </section>
+    <section aria-labelledby="evals-heading">
+      <h2 id="evals-heading" class="queue-title">בדיקות איכות לאורך זמן</h2>
+      <p class="small-muted metric-note">כל הרצה של <bdi dir="ltr">evals/run_evals.py</bdi> מול המודל האמיתי מוסיפה שורה: כמה תרחישים עברו, וזמני התגובה.</p>
+      <div class="metric-card"><table class="metric-table" id="evals"></table></div>
+    </section>
+  </main>
+  <script type="module" src="js/metrics.js"></script>
+</body>
+</html>

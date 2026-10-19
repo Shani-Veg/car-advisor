@@ -8,7 +8,8 @@ Runs the whole demo conversation against a running server (Python 3, standard li
       Runs it again (for example against `run.ps1 -Replay`) and fails if what the employee sees differs.
 
 The steps below are exactly what the demo script (docs/demo-script.md) does: typed sentences, button taps,
-the sample payslip upload (demo/sample-payslip.png), and the rep's answer.
+the sample payslip upload (demo/sample-payslip.pdf: read on the server, only its payroll lines reach the model),
+and the rep's answer.
 """
 import argparse
 import base64
@@ -21,7 +22,7 @@ import urllib.request
 import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PAYSLIP = os.path.join(HERE, "sample-payslip.png")
+PAYSLIP = os.path.join(HERE, "sample-payslip.pdf")
 
 NOA = [
     ("say", "שלום, אני מנהלת מוצר. שכר הבסיס שלי 18,500 ש\"ח ויש לי שני ילדים."),
@@ -68,8 +69,10 @@ class Server:
         boundary = uuid.uuid4().hex
         with open(file_path, "rb") as f:
             content = f.read()
-        body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"payslip.png\"\r\n"
-                f"Content-Type: image/png\r\n\r\n").encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        name = os.path.basename(file_path)
+        kind = "application/pdf" if name.endswith(".pdf") else "image/png"
+        body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"{name}\"\r\n"
+                f"Content-Type: {kind}\r\n\r\n").encode() + content + f"\r\n--{boundary}--\r\n".encode()
         headers = {"Content-Type": f"multipart/form-data; boundary={boundary}", "X-Requested-With": "car-advisor"}
         return self._send(urllib.request.Request(self.base + path, data=body, method="POST", headers=headers))
 
@@ -103,6 +106,7 @@ def step(server, case_id, kind, arg, transcript, seen):
             transcript.append({"role": "payslip", "text": "unreadable"})
             return
         read = {f["key"]: f["display"] for f in reading["fields"]}
+        print("    sent to the model:", reading.get("sentForReading") or "(a cropped image)")
         print("    read:", json.dumps(read, ensure_ascii=False))
         transcript.append({"role": "payslip", "text": json.dumps(read, ensure_ascii=False, sort_keys=True)})
         values = {f["key"]: f["value"] for f in reading["fields"]}

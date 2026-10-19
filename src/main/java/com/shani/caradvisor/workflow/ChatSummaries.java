@@ -62,7 +62,7 @@ public final class ChatSummaries {
             return "עדכנתי. עוד הנחתי: " + items + ". נכון?";
         }
         return "יש לי מה שצריך. הנחתי כמה פרטים, כדאי לוודא שהם נכונים: " + items
-                + ". אפשר גם להעלות תלוש שכר ואמלא מהתלוש.";
+                + (view.payslipEnabled() ? ". אפשר גם להעלות תלוש שכר ואמלא מהתלוש." : ".");
     }
 
     public static String assumptionsConfirmed() {

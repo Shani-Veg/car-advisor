@@ -1,6 +1,7 @@
 package com.shani.caradvisor.agent;
 
 import com.shani.caradvisor.data.ReferenceData;
+import com.shani.caradvisor.observability.AssistantMetrics;
 import com.shani.caradvisor.workflow.ApiException;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
 import com.shani.caradvisor.workflow.FactKey;
@@ -9,10 +10,12 @@ import com.shani.caradvisor.workflow.Views.CaseView;
 import com.shani.caradvisor.workflow.Views.PayslipField;
 import com.shani.caradvisor.workflow.Views.PayslipReading;
 import com.shani.caradvisor.workflow.Views.ProfileField;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -21,10 +24,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Reads the few numbers the comparison needs from the employee's payslip. The model only reads; the code turns
- * amounts into percentages, validates every value like a form entry, and nothing is stored until the employee
- * approves (CaseWorkflowService.applyPayslip). The file is kept in memory for this request only, never saved or
- * logged; a recording keeps only the numbers read, keyed by the file's hash.
+ * Reads the few numbers the comparison needs from the employee's payslip, without the payslip itself ever reaching
+ * the model. A PDF is read here, on our server, and only its payroll lines (terms and numbers, see PayslipText) are
+ * sent; a scanned PDF without text is not sent at all. An image arrives already cropped by the employee in the
+ * browser to the payments and deductions table, so the name, ID and address stay on their computer. The model only
+ * reads; the code turns amounts into percentages, validates every value like a form entry, and nothing is stored
+ * until the employee approves (CaseWorkflowService.applyPayslip). The file is kept in memory for this request only,
+ * never saved or logged; a recording keeps only the numbers read, keyed by the hash of what was sent.
  */
 @Service
 public class PayslipReader {
@@ -32,8 +38,20 @@ public class PayslipReader {
     public static final int MAX_BYTES = 5 * 1024 * 1024;
 
     static final String INSTRUCTION = """
-            This is an Israeli payslip (תלוש שכר). Return only the numbers below, as printed, for the month of this
-            payslip. Use null for anything that is not on it. Never guess or calculate.
+            This is part of an Israeli payslip (תלוש שכר): the table of payments and deductions. Return only the
+            numbers below, as printed, for the month of this payslip. Use null for anything that is not on it.
+            Never guess or calculate.
+            """ + Fields.TEXT;
+
+    static final String TEXT_INSTRUCTION = """
+            These lines come from an Israeli payslip (תלוש שכר). Before sending, the system kept only payroll terms
+            and the numbers next to them; every other word was removed. A line reads "term: numbers", and the numbers
+            may be an amount in NIS, a rate in percent or a quantity, in any order. Return only the numbers below.
+            Use null for anything that is not there. Never guess or calculate.
+            """ + Fields.TEXT;
+
+    private static final class Fields {
+        static final String TEXT = """
             - baseSalary: monthly base salary (שכר יסוד, שכר בסיס, משכורת), in NIS.
             - commissions: commissions paid this month (עמלות), in NIS.
             - bonus: bonus or premium paid this month (בונוס, פרמיה, מענק), in NIS.
@@ -49,6 +67,7 @@ public class PayslipReader {
               never return the use value.
             Do not return names, ID numbers, addresses, bank details or any other text.
             """;
+    }
 
     private static final List<String> NUMBERS = List.of("baseSalary", "commissions", "bonus", "pensionEmployeePercent",
             "pensionEmployeeAmount", "studyFundEmployeePercent", "studyFundEmployeeAmount", "creditPoints", "carParticipation");
@@ -60,16 +79,25 @@ public class PayslipReader {
     private final FactValues values;
     private final ReferenceData data;
     private final RateLimiter rateLimiter = new RateLimiter(3, 20);
+    private final AssistantMetrics metrics;
+    private final boolean enabled;
 
-    public PayslipReader(LlmClient llm, CaseWorkflowService workflow, FactValues values, ReferenceData data) {
+    public PayslipReader(LlmClient llm, CaseWorkflowService workflow, FactValues values, ReferenceData data,
+                         AssistantMetrics metrics, @Value("${advisor.payslip.enabled:true}") boolean enabled) {
         this.llm = llm;
         this.workflow = workflow;
         this.values = values;
         this.data = data;
+        this.metrics = metrics;
+        this.enabled = enabled;
     }
 
     public PayslipReading read(String caseId, byte[] file) {
         CaseView view = workflow.view(caseId);
+        // Without a processing agreement with the model's provider, a real payslip must not leave the organisation.
+        if (!enabled) {
+            throw new ApiException(403, "PAYSLIP_DISABLED", "קריאת תלוש כבויה כאן. אפשר לעדכן את הפרטים ב\"המידע שלך\".");
+        }
         if (file == null || file.length == 0) {
             throw ApiException.badRequest("EMPTY_FILE", "לא התקבל קובץ");
         }
@@ -84,9 +112,22 @@ public class PayslipReader {
             throw new ApiException(429, "RATE_LIMITED", "יותר מדי ניסיונות בזמן קצר. נסו שוב בעוד דקה.");
         }
         Map<String, Object> raw;
+        List<String> sent = List.of();
         try {
-            raw = llm.extract(INSTRUCTION, file, mimeType, SCHEMA);
+            if (mimeType.equals("application/pdf")) {
+                sent = PayslipText.fromPdf(file).orElseThrow(() -> ApiException.badRequest("SCANNED_PDF",
+                        "בקובץ הזה אין טקסט (זו סריקה), ולכן הוא לא נשלח. אפשר לצלם את התלוש ולסמן בו את טבלת התשלומים, או לעדכן ב\"המידע שלך\"."));
+                if (sent.isEmpty()) {
+                    metrics.payslip("nothing_read");
+                    throw ApiException.badRequest("NOTHING_READ",
+                            "לא מצאתי בקובץ שורות שכר. אפשר לנסות קובץ אחר, או לעדכן ב\"המידע שלך\".");
+                }
+                raw = llm.extract(TEXT_INSTRUCTION, String.join("\n", sent).getBytes(StandardCharsets.UTF_8), "text/plain", SCHEMA);
+            } else {
+                raw = llm.extract(INSTRUCTION, file, mimeType, SCHEMA);
+            }
         } catch (LlmClient.UnavailableException e) {
+            metrics.payslip("unavailable");
             throw ApiException.unavailable("PAYSLIP_UNAVAILABLE", "REPLAY".equals(llm.mode())
                     ? "במצב השמעה אפשר לקרוא רק את תלוש הדוגמה שהוקלט. אפשר לעדכן את הפרטים ב\"המידע שלך\"."
                     : "קריאת התלוש לא זמינה כרגע. אפשר לעדכן את הפרטים ב\"המידע שלך\".");
@@ -105,10 +146,12 @@ public class PayslipReader {
                     current.display(), current.status()));
         }
         if (fields.isEmpty()) {
+            metrics.payslip("nothing_read");
             throw ApiException.badRequest("NOTHING_READ",
                     "לא הצלחתי לקרוא פרטי שכר מהקובץ. אפשר לנסות תמונה ברורה יותר, או לעדכן ב\"המידע שלך\".");
         }
-        return new PayslipReading(fields, notFound);
+        metrics.payslip(sent.isEmpty() ? "read_image_crop" : "read_pdf_lines");
+        return new PayslipReading(fields, notFound, sent);
     }
 
     /**

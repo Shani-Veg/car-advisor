@@ -5,7 +5,9 @@
 <title>תלוש לדוגמה</title>
 <!-- A made-up payslip for the demo (docs/demo-script.md). Its numbers are the engine's own breakdown of Noa's
      reference case today, so the net printed here equals the "today" net on the comparison screen.
-     Rendered to demo/sample-payslip.png with a headless browser. -->
+     Rendered to demo/sample-payslip.pdf (with a text layer, like a payslip from a payroll system) and
+     demo/sample-payslip.png (like a photo) with a headless browser. The name, ID, address and bank details are made up
+     too: they are there to show that none of them reaches the model. -->
 <style>
   body { margin: 0; background: #fff; color: #111; font: 15px/1.45 Arial, "Segoe UI", sans-serif; }
   .page { width: 860px; margin: 0 auto; padding: 28px 30px 34px; position: relative; }
@@ -20,6 +22,8 @@
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .net { margin-top: 16px; font-size: 20px; font-weight: 700; border: 2px solid #111; padding: 8px 12px; display: flex; justify-content: space-between; }
   .details td { width: 25%; }
+  @page { size: A4; margin: 12mm; }
+  @media print { .page { width: auto; padding: 0; } .sample { top: 300px; } }
 </style>
 </head>
 <body>
@@ -32,8 +36,10 @@
   </header>
   <table class="details">
     <tr><th>שם העובד</th><td>נועה דוגמה</td><th>מספר עובד</th><td class="n">000123</td></tr>
+    <tr><th>מספר זהות</th><td class="n">000000018</td><th>כתובת</th><td>רחוב הדוגמה 1, עיר לדוגמה</td></tr>
     <tr><th>תפקיד</th><td>מנהלת מוצר</td><th>נקודות זיכוי</th><td class="n">2.75</td></tr>
     <tr><th>מצב משפחתי</th><td>נשואה + 2</td><th>היקף משרה</th><td class="n">100%</td></tr>
+    <tr><th>בנק</th><td>בנק לדוגמה, סניף 000</td><th>חשבון</th><td class="n">0000000</td></tr>
   </table>
   <div class="grid">
     <table>

@@ -29,9 +29,16 @@ class ScriptedLlm implements LlmClient {
 
     /** What extract() returns; null = the model cannot read documents. */
     Map<String, Object> document;
+    /** How many files reached the model, and what the last one was. */
+    int documentsRead;
+    byte[] lastDocument;
+    String lastMimeType;
 
     @Override
     public Map<String, Object> extract(String instruction, byte[] file, String mimeType, Map<String, Object> schema) {
+        documentsRead++;
+        lastDocument = file;
+        lastMimeType = mimeType;
         if (document == null) {
             throw new UnavailableException("no document scripted");
         }

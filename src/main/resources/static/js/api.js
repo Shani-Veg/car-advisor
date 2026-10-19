@@ -50,5 +50,6 @@ export const api = Object.freeze({
   getOccupations: () => request('/api/occupations'),
   getQuestions: () => request('/api/rep/questions?status=OPEN'),
   getAnsweredQuestions: () => request('/api/rep/questions?status=ANSWERED'),
+  getMetrics: () => request('/api/rep/metrics'),
   answerQuestion: (id, value, effectiveFrom, note, clientRequestId) => request('/api/rep/questions/' + encodeURIComponent(id) + '/answer', { method: 'POST', body: { value, effectiveFrom, note, clientRequestId } })
 });

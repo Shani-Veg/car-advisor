@@ -358,7 +358,7 @@ function checklist(comparison) {
   if (estimated.length) {
     const labels = estimated.map(key => current.profile.find(field => field.key === key)?.label).filter(Boolean);
     items.push(['wait', (estimated.length === 1 ? 'פרט אחד בחישוב הוא הערכה שלי: ' : estimated.length + ' פרטים בחישוב הם הערכה שלי: ') + labels.join(', '),
-      [['העלאת תלוש שכר', () => screenAction('ui:payslip')], ['בדיקת הפרטים', () => screenAction('ui:profile')]]]);
+      [...(current.payslipEnabled === false ? [] : [['העלאת תלוש שכר', () => screenAction('ui:payslip')]]), ['בדיקת הפרטים', () => screenAction('ui:profile')]]]);
   } else {
     items.push(['done', 'פרטי השכר שלך מאושרים']);
   }
@@ -561,19 +561,28 @@ async function askRep() {
   await mutate('rep-request:' + alternativeKey(), id => api.requestRep(caseId, id));
 }
 
-/** The payslip: the employee chooses a file, sees what was read, and approves what to keep. Nothing is stored before that. */
+/**
+ * The payslip: the employee chooses a file, sees what was read and what was sent, and approves what to keep.
+ * The payslip itself never reaches the model: a PDF is read on our server and only its payroll lines are sent;
+ * an image is cropped here, in the browser, to the payments table. Nothing is stored before the employee approves.
+ */
 let payslipReading = null;
-function payslipStage(stage, data) {
+function payslipStage(stage, data, preview) {
   const body = byId('payslip-body'); const actions = byId('payslip-actions');
   body.replaceChildren(); actions.replaceChildren(); showNotice(byId('payslip-error'), '');
   const action = (label, primary, handler) => { const button = el('button', primary ? 'primary-button' : 'secondary-button', label); button.type = 'button'; button.addEventListener('click', handler); actions.append(button); return button; };
   if (stage === 'intro') {
     body.append(el('p', 'dialog-lead', 'אקרא מהתלוש רק את מה שההשוואה צריכה: שכר בסיס, עמלות, בונוס, ההפרשות שלך לפנסיה ולקרן השתלמות, נקודות זיכוי וההשתתפות ברכב.'));
     const privacy = el('ul', 'privacy-list');
-    for (const line of ['התלוש נקרא על ידי מודל AI (Gemini) ולא נשמר במערכת.', 'כדאי לכסות מספר זהות ופרטי חשבון בנק לפני הצילום.', 'שום פרט לא יישמר לפני שתאשרו אותו במסך הבא.']) privacy.append(el('li', '', line));
-    body.append(privacy, el('p', 'small-muted', 'תמונה או קובץ PDF, עד 5 מגה.'));
+    for (const line of [
+      'קובץ PDF של התלוש: נקרא אצלנו, ורק שורות השכר (מונח ומספר) נשלחות לקריאה. שם, תעודת זהות, כתובת ופרטי בנק לא יוצאים.',
+      'צילום של התלוש: מסמנים את טבלת התשלומים והניכויים, ורק החלק הזה נשלח. שאר התמונה לא יוצאת מהמחשב.',
+      'התלוש לא נשמר, ושום פרט לא יישמר לפני שתאשרו אותו במסך הבא.']) privacy.append(el('li', '', line));
+    body.append(privacy, el('p', 'small-muted', 'PDF או תמונה, עד 5 מגה.'));
     action('בחירת קובץ', true, () => byId('payslip-file').click()).focus();
     action('ביטול', false, closePayslip);
+  } else if (stage === 'crop') {
+    cropStage(body, data, action);
   } else if (stage === 'reading') {
     body.append(el('p', 'payslip-reading', 'קורא את התלוש…'));
   } else if (stage === 'review') {
@@ -592,6 +601,7 @@ function payslipStage(stage, data) {
     }
     body.append(list);
     if (data.notFound?.length) body.append(el('p', 'small-muted', 'לא נמצאו בתלוש: ' + data.notFound.join(', ') + '. הם נשארים כמו שהם.'));
+    body.append(sentForReading(data, preview));
     action('שמירת הפרטים שסומנו', true, savePayslip).dataset.mutation = '';
     action('ביטול', false, closePayslip);
   }
@@ -611,16 +621,85 @@ async function savePayslip() {
   if (ok) { byId('payslip-dialog').close(); payslipReading = null; feedback('הפרטים מהתלוש נשמרו.'); }
   else showNotice(byId('payslip-error'), 'השמירה לא הצליחה. נסו שוב.');
 }
-byId('payslip-file').addEventListener('change', async event => {
-  const file = event.target.files?.[0]; event.target.value = '';
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { showNotice(byId('payslip-error'), 'הקובץ גדול מדי. אפשר להעלות עד 5 מגה.'); return; }
+/** What left for reading: the PDF's payroll lines, or the part of the image the employee marked. */
+function sentForReading(reading, preview) {
+  const details = el('details', 'payslip-sent');
+  details.append(el('summary', '', 'מה נשלח לקריאה'));
+  if (reading.sentForReading?.length) {
+    details.append(el('p', 'small-muted', 'רק השורות האלה, בלי שם, תעודת זהות, כתובת או פרטי בנק:'));
+    const list = el('ul', 'sent-lines');
+    for (const line of reading.sentForReading) list.append(el('li', '', line));
+    details.append(list);
+  } else if (preview) {
+    details.append(el('p', 'small-muted', 'רק האזור שסימנת:'));
+    preview.className = 'sent-crop'; details.append(preview);
+  }
+  return details;
+}
+/** An image is cropped here: the employee drags a frame around the payments table, and only that part is sent. */
+function cropStage(body, bitmap, action) {
+  body.append(el('p', 'dialog-lead', 'גררו מסגרת סביב טבלת התשלומים והניכויים.'),
+    el('p', 'small-muted', 'רק מה שבתוך המסגרת יישלח לקריאה. השם, תעודת הזהות, הכתובת ופרטי הבנק נשארים אצלך. אפשר גם לעדכן את הפרטים ידנית ב"המידע שלך".'));
+  const canvas = el('canvas', 'crop-canvas');
+  canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', 'התלוש. גררו מסגרת סביב טבלת התשלומים והניכויים');
+  const scale = Math.min(1, 1000 / bitmap.width);
+  canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext('2d');
+  let box = null; let start = null;
+  const draw = () => {
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    if (!box) return;
+    context.fillStyle = 'rgba(20, 33, 61, .55)';
+    context.fillRect(0, 0, canvas.width, box.y);
+    context.fillRect(0, box.y + box.h, canvas.width, canvas.height - box.y - box.h);
+    context.fillRect(0, box.y, box.x, box.h);
+    context.fillRect(box.x + box.w, box.y, canvas.width - box.x - box.w, box.h);
+    context.strokeStyle = '#1E4FA8'; context.lineWidth = 3; context.strokeRect(box.x, box.y, box.w, box.h);
+  };
+  const point = event => {
+    const rect = canvas.getBoundingClientRect();
+    const clamp = (value, max) => Math.max(0, Math.min(max, value));
+    return { x: clamp((event.clientX - rect.left) * canvas.width / rect.width, canvas.width), y: clamp((event.clientY - rect.top) * canvas.height / rect.height, canvas.height) };
+  };
+  canvas.addEventListener('pointerdown', event => { canvas.setPointerCapture(event.pointerId); start = point(event); box = null; send.disabled = true; draw(); });
+  canvas.addEventListener('pointermove', event => {
+    if (!start) return;
+    const now = point(event);
+    box = { x: Math.min(start.x, now.x), y: Math.min(start.y, now.y), w: Math.abs(now.x - start.x), h: Math.abs(now.y - start.y) };
+    draw();
+  });
+  canvas.addEventListener('pointerup', () => { start = null; send.disabled = !(box && box.w > 30 && box.h > 20); });
+  body.append(canvas);
+  const send = action('שליחת האזור המסומן', true, async () => {
+    if (!box) return;
+    const ratio = bitmap.width / canvas.width;
+    const crop = document.createElement('canvas');
+    crop.width = Math.round(box.w * ratio); crop.height = Math.round(box.h * ratio);
+    crop.getContext('2d').drawImage(bitmap, box.x * ratio, box.y * ratio, box.w * ratio, box.h * ratio, 0, 0, crop.width, crop.height);
+    const blob = await new Promise(resolve => crop.toBlob(resolve, 'image/png'));
+    if (blob) readPayslip(new File([blob], 'payslip-table.png', { type: 'image/png' }), crop);
+  });
+  send.disabled = true;
+  action('בחירת קובץ אחר', false, () => byId('payslip-file').click());
+  action('ביטול', false, closePayslip);
+  draw();
+}
+async function readPayslip(file, preview) {
   payslipStage('reading');
-  try { payslipStage('review', await api.readPayslip(caseId, file)); }
+  try { payslipStage('review', await api.readPayslip(caseId, file), preview); }
   catch (error) {
     payslipStage('intro');
     showNotice(byId('payslip-error'), error.message || 'לא ניתן לקרוא את הקובץ.');
   }
+}
+byId('payslip-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0]; event.target.value = '';
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showNotice(byId('payslip-error'), 'הקובץ גדול מדי. אפשר להעלות עד 5 מגה.'); return; }
+  if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) { readPayslip(file); return; }
+  // an image never leaves whole: the employee marks the table first
+  try { payslipStage('crop', await createImageBitmap(file)); }
+  catch { showNotice(byId('payslip-error'), 'לא ניתן לפתוח את התמונה. אפשר לנסות קובץ PDF או תמונה אחרת.'); }
 });
 byId('close-payslip').addEventListener('click', closePayslip);
 byId('payslip-dialog').addEventListener('cancel', event => { if (busy) event.preventDefault(); else payslipReading = null; });
@@ -631,6 +710,7 @@ function applyCase(next) {
   const previous = current;
   current = next; caseId = next.caseId;
   const url = new URL(location.href); url.searchParams.set('case', caseId); history.replaceState(null, '', url);
+  byId('profile-payslip-hint').hidden = next.payslipEnabled === false;
   if (next.assistantAvailable === false) assistantOffline = true;
   // A later poll explicitly declaring availability is the recovery signal.
   else if (next.assistantAvailable === true) assistantOffline = false;

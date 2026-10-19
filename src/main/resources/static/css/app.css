@@ -411,6 +411,32 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .answered-what { margin-top: 2px; color: var(--gain); font-weight: 600; }
 .answered-empty { margin-top: 10px; }
 
+/* payslip: the image is cropped in the browser, and the review shows what was sent */
+.crop-canvas { display: block; width: 100%; height: auto; margin: 10px 0 4px; border: 1px solid var(--line); border-radius: var(--r-sm); cursor: crosshair; touch-action: none; }
+.payslip-sent { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface-2); font-size: 14px; }
+.payslip-sent > summary { font-weight: 700; cursor: pointer; }
+.payslip-sent .small-muted { margin: 8px 0 6px; }
+.sent-lines { margin: 0; padding: 0; list-style: none; }
+.sent-lines li { padding: 3px 0; border-top: 1px solid var(--line-2); }
+.sent-lines li:first-child { border-top: 0; }
+.sent-crop { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--r-sm); }
+
+/* the assistant's health page: counters and timings only */
+.metric-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.metric-tile { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
+.metric-label { color: var(--muted); font-size: 13px; font-weight: 600; }
+.metric-value { font: 600 26px/1.2 var(--num); color: var(--ink); }
+.metric-note { color: var(--muted); font-size: 12px; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 12px; margin-bottom: 26px; }
+.metric-card { min-width: 0; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); overflow-x: auto; }
+.metric-card h3 { margin-bottom: 8px; font-size: 16px; }
+.metric-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.metric-table th, .metric-table td { padding: 7px 6px; border-top: 1px solid var(--line-2); text-align: start; vertical-align: top; }
+.metric-table thead th { border-top: 0; color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.metric-table tbody th { font-weight: 600; }
+.metric-table td bdi { font-family: var(--num); }
+.metric-note.small-muted, .metric-note { margin-bottom: 8px; }
+
 /* the date field: our own calendar, so the days can be round */
 .date-control { position: relative; }
 .date-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font-size: 16px; text-align: start; }
@@ -504,6 +530,8 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
   .readout-amount { font-size: 26px; }
   .profile-field { padding: 13px 0; gap: 10px; }
   .answer-row { grid-template-columns: minmax(0, 1fr); }
+  .metric-grid { grid-template-columns: minmax(0, 1fr); }
+  .metric-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rep-top { flex-direction: column; align-items: flex-start; gap: 6px; }
   .rep-top h1 { font-size: 26px; }
   .question-card { padding: 16px 14px; }

@@ -4,6 +4,7 @@ import com.shani.caradvisor.data.ReferenceData;
 import com.shani.caradvisor.engine.Occupation;
 import com.shani.caradvisor.engine.Vehicle;
 import com.shani.caradvisor.engine.Drive;
+import com.shani.caradvisor.observability.AssistantMetrics.Guard;
 import com.shani.caradvisor.workflow.ApiException;
 import com.shani.caradvisor.workflow.CarGuide;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
@@ -63,6 +64,10 @@ public class AgentTools {
         boolean repRequested;
         /** What the car tools found, for the server to write in the chat (with the numbers) after the model's reply. */
         final List<CarGuide.Answer> carAnswers = new ArrayList<>();
+        /** For the metrics: the tools called, the guards that stepped in, the model that answered last. */
+        final List<String> tools = new ArrayList<>();
+        final List<Guard> guards = new ArrayList<>();
+        String model;
     }
 
     List<Map<String, Object>> declarations() {
@@ -131,6 +136,7 @@ public class AgentTools {
 
     Map<String, Object> execute(String caseId, long messageId, String employeeText, LlmClient.FunctionCall call,
                                 TurnLog log) {
+        log.tools.add(call.name());
         return switch (call.name()) {
             case RECORD_FACTS -> recordFacts(caseId, messageId, employeeText, call.args(), log);
             case CHOOSE_ALTERNATIVE -> chooseAlternative(caseId, call.args(), log);
@@ -161,6 +167,7 @@ public class AgentTools {
             }
             if (key.type() == FactKey.ValueType.MONEY && !statedInMessage(entry.getValue(), employeeText)) {
                 rejected.put(key.apiName(), "This amount does not appear in the employee's message. Ask them to write it in digits.");
+                log.guards.add(Guard.AMOUNT_NOT_IN_MESSAGE);
                 continue;
             }
             try {
@@ -173,6 +180,7 @@ public class AgentTools {
                 }
             } catch (ApiException e) {
                 rejected.put(key.apiName(), e.getMessage());
+                log.guards.add(Guard.VALUE_REJECTED);
             }
         }
         Map<String, Object> result = new LinkedHashMap<>();

@@ -108,7 +108,7 @@
         </section>
         <section id="profile-panel" class="panel profile-panel" aria-label="המידע שלך">
           <button id="profile-toggle" class="profile-toggle" type="button" aria-expanded="false" aria-controls="profile-content"><span class="profile-title">המידע שלך</span><span id="profile-count" class="badge neutral">טוען…</span><span class="chevron" aria-hidden="true">▾</span></button>
-          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן כל פרט בלחיצה עליו, או <button id="profile-payslip" class="text-button" type="button" data-mutation>להעלות תלוש שכר</button> ולמלא ממנו.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
+          <div id="profile-content" hidden><p class="profile-hint">אפשר לתקן כל פרט בלחיצה עליו<span id="profile-payslip-hint">, או <button id="profile-payslip" class="text-button" type="button" data-mutation>להעלות תלוש שכר</button> ולמלא ממנו</span>.</p><div id="profile" class="profile-grid" aria-busy="true"></div></div>
         </section>
       </div>
     </div>
@@ -150,7 +150,7 @@
 </head>
 <body>
   <a class="skip-link" href="#main">דילוג לתוכן</a>
-  <header class="site-header"><a class="wordmark" id="home-link" href="index.html"><svg class="wordmark-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="mark-track" d="M3 16a9 9 0 0 1 18 0"></path><path class="mark-value" d="M3 16a9 9 0 0 1 12.5-8.3"></path></svg>יועץ הרכב</a><nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">עמדת נציג</span><a id="employee-link" href="employee.html">מסך עובד <span aria-hidden="true">↗</span></a></nav></header>
+  <header class="site-header"><a class="wordmark" id="home-link" href="index.html"><svg class="wordmark-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="mark-track" d="M3 16a9 9 0 0 1 18 0"></path><path class="mark-value" d="M3 16a9 9 0 0 1 12.5-8.3"></path></svg>יועץ הרכב</a><nav class="header-nav" aria-label="ניווט ראשי"><span class="nav-current">עמדת נציג</span><a href="metrics.html">מצב העוזר</a><a id="employee-link" href="employee.html">מסך עובד <span aria-hidden="true">↗</span></a></nav></header>
   <main id="main" class="app-main rep-main">
     <div class="rep-top">
       <div><h1>תור השאלות</h1><p>שאלות שמחכות לאישור שלך, מהוותיקה לחדשה. התשובה מעדכנת מיד את ההשוואה אצל העובד/ת.</p></div>
@@ -165,6 +165,48 @@
     <details id="answered-section" class="answered-section"><summary>נענו לאחרונה <span id="answered-count" class="count-badge muted"><bdi dir="ltr">0</bdi></span></summary><div id="answered-list"></div></details>
   </main>
   <script type="module" src="js/rep.js"></script>
+</body>
+</html>
+```
+
+## `metrics.html`
+
+```html
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>מצב העוזר · יועץ הרכב</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">דילוג לתוכן</a>
+  <header class="site-header"><a class="wordmark" id="home-link" href="index.html"><svg class="wordmark-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="mark-track" d="M3 16a9 9 0 0 1 18 0"></path><path class="mark-value" d="M3 16a9 9 0 0 1 12.5-8.3"></path></svg>יועץ הרכב</a><nav class="header-nav" aria-label="ניווט ראשי"><a href="rep.html">עמדת נציג</a><span class="nav-current">מצב העוזר</span></nav></header>
+  <main id="main" class="app-main rep-main">
+    <div class="rep-top">
+      <div><h1>מצב העוזר</h1><p>מדדים חיים מאז שהשרת עלה, ותוצאות בדיקות האיכות לאורך זמן. בלי שום מידע אישי: רק ספירות וזמנים.</p></div>
+      <p id="sync-label" class="sync-label" role="status">מתחבר…</p>
+    </div>
+    <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span></div>
+    <section aria-labelledby="live-heading">
+      <h2 id="live-heading" class="queue-title">מאז ההפעלה</h2>
+      <div id="tiles" class="metric-tiles"></div>
+      <div class="metric-grid">
+        <div class="metric-card"><h3>איך נענו ההודעות</h3><table class="metric-table" id="paths"></table></div>
+        <div class="metric-card"><h3>קריאות למודל</h3><table class="metric-table" id="models"></table></div>
+        <div class="metric-card"><h3>שומרים שנכנסו לפעולה</h3><table class="metric-table" id="guards"></table></div>
+        <div class="metric-card"><h3>כלים שהמודל הפעיל</h3><table class="metric-table" id="tools"></table></div>
+      </div>
+    </section>
+    <section aria-labelledby="evals-heading">
+      <h2 id="evals-heading" class="queue-title">בדיקות איכות לאורך זמן</h2>
+      <p class="small-muted metric-note">כל הרצה של <bdi dir="ltr">evals/run_evals.py</bdi> מול המודל האמיתי מוסיפה שורה: כמה תרחישים עברו, וזמני התגובה.</p>
+      <div class="metric-card"><table class="metric-table" id="evals"></table></div>
+    </section>
+  </main>
+  <script type="module" src="js/metrics.js"></script>
 </body>
 </html>
 ```
@@ -580,6 +622,32 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
 .answered-what { margin-top: 2px; color: var(--gain); font-weight: 600; }
 .answered-empty { margin-top: 10px; }
 
+/* payslip: the image is cropped in the browser, and the review shows what was sent */
+.crop-canvas { display: block; width: 100%; height: auto; margin: 10px 0 4px; border: 1px solid var(--line); border-radius: var(--r-sm); cursor: crosshair; touch-action: none; }
+.payslip-sent { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface-2); font-size: 14px; }
+.payslip-sent > summary { font-weight: 700; cursor: pointer; }
+.payslip-sent .small-muted { margin: 8px 0 6px; }
+.sent-lines { margin: 0; padding: 0; list-style: none; }
+.sent-lines li { padding: 3px 0; border-top: 1px solid var(--line-2); }
+.sent-lines li:first-child { border-top: 0; }
+.sent-crop { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--r-sm); }
+
+/* the assistant's health page: counters and timings only */
+.metric-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.metric-tile { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
+.metric-label { color: var(--muted); font-size: 13px; font-weight: 600; }
+.metric-value { font: 600 26px/1.2 var(--num); color: var(--ink); }
+.metric-note { color: var(--muted); font-size: 12px; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 12px; margin-bottom: 26px; }
+.metric-card { min-width: 0; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); overflow-x: auto; }
+.metric-card h3 { margin-bottom: 8px; font-size: 16px; }
+.metric-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.metric-table th, .metric-table td { padding: 7px 6px; border-top: 1px solid var(--line-2); text-align: start; vertical-align: top; }
+.metric-table thead th { border-top: 0; color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.metric-table tbody th { font-weight: 600; }
+.metric-table td bdi { font-family: var(--num); }
+.metric-note.small-muted, .metric-note { margin-bottom: 8px; }
+
 /* the date field: our own calendar, so the days can be round */
 .date-control { position: relative; }
 .date-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font-size: 16px; text-align: start; }
@@ -673,6 +741,8 @@ progress::-moz-progress-bar { background: var(--warm); border-radius: var(--r-pi
   .readout-amount { font-size: 26px; }
   .profile-field { padding: 13px 0; gap: 10px; }
   .answer-row { grid-template-columns: minmax(0, 1fr); }
+  .metric-grid { grid-template-columns: minmax(0, 1fr); }
+  .metric-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rep-top { flex-direction: column; align-items: flex-start; gap: 6px; }
   .rep-top h1 { font-size: 26px; }
   .question-card { padding: 16px 14px; }
@@ -749,6 +819,7 @@ export const api = Object.freeze({
   getOccupations: () => request('/api/occupations'),
   getQuestions: () => request('/api/rep/questions?status=OPEN'),
   getAnsweredQuestions: () => request('/api/rep/questions?status=ANSWERED'),
+  getMetrics: () => request('/api/rep/metrics'),
   answerQuestion: (id, value, effectiveFrom, note, clientRequestId) => request('/api/rep/questions/' + encodeURIComponent(id) + '/answer', { method: 'POST', body: { value, effectiveFrom, note, clientRequestId } })
 });
 ```
@@ -1414,7 +1485,7 @@ function checklist(comparison) {
   if (estimated.length) {
     const labels = estimated.map(key => current.profile.find(field => field.key === key)?.label).filter(Boolean);
     items.push(['wait', (estimated.length === 1 ? 'פרט אחד בחישוב הוא הערכה שלי: ' : estimated.length + ' פרטים בחישוב הם הערכה שלי: ') + labels.join(', '),
-      [['העלאת תלוש שכר', () => screenAction('ui:payslip')], ['בדיקת הפרטים', () => screenAction('ui:profile')]]]);
+      [...(current.payslipEnabled === false ? [] : [['העלאת תלוש שכר', () => screenAction('ui:payslip')]]), ['בדיקת הפרטים', () => screenAction('ui:profile')]]]);
   } else {
     items.push(['done', 'פרטי השכר שלך מאושרים']);
   }
@@ -1617,19 +1688,28 @@ async function askRep() {
   await mutate('rep-request:' + alternativeKey(), id => api.requestRep(caseId, id));
 }
 
-/** The payslip: the employee chooses a file, sees what was read, and approves what to keep. Nothing is stored before that. */
+/**
+ * The payslip: the employee chooses a file, sees what was read and what was sent, and approves what to keep.
+ * The payslip itself never reaches the model: a PDF is read on our server and only its payroll lines are sent;
+ * an image is cropped here, in the browser, to the payments table. Nothing is stored before the employee approves.
+ */
 let payslipReading = null;
-function payslipStage(stage, data) {
+function payslipStage(stage, data, preview) {
   const body = byId('payslip-body'); const actions = byId('payslip-actions');
   body.replaceChildren(); actions.replaceChildren(); showNotice(byId('payslip-error'), '');
   const action = (label, primary, handler) => { const button = el('button', primary ? 'primary-button' : 'secondary-button', label); button.type = 'button'; button.addEventListener('click', handler); actions.append(button); return button; };
   if (stage === 'intro') {
     body.append(el('p', 'dialog-lead', 'אקרא מהתלוש רק את מה שההשוואה צריכה: שכר בסיס, עמלות, בונוס, ההפרשות שלך לפנסיה ולקרן השתלמות, נקודות זיכוי וההשתתפות ברכב.'));
     const privacy = el('ul', 'privacy-list');
-    for (const line of ['התלוש נקרא על ידי מודל AI (Gemini) ולא נשמר במערכת.', 'כדאי לכסות מספר זהות ופרטי חשבון בנק לפני הצילום.', 'שום פרט לא יישמר לפני שתאשרו אותו במסך הבא.']) privacy.append(el('li', '', line));
-    body.append(privacy, el('p', 'small-muted', 'תמונה או קובץ PDF, עד 5 מגה.'));
+    for (const line of [
+      'קובץ PDF של התלוש: נקרא אצלנו, ורק שורות השכר (מונח ומספר) נשלחות לקריאה. שם, תעודת זהות, כתובת ופרטי בנק לא יוצאים.',
+      'צילום של התלוש: מסמנים את טבלת התשלומים והניכויים, ורק החלק הזה נשלח. שאר התמונה לא יוצאת מהמחשב.',
+      'התלוש לא נשמר, ושום פרט לא יישמר לפני שתאשרו אותו במסך הבא.']) privacy.append(el('li', '', line));
+    body.append(privacy, el('p', 'small-muted', 'PDF או תמונה, עד 5 מגה.'));
     action('בחירת קובץ', true, () => byId('payslip-file').click()).focus();
     action('ביטול', false, closePayslip);
+  } else if (stage === 'crop') {
+    cropStage(body, data, action);
   } else if (stage === 'reading') {
     body.append(el('p', 'payslip-reading', 'קורא את התלוש…'));
   } else if (stage === 'review') {
@@ -1648,6 +1728,7 @@ function payslipStage(stage, data) {
     }
     body.append(list);
     if (data.notFound?.length) body.append(el('p', 'small-muted', 'לא נמצאו בתלוש: ' + data.notFound.join(', ') + '. הם נשארים כמו שהם.'));
+    body.append(sentForReading(data, preview));
     action('שמירת הפרטים שסומנו', true, savePayslip).dataset.mutation = '';
     action('ביטול', false, closePayslip);
   }
@@ -1667,16 +1748,85 @@ async function savePayslip() {
   if (ok) { byId('payslip-dialog').close(); payslipReading = null; feedback('הפרטים מהתלוש נשמרו.'); }
   else showNotice(byId('payslip-error'), 'השמירה לא הצליחה. נסו שוב.');
 }
-byId('payslip-file').addEventListener('change', async event => {
-  const file = event.target.files?.[0]; event.target.value = '';
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { showNotice(byId('payslip-error'), 'הקובץ גדול מדי. אפשר להעלות עד 5 מגה.'); return; }
+/** What left for reading: the PDF's payroll lines, or the part of the image the employee marked. */
+function sentForReading(reading, preview) {
+  const details = el('details', 'payslip-sent');
+  details.append(el('summary', '', 'מה נשלח לקריאה'));
+  if (reading.sentForReading?.length) {
+    details.append(el('p', 'small-muted', 'רק השורות האלה, בלי שם, תעודת זהות, כתובת או פרטי בנק:'));
+    const list = el('ul', 'sent-lines');
+    for (const line of reading.sentForReading) list.append(el('li', '', line));
+    details.append(list);
+  } else if (preview) {
+    details.append(el('p', 'small-muted', 'רק האזור שסימנת:'));
+    preview.className = 'sent-crop'; details.append(preview);
+  }
+  return details;
+}
+/** An image is cropped here: the employee drags a frame around the payments table, and only that part is sent. */
+function cropStage(body, bitmap, action) {
+  body.append(el('p', 'dialog-lead', 'גררו מסגרת סביב טבלת התשלומים והניכויים.'),
+    el('p', 'small-muted', 'רק מה שבתוך המסגרת יישלח לקריאה. השם, תעודת הזהות, הכתובת ופרטי הבנק נשארים אצלך. אפשר גם לעדכן את הפרטים ידנית ב"המידע שלך".'));
+  const canvas = el('canvas', 'crop-canvas');
+  canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', 'התלוש. גררו מסגרת סביב טבלת התשלומים והניכויים');
+  const scale = Math.min(1, 1000 / bitmap.width);
+  canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext('2d');
+  let box = null; let start = null;
+  const draw = () => {
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    if (!box) return;
+    context.fillStyle = 'rgba(20, 33, 61, .55)';
+    context.fillRect(0, 0, canvas.width, box.y);
+    context.fillRect(0, box.y + box.h, canvas.width, canvas.height - box.y - box.h);
+    context.fillRect(0, box.y, box.x, box.h);
+    context.fillRect(box.x + box.w, box.y, canvas.width - box.x - box.w, box.h);
+    context.strokeStyle = '#1E4FA8'; context.lineWidth = 3; context.strokeRect(box.x, box.y, box.w, box.h);
+  };
+  const point = event => {
+    const rect = canvas.getBoundingClientRect();
+    const clamp = (value, max) => Math.max(0, Math.min(max, value));
+    return { x: clamp((event.clientX - rect.left) * canvas.width / rect.width, canvas.width), y: clamp((event.clientY - rect.top) * canvas.height / rect.height, canvas.height) };
+  };
+  canvas.addEventListener('pointerdown', event => { canvas.setPointerCapture(event.pointerId); start = point(event); box = null; send.disabled = true; draw(); });
+  canvas.addEventListener('pointermove', event => {
+    if (!start) return;
+    const now = point(event);
+    box = { x: Math.min(start.x, now.x), y: Math.min(start.y, now.y), w: Math.abs(now.x - start.x), h: Math.abs(now.y - start.y) };
+    draw();
+  });
+  canvas.addEventListener('pointerup', () => { start = null; send.disabled = !(box && box.w > 30 && box.h > 20); });
+  body.append(canvas);
+  const send = action('שליחת האזור המסומן', true, async () => {
+    if (!box) return;
+    const ratio = bitmap.width / canvas.width;
+    const crop = document.createElement('canvas');
+    crop.width = Math.round(box.w * ratio); crop.height = Math.round(box.h * ratio);
+    crop.getContext('2d').drawImage(bitmap, box.x * ratio, box.y * ratio, box.w * ratio, box.h * ratio, 0, 0, crop.width, crop.height);
+    const blob = await new Promise(resolve => crop.toBlob(resolve, 'image/png'));
+    if (blob) readPayslip(new File([blob], 'payslip-table.png', { type: 'image/png' }), crop);
+  });
+  send.disabled = true;
+  action('בחירת קובץ אחר', false, () => byId('payslip-file').click());
+  action('ביטול', false, closePayslip);
+  draw();
+}
+async function readPayslip(file, preview) {
   payslipStage('reading');
-  try { payslipStage('review', await api.readPayslip(caseId, file)); }
+  try { payslipStage('review', await api.readPayslip(caseId, file), preview); }
   catch (error) {
     payslipStage('intro');
     showNotice(byId('payslip-error'), error.message || 'לא ניתן לקרוא את הקובץ.');
   }
+}
+byId('payslip-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0]; event.target.value = '';
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showNotice(byId('payslip-error'), 'הקובץ גדול מדי. אפשר להעלות עד 5 מגה.'); return; }
+  if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) { readPayslip(file); return; }
+  // an image never leaves whole: the employee marks the table first
+  try { payslipStage('crop', await createImageBitmap(file)); }
+  catch { showNotice(byId('payslip-error'), 'לא ניתן לפתוח את התמונה. אפשר לנסות קובץ PDF או תמונה אחרת.'); }
 });
 byId('close-payslip').addEventListener('click', closePayslip);
 byId('payslip-dialog').addEventListener('cancel', event => { if (busy) event.preventDefault(); else payslipReading = null; });
@@ -1687,6 +1837,7 @@ function applyCase(next) {
   const previous = current;
   current = next; caseId = next.caseId;
   const url = new URL(location.href); url.searchParams.set('case', caseId); history.replaceState(null, '', url);
+  byId('profile-payslip-hint').hidden = next.payslipEnabled === false;
   if (next.assistantAvailable === false) assistantOffline = true;
   // A later poll explicitly declaring availability is the recovery signal.
   else if (next.assistantAvailable === true) assistantOffline = false;
@@ -2062,4 +2213,87 @@ window.addEventListener('pagehide', () => clearInterval(timer));
 window.addEventListener('pageshow', event => { if (event.persisted) { timer = setInterval(() => { if (!document.hidden) refresh(); }, 3000); refresh(); } });
 refresh();
 timer = setInterval(() => { if (!document.hidden) refresh(); }, 3000);
+```
+
+## `js/metrics.js`
+
+```js
+import { api } from './api.js';
+import { el, formatDate, formatNumber, showNotice } from './format.js';
+
+/** The assistant's health page: counters and timings only, refreshed every ten seconds. */
+const byId = id => document.getElementById(id);
+const PATHS = { CODE_ANSWER: 'תשובה לשאלה הפתוחה, בקוד', CODE_CARS: 'בקשת רכבים, בקוד', MODEL: 'המודל (עם כלים)', UNAVAILABLE: 'העוזר לא היה זמין' };
+const OUTCOMES = { ANSWERED: 'ענה', BUSY: 'עמוס', TIMEOUT: 'לא ענה בזמן', OTHER: 'אחר' };
+const GUARDS = {
+  REPLY_REWRITTEN: 'סכום, אותיות זרות, "מסך" או "בצד" בתשובה: נשלחה לשכתוב',
+  REPLY_REPLACED: 'גם השכתוב לא עבר: הוצג טקסט של השרת',
+  CLAIMED_CARS: '"הנה האפשרויות" בלי רכבים: נשלח לחפש',
+  AMOUNT_NOT_IN_MESSAGE: 'סכום שהעובד/ת לא כתב/ה: לא נשמר',
+  VALUE_REJECTED: 'ערך שהכללים דוחים (למשל קבוצה גבוהה מהעיסוק)',
+  RATE_LIMITED: 'יותר מדי הודעות בדקה',
+  STEP_LIMIT: 'המודל לא סיים בשישה צעדים'
+};
+const PAYSLIP = { read: 'נקראו', nothing_read: 'לא נמצא בהם שכר', unavailable: 'הקריאה לא הייתה זמינה' };
+
+/** Seconds in Hebrew ("2.1 שנ׳"); a Latin "ms" inside Hebrew text reads backwards. */
+const seconds = value => new Intl.NumberFormat('he-IL', { maximumFractionDigits: value < 1000 ? 2 : 1 }).format(value / 1000) + ' שנ׳';
+const ms = seconds;
+/** Code-like names (models, tools, versions) stay one left-to-right unit. */
+function ltr(text) { const node = document.createElement('bdi'); node.dir = 'ltr'; node.textContent = text; return node; }
+function tile(label, value, note) {
+  const node = el('div', 'metric-tile');
+  node.append(el('span', 'metric-label', label), el('strong', 'metric-value', value));
+  if (note) node.append(el('span', 'metric-note', note));
+  return node;
+}
+function table(id, head, rows, empty) {
+  const node = byId(id); node.replaceChildren();
+  if (!rows.length) { const row = el('tr'); const cell = el('td', 'small-muted', empty); cell.colSpan = head.length; row.append(cell); node.append(row); return; }
+  const thead = el('thead'); const top = el('tr');
+  for (const label of head) { const th = el('th', '', label); th.scope = 'col'; top.append(th); }
+  thead.append(top);
+  const body = el('tbody');
+  for (const cells of rows) {
+    const row = el('tr');
+    cells.forEach((cell, index) => { const node = el(index ? 'td' : 'th'); if (cell instanceof Node) node.append(cell); else node.append(el('span', '', cell)); row.append(node); });
+    body.append(row);
+  }
+  node.append(thead, body);
+}
+function render({ live, evalRuns }) {
+  const model = live.turnLatencyMs.MODEL;
+  const code = [live.turnLatencyMs.CODE_ANSWER, live.turnLatencyMs.CODE_CARS].filter(l => l.count);
+  const codeP50 = code.length ? Math.max(...code.map(l => l.p50)) : 0;
+  byId('tiles').replaceChildren(
+    tile('הודעות בצ\'אט', formatNumber(live.turns), 'מאז ' + formatDate(live.since)),
+    tile('נענו בקוד, בלי מודל', Math.round(live.answeredByCode * 100) + '%', 'מיד, וגם כשהמודל לא זמין'),
+    tile('זמן תגובה עם מודל', model.count ? ms(model.p50) : '—', model.count ? 'חציון · 95% עד ' + ms(model.p95) : 'עוד אין'),
+    tile('זמן תגובה בקוד', code.length ? ms(codeP50) : '—', 'חציון'),
+    tile('מעבר למודל גיבוי', formatNumber(live.fallbackAnswers), 'המתנות וניסיון חוזר: ' + formatNumber(live.backoffRounds)));
+  table('paths', ['מסלול', 'הודעות', 'חציון', '95%'], Object.entries(live.turnsByPath).map(([path, count]) =>
+    [PATHS[path] || path, formatNumber(count), live.turnLatencyMs[path].count ? ms(live.turnLatencyMs[path].p50) : '—', live.turnLatencyMs[path].count ? ms(live.turnLatencyMs[path].p95) : '—']), 'עוד אין הודעות.');
+  table('models', ['מודל', ...Object.values(OUTCOMES)], Object.entries(live.modelCalls).map(([name, outcomes]) =>
+    [ltr(name), formatNumber(outcomes.ANSWERED || 0), formatNumber(outcomes.BUSY || 0), formatNumber(outcomes.TIMEOUT || 0),
+      formatNumber((outcomes.REJECTED || 0) + (outcomes.UNREACHABLE || 0) + (outcomes.UNREADABLE || 0))]), 'עוד לא נקרא מודל.');
+  table('guards', ['מה קרה', 'פעמים'], Object.entries(live.guards).filter(([, count]) => count).map(([guard, count]) => [GUARDS[guard] || guard, formatNumber(count)]), 'אף שומר לא נדרש עד עכשיו.');
+  const tools = Object.entries(live.toolCalls).map(([name, count]) => [ltr(name), formatNumber(count)]);
+  for (const [outcome, count] of Object.entries(live.payslipReads)) tools.push(['תלושים: ' + (PAYSLIP[outcome] || outcome), formatNumber(count)]);
+  table('tools', ['כלי', 'פעמים'], tools, 'עוד לא הופעלו כלים.');
+  table('evals', ['מתי', 'גרסה', 'מודל', 'עברו', 'חציון', '95%', 'לשון זכר'], evalRuns.map(run =>
+    [formatDate(run.at), ltr(String(run.commit || '—')), ltr(String(run.model || '—')), formatNumber(run.passed) + ' מתוך ' + formatNumber(run.total),
+      run.latencyMs ? ms(run.latencyMs.p50) : '—', run.latencyMs ? ms(run.latencyMs.p95) : '—',
+      run.style ? formatNumber(run.style.masculineReplies) + ' מתוך ' + formatNumber(run.style.replies) : '—']), 'עוד לא הורצו בדיקות איכות.');
+}
+async function refresh() {
+  try {
+    render(await api.getMetrics());
+    byId('error-banner').hidden = true;
+    showNotice(byId('sync-label'), 'מתעדכן · ' + formatDate(new Date().toISOString(), true));
+  } catch (error) {
+    showNotice(byId('error-text'), error.message); byId('error-banner').hidden = false;
+  }
+}
+refresh();
+setInterval(() => { if (!document.hidden) refresh(); }, 10000);
 ```

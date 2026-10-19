@@ -50,6 +50,16 @@ class SecurityTest {
     }
 
     @Test
+    void theAssistantsMetricsAreBehindTheSameLogin() throws Exception {
+        mvc.perform(get("/api/rep/metrics")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/metrics.html")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/rep/metrics").with(httpBasic("rep", "test-pass")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.live.turnsByPath.MODEL").exists())
+                .andExpect(jsonPath("$.evalRuns").isArray());
+    }
+
+    @Test
     void theEmployeeApiIsOpenAndEveryResponseCarriesTheCsp() throws Exception {
         mvc.perform(post("/api/cases"))
                 .andExpect(status().isOk())

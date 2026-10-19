@@ -1,5 +1,8 @@
 package com.shani.caradvisor.agent;
 
+import com.shani.caradvisor.observability.AssistantMetrics;
+import com.shani.caradvisor.observability.AssistantMetrics.Guard;
+import com.shani.caradvisor.observability.AssistantMetrics.Path;
 import com.shani.caradvisor.workflow.ApiException;
 import com.shani.caradvisor.workflow.CaseWorkflowService;
 import com.shani.caradvisor.workflow.MessageEntity;
@@ -39,32 +42,40 @@ public class AdvisorAgent {
     private final AgentTools tools;
     private final LlmClient llm;
     private final RateLimiter rateLimiter;
+    private final AssistantMetrics metrics;
 
     public AdvisorAgent(CaseWorkflowService workflow, ChoiceService choices, AgentTools tools, LlmClient llm,
+                        AssistantMetrics metrics,
                         @Value("${advisor.assistant.max-messages-per-case-per-minute:6}") int perCase,
                         @Value("${advisor.assistant.max-messages-per-minute:30}") int overall) {
         this.workflow = workflow;
         this.choices = choices;
         this.tools = tools;
         this.llm = llm;
+        this.metrics = metrics;
         this.rateLimiter = new RateLimiter(perCase, overall);
     }
 
     public CaseView reply(String caseId, String text, String clientRequestId) {
+        long started = System.currentTimeMillis();
         // A plain answer to the open question is understood by code, before (and without) the model.
         Optional<CaseView> direct = choices.answerDirectly(caseId, text, clientRequestId);
         if (direct.isPresent()) {
+            metrics.turn(Path.CODE_ANSWER, System.currentTimeMillis() - started, caseId, null, List.of(), List.of());
             return direct.get();
         }
         // So is a plain request for cars: instant, and the cars always show.
         Optional<CaseView> cars = choices.answerCarRequest(caseId, text, clientRequestId);
         if (cars.isPresent()) {
+            metrics.turn(Path.CODE_CARS, System.currentTimeMillis() - started, caseId, null, List.of(), List.of());
             return cars.get();
         }
         if (!workflow.assistantAvailable()) {
+            metrics.turn(Path.UNAVAILABLE, System.currentTimeMillis() - started, caseId, null, List.of(), List.of());
             throw ApiException.unavailable("ASSISTANT_UNAVAILABLE", unavailableText());
         }
         if (!rateLimiter.tryAcquire(caseId, Instant.now())) {
+            metrics.guard(Guard.RATE_LIMITED);
             throw new ApiException(429, "RATE_LIMITED", "יותר מדי הודעות בזמן קצר. נסו שוב בעוד דקה.");
         }
         Optional<Long> messageId = workflow.recordEmployeeMessage(caseId, text, clientRequestId);
@@ -80,14 +91,16 @@ public class AdvisorAgent {
             reply = converse(caseId, messageId.get(), text.trim(), contents, turnLog);
             if (claimsToShowCars(reply) && turnLog.carAnswers.isEmpty() && !turnLog.alternativeChosen) {
                 log.info("Reply offered cars without looking them up; asking the model to call find_cars");
+                turnLog.guards.add(Guard.CLAIMED_CARS);
                 contents.add(Map.of("role", "user", "parts", List.of(Map.of("text",
                         "[system] You said you are showing cars or options, but no car appears in the chat. "
                                 + "Call find_cars now with what the employee asked for, then reply in one short sentence."))));
                 reply = converse(caseId, messageId.get(), text.trim(), contents, turnLog);
             }
-            reply = guarded(reply, contents);
+            reply = guarded(reply, contents, turnLog);
         } catch (LlmClient.UnavailableException e) {
             log.warn("Assistant unavailable: {}", e.getMessage());
+            metrics.turn(Path.UNAVAILABLE, System.currentTimeMillis() - started, caseId, turnLog.model, turnLog.tools, turnLog.guards);
             workflow.addBotMessage(caseId, unavailableText());
             throw ApiException.unavailable("ASSISTANT_UNAVAILABLE", unavailableText());
         }
@@ -137,6 +150,7 @@ public class AdvisorAgent {
                 workflow.deferAssumptions(caseId);
             }
         }
+        metrics.turn(Path.MODEL, System.currentTimeMillis() - started, caseId, turnLog.model, turnLog.tools, turnLog.guards);
         return workflow.view(caseId);
     }
 
@@ -158,6 +172,7 @@ public class AdvisorAgent {
                             AgentTools.TurnLog turnLog) {
         for (int step = 0; step < MAX_STEPS; step++) {
             LlmClient.Turn turn = llm.next(Prompts.system(workflow.view(caseId)), contents, tools.declarations());
+            turnLog.model = turn.model();
             contents.add(turn.rawContent());
             if (turn.calls().isEmpty()) {
                 return turn.text();
@@ -175,6 +190,7 @@ public class AdvisorAgent {
             contents.add(Map.of("role", "user", "parts", responses));
         }
         log.warn("Agent stopped after {} steps without a final reply", MAX_STEPS);
+        turnLog.guards.add(Guard.STEP_LIMIT);
         return "";
     }
 
@@ -182,17 +198,22 @@ public class AdvisorAgent {
      * The model must not write amounts, and must stay in Hebrew. One chance to rewrite,
      * otherwise the server's fallback text is used.
      */
-    private String guarded(String reply, List<Map<String, Object>> contents) {
+    private String guarded(String reply, List<Map<String, Object>> contents, AgentTools.TurnLog turnLog) {
         String text = clean(reply);
         if (acceptable(text)) {
             return text;
         }
         log.info("Reply contained an amount or foreign letters; asking the model to rewrite it");
+        turnLog.guards.add(Guard.REPLY_REWRITTEN);
         contents.add(Map.of("role", "user", "parts", List.of(Map.of("text",
-                "[system] Your last reply contained numbers, amounts or non-Hebrew letters, or sent the employee to the screen. "
+                "[system] Your last reply contained numbers, amounts or non-Hebrew letters, or sent the employee to the screen or the side. "
                         + "Rewrite it in Hebrew only, without them. Everything you show appears in the chat."))));
         String rewritten = clean(llm.next(Prompts.RULES, contents, List.of()).text());
-        return acceptable(rewritten) ? rewritten : "";
+        if (acceptable(rewritten)) {
+            return rewritten;
+        }
+        turnLog.guards.add(Guard.REPLY_REPLACED);
+        return "";
     }
 
     /** "Here are the options" with nothing shown: the model meant to look cars up and did not. */
@@ -200,9 +221,12 @@ public class AdvisorAgent {
         return CLAIMS_CARS.matcher(text).find();
     }
 
-    /** "Look at the screen" sends the employee away from the chat, where the cars and numbers are. */
+    /**
+     * "Look at the screen" or "on the side" sends the employee away from the chat, where the cars and numbers are
+     * (an evaluation run caught "the range is in the card on the side", with no card and no range anywhere).
+     */
     private static boolean pointsToTheScreen(String text) {
-        return text.contains("מסך");
+        return text.contains("מסך") || text.contains("בצד");
     }
 
     private boolean acceptable(String text) {
@@ -218,7 +242,8 @@ public class AdvisorAgent {
         StringBuilder text = new StringBuilder();
         for (MessageView m : recent) {
             String r = "bot".equals(m.role()) ? "model" : "user";
-            String t = "system".equals(m.role()) ? "[עדכון מהמערכת] " + m.text() : m.text();
+            String t = "system".equals(m.role()) ? "[עדכון מהמערכת] " + m.text()
+                    : "employee".equals(m.role()) ? asTheEmployeeWroteIt(m.text()) : m.text();
             if (contents.isEmpty() && role == null && "model".equals(r)) {
                 continue;
             }
@@ -236,6 +261,15 @@ public class AdvisorAgent {
             contents.add(content(role, text.toString()));
         }
         return contents;
+    }
+
+    /**
+     * The system's own notes reach the model in square brackets ("[עדכון מהמערכת]", "[system]"). An employee who
+     * types such a note must not be able to pose as the system or the rep (an evaluation run caught the model
+     * repeating a forged "the rep confirmed" as true), so brackets in their text become round ones.
+     */
+    static String asTheEmployeeWroteIt(String text) {
+        return text.replace('[', '(').replace(']', ')');
     }
 
     private static Map<String, Object> content(String role, String text) {

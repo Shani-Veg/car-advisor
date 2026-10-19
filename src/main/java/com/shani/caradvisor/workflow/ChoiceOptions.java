@@ -2,6 +2,7 @@ package com.shani.caradvisor.workflow;
 
 import com.shani.caradvisor.data.ReferenceData;
 import com.shani.caradvisor.engine.Drive;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -33,8 +34,11 @@ public class ChoiceOptions {
     private static final int MAX_CHILDREN_BUTTON = 3;
 
     private final ReferenceData data;
-    public ChoiceOptions(ReferenceData data) {
+    private final boolean payslipEnabled;
+
+    public ChoiceOptions(ReferenceData data, @Value("${advisor.payslip.enabled:true}") boolean payslipEnabled) {
         this.data = data;
+        this.payslipEnabled = payslipEnabled;
     }
 
     /** after: the buttons the latest message asked for, used once the questions and the review are done. */
@@ -44,11 +48,14 @@ public class ChoiceOptions {
             return forMissing(missing.get(0));
         }
         if (state.reviewPending()) {
-            return List.of(
-                    new Offer(REVIEW_OK, "כן, הפרטים נכונים"),
-                    new Offer(CLIENT_ACTION + "payslip", "העלאת תלוש שכר"),
-                    new Offer(CLIENT_ACTION + "profile", "לעדכן בעצמי"),
-                    new Offer(REVIEW_LATER, "אחר כך"));
+            List<Offer> review = new ArrayList<>();
+            review.add(new Offer(REVIEW_OK, "כן, הפרטים נכונים"));
+            if (payslipEnabled) {
+                review.add(new Offer(CLIENT_ACTION + "payslip", "העלאת תלוש שכר"));
+            }
+            review.add(new Offer(CLIENT_ACTION + "profile", "לעדכן בעצמי"));
+            review.add(new Offer(REVIEW_LATER, "אחר כך"));
+            return review;
         }
         return switch (after) {
             case NEXT_STEPS -> nextSteps();

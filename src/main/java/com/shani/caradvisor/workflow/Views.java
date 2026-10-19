@@ -19,6 +19,7 @@ public final class Views {
             String status,
             boolean assistantAvailable,
             String assistantMode,
+            boolean payslipEnabled,
             List<ProfileField> profile,
             List<MessageView> messages,
             ComparisonView comparison,
@@ -27,8 +28,12 @@ public final class Views {
             List<String> assumptionsToConfirm) {
     }
 
-    /** What the payslip reader found, for the employee to approve. Nothing here is stored yet. */
-    public record PayslipReading(List<PayslipField> fields, List<String> notFound) {
+    /**
+     * What the payslip reader found, for the employee to approve. Nothing here is stored yet.
+     * sentForReading: for a PDF, the only lines that went to the model (payroll terms and numbers); empty for an
+     * image, which the employee cropped in the browser and can see there.
+     */
+    public record PayslipReading(List<PayslipField> fields, List<String> notFound, List<String> sentForReading) {
     }
 
     /** current: what the case holds now (empty when missing), so the screen can show what would change. */
