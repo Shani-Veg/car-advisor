@@ -1,5 +1,5 @@
 import { api } from './api.js';
-import { el, appendText, moneyNode, formatMoney, formatDate, sourceText, statusBadge, caseLabels, directionLabels, breakdownLabels, emptyState, showNotice } from './format.js';
+import { el, appendText, moneyNode, formatMoney, formatDate, sourceText, statusBadge, directionLabels, breakdownLabels, emptyState, showNotice } from './format.js';
 import { vehicleIdentity, choiceVehicle, makerLogo, brandName, driveChip } from './vehicle.js';
 
 const byId = id => document.getElementById(id);
@@ -321,6 +321,14 @@ function readout(data, title, alternative, estimates, key) {
   }
   node.append(moneyNode(data.net, false, 'readout-amount'), el('span', 'readout-unit', 'נטו לחודש'));
   if (estimates.includes(key + '.net')) node.append(statusBadge('DEFAULT'));
+  // what the employee pays for this car each month, and whether the rep confirmed it
+  if (typeof data.participation === 'number') {
+    const participation = el('span', 'readout-participation', 'ההשתתפות שלך ');
+    participation.append(moneyNode(data.participation), document.createTextNode(' בחודש'));
+    if (data.participationStatus === 'CONFIRMED') participation.append(el('span', 'participation-tag confirmed', '✓ אושר'));
+    else if (data.participationStatus === 'DEFAULT') participation.append(el('span', 'participation-tag estimate', 'הערכה'));
+    node.append(participation);
+  }
   if (typeof data.monthlyCost === 'number') {
     const cost = el('span', 'readout-cost', 'עלות לחברה ');
     cost.append(moneyNode(data.monthlyCost));
@@ -484,7 +492,7 @@ function renderRanking(ranking, previous) {
     const link = modelLink(item.alternative.officialUrl, item.alternative.label);
     if (link) info.append(link);
     const value = el('div', 'ranking-value'); value.append(moneyNode(item.difference, true), el('small', '', 'שינוי בנטו לחודש'));
-    const button = el('button', 'compare-button', 'השווה'); button.type = 'button'; button.dataset.mutation = '';
+    const button = el('button', 'compare-button', 'השוואה'); button.type = 'button'; button.dataset.mutation = '';
     button.setAttribute('aria-label', 'השוואת החלופה ' + item.alternative.label);
     button.addEventListener('click', async () => {
       const ok = await mutate('alternative:' + item.alternative.type + ':' + item.alternative.vehicleId, id => api.selectAlternative(caseId, item.alternative, id));
@@ -714,8 +722,6 @@ function applyCase(next) {
   if (next.assistantAvailable === false) assistantOffline = true;
   // A later poll explicitly declaring availability is the recovery signal.
   else if (next.assistantAvailable === true) assistantOffline = false;
-  showNotice(byId('case-state'), caseLabels[next.status] || next.status);
-  byId('case-state').dataset.status = next.status;
   byId('replay-banner').hidden = next.assistantMode !== 'REPLAY';
   renderMessages(next.messages || []);
   byId('message-input').placeholder = (next.messages || []).some(message => message.role === 'employee') ? 'הקלידו כאן…' : 'מה תרצו לבדוק?';
@@ -816,7 +822,7 @@ async function initialize() {
   if (results[1].status === 'fulfilled') catalog = results[1].value;
   if (results[2].status === 'fulfilled') occupations = results[2].value;
   if (results[0].status === 'fulfilled') applyCase(results[0].value);
-  else { setError(results[0].reason, initialize); showNotice(byId('case-state'), 'אין חיבור לתיק'); }
+  else setError(results[0].reason, initialize);
   if (results[1].status === 'rejected' && results[0].status === 'fulfilled') setError(results[1].reason, async () => { try { catalog = await api.getCatalog(); messageNodes.forEach(entry => { entry.data = null; }); renderMessages(current.messages || []); renderComparison(current.comparison, null); renderRanking(current.ranking, null); updateControls(); clearError(); } catch (error) { setError(error, initialize); } });
   loading = false;
   if (!pollTimer) pollTimer = setInterval(() => { if (!document.hidden) refresh(); }, 3000);

@@ -20,7 +20,7 @@ public final class ChatSummaries {
             "יש לי את כל מה שצריך. אפשר לבדוק רכב, או לשאול מה הכי משתלם.";
 
     private static final Map<FactKey, String> QUESTIONS = Map.ofEntries(
-            Map.entry(FactKey.OCCUPATION, "באיזה תפקיד את/ה עובד/ת?"),
+            Map.entry(FactKey.OCCUPATION, "מה התפקיד שלך?"),
             Map.entry(FactKey.GROUP, "באיזו קבוצת זכאות את/ה?"),
             Map.entry(FactKey.BASE_SALARY, "מה שכר הבסיס החודשי שלך (ברוטו)?"),
             Map.entry(FactKey.COMMISSIONS, "יש לך עמלות חודשיות? אם אין, כתבו 0."),

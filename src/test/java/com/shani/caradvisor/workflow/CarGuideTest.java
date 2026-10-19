@@ -39,8 +39,8 @@ class CarGuideTest {
         assertThat(answer.cars()).contains("CAR-10", "CAR-03").doesNotContain("CAR-14", "CAR-17");
         // the text frames the cards; each card carries its own numbers (CarCard)
         assertThat(answer.text()).startsWith("רכבים חשמליים בזכאות שלך, מהמשתלם לנטו:")
-                // group D electric cars are named, without numbers, under the cards
-                .contains("\nמחוץ לזכאות שלך: MODEL 3 (2025) (קבוצה ד)");
+                // cars outside the employee's eligibility are not listed at all
+                .doesNotContain("MODEL 3").doesNotContain("מחוץ לזכאות");
         assertThat(answer.forModel()).allSatisfy(car -> assertThat(car.toString()).doesNotContain("1,013").doesNotContain("1013"));
     }
 
@@ -51,7 +51,7 @@ class CarGuideTest {
         CarGuide.Answer answer = guide.find(id, Set.of(Drive.PLUG_IN), null, null);
 
         assertThat(answer.cars()).isEmpty();
-        assertThat(answer.text()).startsWith("לא מצאתי רכבי פלאג-אין בזכאות שלך.").contains("SPORTAGE HEV (2026) (קבוצה ד)");
+        assertThat(answer.text()).isEqualTo("לא מצאתי רכבי פלאג-אין בזכאות שלך.");
     }
 
     @Test

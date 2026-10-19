@@ -196,10 +196,11 @@ class CaseViewAssembler {
 
     private ComparisonView comparison(CaseState state) {
         Comparison c = engine.compare(state.employee(), state.occupation(), state.todayChoice(), state.alternativeChoice());
-        SideView today = side(c.today().choice(), c.netToday());
+        SideView today = side(c.today().choice(), c.netToday(), status(state, FactKey.CURRENT_PARTICIPATION));
+        String alternativeStatus = status(state, FactKey.ALTERNATIVE_PARTICIPATION);
         if (!c.eligible()) {
             return new ComparisonView(c.rulesVersion(), false, c.eligibility().reason(), today,
-                    side(state.alternativeChoice(), null),
+                    side(state.alternativeChoice(), null, alternativeStatus),
                     null, "NONE", List.of(), null, state.estimates(), ExplanationWriter.explain(c), null);
         }
         int sign = c.difference().signum();
@@ -208,7 +209,7 @@ class CaseViewAssembler {
                 true,
                 c.eligibility().reason(),
                 today,
-                side(c.alternative().choice(), c.netAlternative()),
+                side(c.alternative().choice(), c.netAlternative(), alternativeStatus),
                 c.difference(),
                 sign > 0 ? "GAIN" : sign < 0 ? "LOSS" : "NONE",
                 c.factors().stream().map(CaseViewAssembler::factorView).toList(),
@@ -239,10 +240,15 @@ class CaseViewAssembler {
     }
 
     /** type and vehicleId let the screen recognise which card is being compared, without guessing from names. */
-    private static SideView side(CarChoice choice, java.math.BigDecimal net) {
+    private static SideView side(CarChoice choice, java.math.BigDecimal net, String participationStatus) {
         return choice instanceof CarChoice.CompanyCar car
-                ? new SideView(choice.label(), net, car.vehicle().officialUrl(), "car", car.vehicle().id(), car.vehicle().monthlyCost())
-                : new SideView(choice.label(), net, null, "waiver", null, null);
+                ? new SideView(choice.label(), net, car.vehicle().officialUrl(), "car", car.vehicle().id(),
+                        car.vehicle().monthlyCost(), car.participation(), participationStatus)
+                : new SideView(choice.label(), net, null, "waiver", null, null, null, null);
+    }
+
+    private static String status(CaseState state, FactKey key) {
+        return state.fact(key).map(f -> f.status().name()).orElse(null);
     }
 
     private static String officialUrl(CarChoice choice) {

@@ -86,8 +86,12 @@ public final class Views {
 
     /** officialUrl: the model's page on the importer's site; null for waiving the car or when there is none. */
     /** monthlyCost: what the car costs the company per month (catalog); null without a car. */
+    /**
+     * participation: what the employee pays for this car each month, deducted from the net (null without a car);
+     * participationStatus: PROVIDED, DEFAULT (an estimate until the rep confirms) or CONFIRMED.
+     */
     public record SideView(String label, BigDecimal net, String officialUrl, String type, String vehicleId,
-                           BigDecimal monthlyCost) {
+                           BigDecimal monthlyCost, BigDecimal participation, String participationStatus) {
     }
 
     public record FactorView(String component, String label, BigDecimal from, BigDecimal to, BigDecimal netImpact) {

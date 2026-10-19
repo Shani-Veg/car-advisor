@@ -325,7 +325,7 @@ class ChoiceFlowTest {
 
         CaseView next = choices.choose(id, "continue", "go-on");
 
-        assertThat(lastText(next)).isEqualTo("באיזה תפקיד את/ה עובד/ת?");
+        assertThat(lastText(next)).isEqualTo("מה התפקיד שלך?");
         assertThat(offered(next)).hasSize(14);
     }
 

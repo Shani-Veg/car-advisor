@@ -26,8 +26,7 @@ import java.util.UUID;
 @Transactional
 public class CaseWorkflowService {
 
-    static final String WELCOME = "שלום! אעזור לבדוק מה יקרה לנטו שלך אם תחליף/י רכב או תוותר/י עליו. "
-            + "אפשר לכתוב לי, או למלא את הפרטים בטופס.";
+    static final String WELCOME = "היי! אני יועץ הרכב. בכמה שאלות קצרות נבדוק מה יקרה לנטו שלך עם רכב אחר. נתחיל: מה התפקיד שלך?";
 
     /**
      * Secondary details a conversation should not have to ask about. They are common values, stored as estimates
@@ -307,7 +306,7 @@ public class CaseWorkflowService {
         question.answer(value, effectiveFrom, note, clientRequestId, answeredBy, Instant.now());
         applyFact(caseEntity, question.factKey(), value, FactEntity.Source.REP, question.id(), effectiveFrom);
         messages.save(new MessageEntity(caseEntity.id(), MessageEntity.Role.SYSTEM,
-                "נציג התחבורה עדכן: " + question.factKey().label() + " " + values.display(question.factKey(), value)
+                "נציג התחבורה עדכן את " + question.factKey().label() + ": " + values.display(question.factKey(), value)
                         + (effectiveFrom == null ? "" : ", בתוקף מ-" + FactValues.displayDate(effectiveFrom)) + ". ההשוואה עודכנה.",
                 null, Instant.now()));
         caseEntity.touch(Instant.now());

@@ -15,7 +15,7 @@ public enum FactKey {
     CHILDREN_UP_TO_23("childrenUpTo23", "ילדים עד גיל 23", ValueType.COUNT),
     CURRENT_CAR("currentCar", "רכב היום", ValueType.CURRENT_CAR),
     CURRENT_PARTICIPATION("currentParticipation", "השתתפות ברכב היום", ValueType.MONEY),
-    ALTERNATIVE_PARTICIPATION("alternativeParticipation", "השתתפות ברכב החלופי", ValueType.MONEY);
+    ALTERNATIVE_PARTICIPATION("alternativeParticipation", "ההשתתפות החודשית שלך ברכב החדש", ValueType.MONEY);
 
     public enum ValueType { OCCUPATION, GROUP, MONEY, PERCENT, POINTS, COUNT, CURRENT_CAR }
 

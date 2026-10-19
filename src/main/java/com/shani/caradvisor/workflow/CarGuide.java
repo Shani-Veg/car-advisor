@@ -44,7 +44,6 @@ public class CarGuide {
     private static final int MAX_CARDS = 6;
     /** A search over every drive type is wide: show fewer cards, the rest is in the alternatives list. */
     private static final int MAX_CARDS_ALL_KINDS = 4;
-    private static final int MAX_OTHERS = 3;
 
     private final CaseRepository cases;
     private final CaseViewAssembler views;
@@ -81,7 +80,6 @@ public class CarGuide {
                 .filter(v -> maxNetDecrease == null || effect.get(v.id()) == null
                         || effect.get(v.id()).compareTo(maxNetDecrease.negate()) >= 0)
                 .toList());
-        List<Vehicle> others = matching.stream().filter(v -> !state.mayTake(v)).toList();
         boolean personal = !effect.isEmpty();
         Order sort = order == Order.BEST_FOR_NET && !personal ? Order.CHEAPEST : order;
         allowed.sort(switch (sort) {
@@ -108,13 +106,8 @@ public class CarGuide {
                 text.append("\nכשאדע את כל הפרטים שלך, אראה גם מה כל רכב עושה לנטו.");
             }
         }
-        if (!others.isEmpty()) {
-            text.append("\nמחוץ לזכאות שלך: ").append(others.stream().limit(MAX_OTHERS)
-                    .map(v -> v.label() + " (" + groupName(v) + ")").collect(Collectors.joining(", "))).append(".");
-        }
         List<Map<String, Object>> forModel = new ArrayList<>();
         allowed.stream().limit(cards).forEach(v -> forModel.add(modelView(v, effect.get(v.id()), true)));
-        others.stream().limit(MAX_OTHERS).forEach(v -> forModel.add(modelView(v, null, false)));
         return new Answer(text.toString(), allowed.stream().limit(cards).map(Vehicle::id).toList(), forModel);
     }
 
@@ -253,10 +246,6 @@ public class CarGuide {
             return "לא משתנה";
         }
         return (amount.signum() > 0 ? "עולה ב-" : "יורד ב-") + Money.display(amount.abs()) + " בחודש";
-    }
-
-    private static String groupName(Vehicle v) {
-        return v.isFamilyTrack() ? "מסלול ברוכת ילדים" : "קבוצה " + v.group();
     }
 
     private static String kind(Collection<Drive> drives) {
