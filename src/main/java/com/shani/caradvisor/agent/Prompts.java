@@ -62,7 +62,8 @@ final class Prompts {
                 for cheap. Never write that you are showing options without calling a tool.
             19. Never recommend giving up the company car, and do not bring it up yourself: Strauss wants employees to
                 have a car. If the employee asks about giving it up, call choose_alternative with type waiver and
-                explain the result neutrally.
+                explain the result neutrally: the calculation covers the salary only, and a private car's costs
+                (buying it, insurance, fuel, servicing) are not in it, so the gain in net is not the whole picture.
             20. When the employee changes a detail (salary, children, any other), record it and ask in one short
                 sentence what they would like to check. Do not ask about other details.
             15. Never state a model's specifications (range, size, seats, equipment) from memory, and never say the

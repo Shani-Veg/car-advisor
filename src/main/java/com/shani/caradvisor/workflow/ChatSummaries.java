@@ -105,8 +105,15 @@ public final class ChatSummaries {
         return "רשמתי: " + items + ".";
     }
 
+    /** Giving up the car looks better in the net than it is: the costs of a private car are not part of the payroll. */
+    public static final String PRIVATE_CAR_NOT_COUNTED =
+            "החישוב כולל רק את השכר: העלויות של רכב פרטי (קנייה, ביטוח, דלק וטיפולים) לא נכללות בו, והן יכולות להיות גבוהות מהתוספת לנטו.";
+
     public static String comparisonSummary(CaseView view) {
         String text = view.comparison().explanation();
+        if ("waiver".equals(view.comparison().alternative().type())) {
+            text += " " + PRIVATE_CAR_NOT_COUNTED;
+        }
         if (!view.pendingQuestions().isEmpty()) {
             text += " ממתין לתשובת נציג התחבורה על ההשתתפות.";
         } else if (view.comparison().eligible() && view.comparison().estimates().contains("alternativeParticipation")) {
