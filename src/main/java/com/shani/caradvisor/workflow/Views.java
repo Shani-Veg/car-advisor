@@ -20,6 +20,7 @@ public final class Views {
             boolean assistantAvailable,
             String assistantMode,
             boolean payslipEnabled,
+            boolean publicDemo,
             List<ProfileField> profile,
             List<MessageView> messages,
             ComparisonView comparison,

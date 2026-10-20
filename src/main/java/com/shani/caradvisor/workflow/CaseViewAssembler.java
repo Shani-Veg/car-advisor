@@ -53,11 +53,13 @@ class CaseViewAssembler {
     private final boolean assistantEnabled;
     private final String assistantMode;
     private final boolean payslipEnabled;
+    private final boolean publicDemo;
 
     CaseViewAssembler(ReferenceData data, ComparisonEngine engine, FactValues values, FactRepository facts,
                       MessageRepository messages, QuestionRepository questions, ChoiceOptions choiceOptions, LlmClient llm,
                       @Value("${advisor.assistant.enabled:true}") boolean assistantEnabled,
-                      @Value("${advisor.payslip.enabled:true}") boolean payslipEnabled) {
+                      @Value("${advisor.payslip.enabled:true}") boolean payslipEnabled,
+                      @Value("${advisor.public-demo:false}") boolean publicDemo) {
         this.data = data;
         this.engine = engine;
         this.values = values;
@@ -68,6 +70,7 @@ class CaseViewAssembler {
         this.assistantEnabled = assistantEnabled && llm.isConfigured();
         this.assistantMode = llm.mode();
         this.payslipEnabled = payslipEnabled;
+        this.publicDemo = publicDemo;
     }
 
     CaseState state(CaseEntity caseEntity) {
@@ -89,6 +92,7 @@ class CaseViewAssembler {
                 assistantEnabled,
                 assistantMode,
                 payslipEnabled,
+                publicDemo,
                 Arrays.stream(FactKey.values()).map(key -> profileField(state, key)).toList(),
                 messageViews(caseEntity, state),
                 state.canCompare() ? comparison(state) : null,

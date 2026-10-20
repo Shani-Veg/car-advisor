@@ -592,6 +592,11 @@ function payslipStage(stage, data, preview) {
       'צילום של התלוש: מסמנים את טבלת התשלומים והניכויים, ורק החלק הזה נשלח. שאר התמונה לא יוצאת מהמחשב.',
       'התלוש לא נשמר, ושום פרט לא יישמר לפני שתאשרו אותו במסך הבא.']) privacy.append(el('li', '', line));
     body.append(privacy, el('p', 'small-muted', 'PDF או תמונה, עד 5 מגה.'));
+    if (current?.publicDemo) {
+      const sample = el('a', '', 'תלוש הדוגמה'); sample.href = 'demo/sample-payslip.pdf'; sample.download = '';
+      const line = el('p', 'small-muted', 'אפשר לנסות את התלוש עם '); line.append(sample, '.');
+      body.append(line);
+    }
     action('בחירת קובץ', true, () => byId('payslip-file').click()).focus();
     action('ביטול', false, closePayslip);
   } else if (stage === 'crop') {
@@ -728,6 +733,7 @@ function applyCase(next) {
   // A later poll explicitly declaring availability is the recovery signal.
   else if (next.assistantAvailable === true) assistantOffline = false;
   byId('replay-banner').hidden = next.assistantMode !== 'REPLAY';
+  byId('demo-notice').hidden = next.publicDemo !== true;
   renderMessages(next.messages || []);
   byId('message-input').placeholder = (next.messages || []).some(message => message.role === 'employee') ? 'הקלידו כאן…' : 'מה תרצו לבדוק?';
   renderProfile(next.profile || [], previous);
