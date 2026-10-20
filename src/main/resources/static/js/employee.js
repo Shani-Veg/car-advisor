@@ -494,7 +494,6 @@ function renderRanking(ranking, previous) {
     info.append(vehicleIdentity(item.alternative, catalog, true));
     if (item.alternative.group) info.append(el('small', '', 'קבוצה ' + item.alternative.group));
     if (item.participationEstimated) info.append(el('span', 'badge status-default', 'השתתפות משוערת'));
-    if (item.alternative.type === 'waiver') info.append(el('small', 'waiver-note', 'בלי העלויות של רכב פרטי (קנייה, ביטוח, דלק)'));
     const link = modelLink(item.alternative.officialUrl, item.alternative.label);
     if (link) info.append(link);
     const value = el('div', 'ranking-value'); value.append(moneyNode(item.difference, true), el('small', '', 'שינוי בנטו לחודש'));

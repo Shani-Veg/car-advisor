@@ -228,8 +228,7 @@ class CaseViewAssembler {
         java.math.BigDecimal amount = data.rules().budgetOf(group);
         String note;
         if (!(alternative instanceof CarChoice.CompanyCar car)) {
-            note = "בוויתור אין רכב, ולכן גם אין שימוש בתקציב: במקומו מקבלים אחזקת רכב לפי טבלת העיסוקים. "
-                    + "העלויות של רכב פרטי לא נכללות בחישוב.";
+            note = "בוויתור אין רכב, ולכן גם אין שימוש בתקציב: במקומו מקבלים אחזקת רכב לפי טבלת העיסוקים.";
         } else if (car.vehicle().monthlyCost().compareTo(amount) <= 0) {
             note = "הרכב בתוך התקציב. תקציב שלא נוצל לא הופך לכסף בשכר.";
         } else if (car.vehicle().isFamilyTrack()) {

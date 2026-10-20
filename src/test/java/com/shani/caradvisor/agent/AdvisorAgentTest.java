@@ -262,10 +262,8 @@ class AdvisorAgentTest {
         assertThat(view.comparison().alternative().type()).isEqualTo("waiver");
         assertThat(view.comparison().difference()).isEqualByComparingTo("1901");
         assertThat(view.comparison().factors()).anySatisfy(f -> assertThat(f.label()).isEqualTo("אחזקת רכב"));
-        assertThat(view.comparison().budget().note()).contains("אחזקת רכב").contains("רכב פרטי");
-        // the gain in net is not the whole picture: a private car's costs are not in the calculation
-        assertThat(botTexts(view)).last().asString().contains("ויתור על רכב").contains("1,901 ₪")
-                .contains("העלויות של רכב פרטי");
+        assertThat(view.comparison().budget().note()).contains("אחזקת רכב");
+        assertThat(botTexts(view)).last().asString().contains("ויתור על רכב").contains("1,901 ₪");
     }
 
     @Test
