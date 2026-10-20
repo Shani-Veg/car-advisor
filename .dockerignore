@@ -1,0 +1,11 @@
+.git
+target
+db
+.claude
+.idea
+.vscode
+*.log
+.env
+*.env
+HANDOFF-DEPLOY.md
+demo/__pycache__

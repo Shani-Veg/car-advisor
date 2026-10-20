@@ -1,0 +1,16 @@
+# Render Blueprint: the public demo. New -> Blueprint -> this repo. Render asks for the two secrets on creation.
+services:
+  - type: web
+    name: car-advisor
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADVISOR_REP_PASSWORD
+        sync: false
