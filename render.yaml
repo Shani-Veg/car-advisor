@@ -14,3 +14,10 @@ services:
         sync: false
       - key: ADVISOR_REP_PASSWORD
         sync: false
+      # Permanent storage (PostgreSQL, e.g. Neon). Without these the demo database is wiped on every restart.
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false

@@ -13,7 +13,10 @@
   <main id="main" class="app-main rep-main">
     <div class="rep-top">
       <div><h1>תור השאלות</h1><p>שאלות שמחכות לאישור שלך, מהוותיקה לחדשה. התשובה מעדכנת מיד את ההשוואה אצל העובד/ת.</p></div>
-      <p id="sync-label" class="sync-label" role="status">מתחבר…</p>
+      <div class="rep-actions">
+        <p id="sync-label" class="sync-label" role="status">מתחבר…</p>
+        <a class="secondary-button export-link" href="api/rep/export.xlsx" download title="כל הפניות ודוח מגמות, לקובץ Excel">ייצוא לאקסל</a>
+      </div>
     </div>
     <div id="error-banner" class="notice error-notice" role="alert" hidden><span id="error-text"></span><button id="retry-button" class="text-button" type="button">נסו שוב</button></div>
     <div id="feedback" class="notice" role="status" hidden></div>

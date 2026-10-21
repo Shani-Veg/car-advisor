@@ -76,6 +76,10 @@ public class CaseEntity {
         return revision;
     }
 
+    public Instant createdAt() {
+        return createdAt;
+    }
+
     public Alternative alternative() {
         return alternative;
     }
