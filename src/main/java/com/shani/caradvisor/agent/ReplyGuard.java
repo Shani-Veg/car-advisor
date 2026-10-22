@@ -7,12 +7,16 @@ import java.util.regex.Pattern;
 /**
  * Stops amounts in the model's own words. Car names contain digits (MG4, ATTO 3, MODEL 3) and years are
  * harmless, so those are removed first; what remains may not contain a multi-digit number, a decimal,
- * or a digit next to % or ₪.
+ * or a digit next to % or ₪. Amounts written around the digits are stopped too (a red-team run found them):
+ * money and distance words ("שלושה עשר אלף", "3 מאות ש"ח", "ארבע מאות קילומטר"), a digit before "אחוז",
+ * and digits spaced apart ("1 3 2 0 0").
  */
 public final class ReplyGuard {
 
     private static final Pattern YEAR = Pattern.compile("(?<!\\p{Nd})(19|20)\\p{Nd}{2}(?!\\p{Nd})");
-    private static final Pattern AMOUNT = Pattern.compile("\\p{Nd}[\\p{Nd},.]*\\p{Nd}|\\p{Nd}\\s*[%₪]|[%₪]\\s*\\p{Nd}");
+    private static final Pattern AMOUNT = Pattern.compile("\\p{Nd}[\\p{Nd},.]*\\p{Nd}|\\p{Nd}\\s*[%₪]|[%₪]\\s*\\p{Nd}"
+            + "|\\p{Nd}\\s*-?\\s*אחוז|\\p{Nd}(\\s+\\p{Nd}){2,}"
+            + "|(?<!\\p{L})[ובלהמכש]{0,2}-?(אלף|אלפים|אלפי|מאות|מאתיים|שקל|שקלים|ש[\"״']ח|קילומטר|קילומטרים|ק[\"״]מ)(?!\\p{L})");
 
     /** Small models sometimes slip an Arabic letter into a Hebrew word. */
     private static final Pattern FOREIGN_SCRIPT = Pattern.compile("[\\u0600-\\u06FF\\u0750-\\u077F\\uFB50-\\uFDFF\\uFE70-\\uFEFF]");

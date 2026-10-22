@@ -364,14 +364,19 @@ public class CaseWorkflowService {
         }
     }
 
+    /**
+     * A stated group must match the occupation table. Before the occupation is known there is nothing to check it
+     * against, so the group is refused then too (a red-team run opened a rep question for a group-ד car that way).
+     */
     private void requireGroupMatchesOccupation(CaseEntity caseEntity, String group) {
-        facts.findByCaseIdAndFactKey(caseEntity.id(), FactKey.OCCUPATION).ifPresent(occupationFact -> {
-            Occupation occupation = data.occupations().byName(occupationFact.value()).orElseThrow();
-            if (!occupation.group().equals(group)) {
-                throw ApiException.badRequest("GROUP_MISMATCH", "לפי טבלת העיסוקים, " + occupation.name()
-                        + " שייך/ת לקבוצה " + occupation.group() + ". שינוי קבוצת זכאות נעשה מול משאבי אנוש.");
-            }
-        });
+        FactEntity occupationFact = facts.findByCaseIdAndFactKey(caseEntity.id(), FactKey.OCCUPATION)
+                .orElseThrow(() -> ApiException.badRequest("GROUP_NEEDS_OCCUPATION",
+                        "קבוצת הזכאות נקבעת לפי התפקיד בטבלת העיסוקים. מה התפקיד שלך?"));
+        Occupation occupation = data.occupations().byName(occupationFact.value()).orElseThrow();
+        if (!occupation.group().equals(group)) {
+            throw ApiException.badRequest("GROUP_MISMATCH", "לפי טבלת העיסוקים, " + occupation.name()
+                    + " שייך/ת לקבוצה " + occupation.group() + ". שינוי קבוצת זכאות נעשה מול משאבי אנוש.");
+        }
     }
 
     private void askRep(CaseEntity caseEntity, FactKey key, String text, String subject) {

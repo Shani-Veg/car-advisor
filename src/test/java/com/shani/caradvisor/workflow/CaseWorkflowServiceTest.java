@@ -234,9 +234,10 @@ class CaseWorkflowServiceTest {
     }
 
     @Test
-    void theOccupationTableOverridesAGroupStatedBeforeIt() {
+    void aGroupStatedBeforeTheOccupationIsRefusedAndTheTableDecides() {
         String id = workflow.create().caseId();
-        workflow.setFact(id, FactKey.GROUP, "ד", FactEntity.Source.EMPLOYEE_MESSAGE, "m-1", null);
+        assertThatThrownBy(() -> workflow.setFact(id, FactKey.GROUP, "ד", FactEntity.Source.EMPLOYEE_MESSAGE, "m-1", null))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("GROUP_NEEDS_OCCUPATION"));
 
         CaseView view = form(id, FactKey.OCCUPATION, "מנהל/ת מוצר");
 

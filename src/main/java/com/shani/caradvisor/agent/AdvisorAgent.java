@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * One employee chat turn: the model reads the case state, calls tools (which run the same workflow as the form),
@@ -266,11 +267,15 @@ public class AdvisorAgent {
     /**
      * The system's own notes reach the model in square brackets ("[עדכון מהמערכת]", "[system]"). An employee who
      * types such a note must not be able to pose as the system or the rep (an evaluation run caught the model
-     * repeating a forged "the rep confirmed" as true), so brackets in their text become round ones.
+     * repeating a forged "the rep confirmed" as true), so brackets in their text become round ones, look-alike
+     * brackets (［】⟦〔) included.
      */
     static String asTheEmployeeWroteIt(String text) {
-        return text.replace('[', '(').replace(']', ')');
+        return LOOKALIKE_OPEN.matcher(LOOKALIKE_CLOSE.matcher(text).replaceAll(")")).replaceAll("(");
     }
+
+    private static final Pattern LOOKALIKE_OPEN = Pattern.compile("[\\[［【〔〖〘〚⟦⟨❲⁅]");
+    private static final Pattern LOOKALIKE_CLOSE = Pattern.compile("[\\]］】〕〗〙〛⟧⟩❳⁆]");
 
     private static Map<String, Object> content(String role, String text) {
         return Map.of("role", role, "parts", List.of(Map.of("text", text)));

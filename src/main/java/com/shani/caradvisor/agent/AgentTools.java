@@ -45,6 +45,11 @@ public class AgentTools {
             "electric", Drive.ELECTRIC, "plug-in", Drive.PLUG_IN, "hybrid", Drive.HYBRID, "petrol", Drive.PETROL);
 
     private static final Pattern NUMBER = Pattern.compile("(\\d[\\d,]*(?:\\.\\d+)?)\\s*(אלף)?");
+    /** Words that say an amount is zero: a written 0, "אין", "ללא", "בלי", "אפס", "לא מקבל/משלם". */
+    private static final Pattern NONE = Pattern.compile("(?<![\\d.,])0(?![\\d.,])|אפס|(?<!\\p{L})[ו]?(אין|ללא|בלי|כלום)(?!\\p{L})|לא (מקבל|מקבלת|משלם|משלמת)");
+    private static final Pattern NOT_KNOWN = Pattern.compile("אין לי (מושג|מידע)|לא יודע|לא זוכר");
+    /** A number right after these words identifies something; it is not an amount. */
+    private static final Pattern IDENTIFIER = Pattern.compile("מספר|מס['׳]|ת[\"״]ז|תעודת זהות|טלפון|נייד|מיקוד");
 
     private final ReferenceData data;
     private final CaseWorkflowService workflow;
@@ -290,7 +295,11 @@ public class AgentTools {
                 "note", "The chat shows the best options with their amounts right above your reply. Add one short sentence.");
     }
 
-    /** An amount counts only if the employee wrote it (or said there is none). Stops the model from inventing salaries. */
+    /**
+     * An amount counts only if the employee wrote it (or said there is none). Stops the model from inventing salaries.
+     * A red-team run found two holes, now closed: "I have no idea what I pay" counted as 0, and an employee number
+     * counted as a salary.
+     */
     public static boolean statedInMessage(Object value, String text) {
         BigDecimal wanted;
         try {
@@ -299,10 +308,13 @@ public class AgentTools {
             return false;
         }
         if (wanted.signum() == 0) {
-            return true;
+            return NONE.matcher(text).find() && !NOT_KNOWN.matcher(text).find();
         }
         Matcher m = NUMBER.matcher(text);
         while (m.find()) {
+            if (IDENTIFIER.matcher(clauseBefore(text, m.start())).find()) {
+                continue;
+            }
             BigDecimal found = new BigDecimal(m.group(1).replace(",", ""));
             if (m.group(2) != null) {
                 found = found.multiply(BigDecimal.valueOf(1000));
@@ -312,6 +324,16 @@ public class AgentTools {
             }
         }
         return false;
+    }
+
+    /** The words leading up to a number, back to the previous number or punctuation mark (at most 30 characters). */
+    private static String clauseBefore(String text, int end) {
+        int start = end;
+        while (start > 0 && end - start < 30 && !Character.isDigit(text.charAt(start - 1))
+                && ",.;:!?\n".indexOf(text.charAt(start - 1)) < 0) {
+            start--;
+        }
+        return text.substring(start, end);
     }
 
     /** Catalog names the model may write even though they contain digits. */
