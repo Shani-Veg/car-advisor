@@ -130,11 +130,11 @@ function buildCard(question) {
     try {
       const result = await api.answerQuestion(question.id, payload.value, payload.effectiveFrom, payload.note, requestId);
       requestIds.delete(key); addAnswered(result); removeCard(question.id); done = true;
-      showNotice(byId('feedback'), 'התשובה נשמרה, וההשוואה אצל העובד/ת התעדכנה.');
+      showNotice(byId('feedback'), 'התשובה נשמרה, וההשוואה בתיק התעדכנה.');
     } catch (failure) {
       if (failure.status === 409) {
         requestIds.delete(key); removeCard(question.id); done = true;
-        showNotice(byId('feedback'), 'השאלה כבר לא רלוונטית: העובד/ת בחר/ה רכב אחר, או שכבר נענתה. היא הוסרה מהתור.');
+        showNotice(byId('feedback'), 'השאלה כבר לא רלוונטית: בתיק נבחר רכב אחר, או שהשאלה כבר נענתה. היא הוסרה מהתור.');
       } else showNotice(error, failure.message);
     } finally {
       entry.busy = false; activeAnswers -= 1;
@@ -169,7 +169,7 @@ function updateQueue() {
   });
   if (!nodes.length) {
     const empty = el('li', 'queue-empty');
-    empty.append(emptyState('התור ריק.', 'שאלה חדשה תופיע כאן ברגע שעובד/ת יבקש/תבקש אישור.'));
+    empty.append(emptyState('התור ריק.', 'שאלה חדשה תופיע כאן כשתגיע בקשת אישור.'));
     container.append(empty);
   }
   byId('open-count').replaceChildren(); appendText(byId('open-count'), formatNumber(nodes.length));

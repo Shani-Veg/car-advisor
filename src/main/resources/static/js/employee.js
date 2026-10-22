@@ -743,7 +743,7 @@ function applyCase(next) {
   const statusChanged = previous?.status !== next.status || !same(previous?.pendingQuestions, next.pendingQuestions);
   if (!previous || !same(previous.comparison, next.comparison) || estimateChanged || statusChanged) renderComparison(next.comparison, previous?.comparison);
   if (!previous || !same(previous.ranking, next.ranking)) renderRanking(next.ranking, previous?.ranking);
-  showNotice(byId('sync-label'), 'מעודכן · ' + formatDate(new Date().toISOString(), true));
+  showNotice(byId('sync-label'), 'עודכן ב-' + formatDate(new Date().toISOString(), true));
   updateControls();
 }
 

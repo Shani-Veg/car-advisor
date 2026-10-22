@@ -12,6 +12,9 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /src/target/car-advisor-0.0.1-SNAPSHOT.jar app.jar
 COPY --from=build /src/data data
+# The app runs as an unprivileged user: it only reads /app and writes the H2 fallback under /tmp.
+RUN useradd --system --uid 10001 --no-create-home advisor
+USER advisor
 # Small heap and a single-threaded GC to fit 512 MB; C1 only, for a faster start on a shared CPU.
 # The database: PostgreSQL when SPRING_DATASOURCE_URL is set in the Render dashboard, so cases and rep questions
 # survive restarts. Without it, an H2 file in /tmp, and the public demo starts clean after every restart.

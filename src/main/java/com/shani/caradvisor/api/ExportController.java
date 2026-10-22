@@ -73,7 +73,7 @@ public class ExportController {
                 .row(text("ממתינות"), text(t.repWaiting()))
                 .row(text("זמן מענה ממוצע (שעות)"), cell(t.averageAnswerHours(), Style.DECIMAL))
                 .blank();
-        buckets(sheet, "הרכבים שנבדקו הכי הרבה", "רכב", "הנעה", t.byCar());
+        buckets(sheet, "הרכבים שנבחרו להשוואה", "רכב", "הנעה", t.byCar());
         buckets(sheet, "לפי סוג הנעה", "הנעה", null, t.byDrive());
         buckets(sheet, "לפי קבוצת זכאות", "קבוצה", null, t.byGroup());
         return sheet;
@@ -100,7 +100,7 @@ public class ExportController {
                         header("נטו היום"),
                         header("נטו בחלופה"), header("שינוי בנטו"), header("עלות החלופה לחברה"),
                         header("תקציב הקבוצה"), header("השתתפות בחלופה"), header("סטטוס ההשתתפות"),
-                        header("שאלה לנציג"), header("ענה/תה"), header("זמן מענה (שעות)"));
+                        header("שאלה לנציג"), header("מי ענה"), header("זמן מענה (שעות)"));
         for (Row r : built.rows()) {
             sheet.row(text(r.createdAt() == null ? null : WHEN.format(r.createdAt())), text(r.status()),
                     text(r.occupation()), text(r.group()), text(r.children()), text(r.currentCar()),
