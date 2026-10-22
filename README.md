@@ -77,7 +77,7 @@ powershell -ExecutionPolicy Bypass -File run.ps1
 ./mvnw test
 ```
 
-156 בדיקות אוטומטיות:
+160 בדיקות אוטומטיות:
 
 | נבדק | מה |
 |---|---|
